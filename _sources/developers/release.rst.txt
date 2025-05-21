@@ -1,4 +1,4 @@
-.. Copyright (C) 2022,2023 Michael Shych <michaelsh@nvidia.com>
+.. Copyright (C) 2022,2025 Michael Shych <michaelsh@nvidia.com>
 .. Copyright (C) 2021,2022 Alex Doyle <adoyle@nvidia.com>
 .. Copyright (C) 2019,2020 Alex Doyle <adoyle@cumulusnetworks.com>   
 .. Copyright (C) 2014,2018 Curt Brune <curt@cumulusnetworks.com>
@@ -79,11 +79,11 @@ without any formal commitment.
   :header: "Version", "Merge Window Closes", "Approx. Release Date"
   :delim: |
 
-  2025.05 | Wed, Apr 16, 2025 | Wed, May 21, 2025
   2025.08 | Wed, Jul 16, 2025 | Wed, Aug 20, 2025
   2025.11 | Wed, Oct 22, 2025 | Wed, Nov 19, 2025
   2026.02 | Wed, Jan 21, 2026 | Wed, Feb 18, 2026
   2026.05 | Wed, Apr 15, 2026 | Wed, May 20, 2026
+  2026.08 | Wed, Jul 15, 2026 | Wed, Aug 19, 2026
 
 Making a Release
 ----------------
