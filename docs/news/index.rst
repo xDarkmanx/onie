@@ -1,4 +1,4 @@
-.. Copyright (C) 2022,2024 Michael Shych <michaelsh@nvidia.com>
+.. Copyright (C) 2022,2025 Michael Shych <michaelsh@nvidia.com>
    Copyright (C) 2021,2022 Alex Doyle <adoyle@nvidia.com>
    Copyright (C) 2019,2020 Alex Doyle <adoyle@cumulusnetworks.com>
    Copyright (C) 2017,2018 Curt Brune <curt@cumulusnetworks.com>
@@ -9,6 +9,10 @@
 ************
 Project News
 ************
+Aug 20, 2025
+  Released version `2025.08
+  <https://ocp-all.groups.io/g/OCP-ONIE/message/369>`_
+
 May 21, 2025
   Released version `2025.05
   <https://ocp-all.groups.io/g/OCP-ONIE/message/358>`_

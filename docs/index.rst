@@ -25,6 +25,10 @@ Open Network Install Environment
 
 News
 ====
+Aug 20, 2025
+  Released version `2025.08
+  <https://ocp-all.groups.io/g/OCP-ONIE/message/369>`_
+
 May 21, 2025
   Released version `2025.05
   <https://ocp-all.groups.io/g/OCP-ONIE/message/358>`_
