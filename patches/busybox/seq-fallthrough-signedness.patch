@@ -1,0 +1,37 @@
+Subject: [PATCH] seq: mark fall-throughs, unsigned width helpers
+
+The argc 3/2/1/default ladder falls through by design; mark it.
+w/f are non-negative string lengths compared against the unsigned
+width/frac_part.
+diff --git a/coreutils/seq.c b/coreutils/seq.c
+index beb339d..66ebbe7 100644
+--- a/coreutils/seq.c
++++ b/coreutils/seq.c
+@@ -59,13 +59,16 @@ int seq_main(int argc, char **argv)
+ 		case 3:
+ 			increment = strtod(argv[1], &pp);
+ 			errno |= *pp;
++			/* fall through */
+ 		case 2:
+ 			first = strtod(argv[0], &pp);
+ 			errno |= *pp;
++			/* fall through */
+ 		case 1:
+ 			last = strtod(argv[argc-1], &pp);
+ 			if (!errno && *pp == '\0')
+ 				break;
++			/* fall through */
+ 		default:
+ 			bb_show_usage();
+ 	}
+@@ -79,8 +82,8 @@ int seq_main(int argc, char **argv)
+ 	frac_part = 0;
+ 	while (1) {
+ 		char *dot = strchrnul(*argv, '.');
+-		int w = (dot - *argv);
+-		int f = strlen(dot);
++		unsigned w = (dot - *argv);
++		unsigned f = strlen(dot);
+ 		if (width < w)
+ 			width = w;
+ 		argv++;
