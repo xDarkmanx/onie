@@ -1,0 +1,17 @@
+Subject: [PATCH] factor: unsigned i in unpack_wheel
+
+i iterates over the static packed_wheel table; unsigned matches
+ARRAY_SIZE.
+diff --git a/coreutils/factor.c b/coreutils/factor.c
+index de8ea4e..8519f13 100644
+--- a/coreutils/factor.c
++++ b/coreutils/factor.c
+@@ -98,7 +98,7 @@ static const uint64_t packed_wheel[] = {
+  */
+ static void unpack_wheel(void)
+ {
+-	int i;
++	unsigned i;
+ 	uint8_t *p;
+ 
+ 	setup_common_bufsiz();

@@ -12,6 +12,7 @@ gunzip-huft-signedness.patch
 unxz-fallthrough.patch
 cut-signedness.patch
 dd-count-size_t.patch
+factor-signedness.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch
