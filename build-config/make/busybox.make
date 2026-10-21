@@ -109,6 +109,8 @@ ifeq ($(I2CTOOLS_ENABLE),yes)
 		-e '/\bCONFIG_I2CDETECT\b/cCONFIG_I2CDETECT=y' $@
 endif
 	$(Q) $(SCRIPTDIR)/apply-config-patch $@ $(MACHINE_BUSYBOX_CONFIG_FILE)
+	$(Q) echo "==== Resolving NEW symbols with defaults (oldconfig) ===="
+	$(Q) yes '' | $(MAKE) -C $(BUSYBOX_DIR) oldconfig
 
 busybox-config: $(BUSYBOX_DIR)/.config
 	PATH='$(CROSSBIN):$(PATH)' \
