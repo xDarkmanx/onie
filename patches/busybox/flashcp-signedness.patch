@@ -1,0 +1,17 @@
+Subject: [PATCH] flashcp: fix -Wextra sign-compare
+
+i drives the uoff_t progress loops; the 0..1 phase loop and
+the progress() mode argument are unaffected by the widening.
+diff --git a/miscutils/flashcp.c b/miscutils/flashcp.c
+index 93c80cc..9c8f0dc 100644
+--- a/miscutils/flashcp.c
++++ b/miscutils/flashcp.c
+@@ -60,7 +60,7 @@ int flashcp_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+ int flashcp_main(int argc UNUSED_PARAM, char **argv)
+ {
+ 	int fd_f, fd_d; /* input file and mtd device file descriptors */
+-	int i;
++	uoff_t i;
+ 	uoff_t erase_count;
+ 	struct mtd_info_user mtd;
+ 	struct erase_info_user e;
