@@ -1,0 +1,38 @@
+Subject: [PATCH] timeout: stable prog_argv across vfork
+
+The parent shifted argv (argv += optind) after xvfork; compute the
+program argv into a volatile pointer before the vfork instead.
+diff --git a/coreutils/timeout.c b/coreutils/timeout.c
+index 06108f3..a4455d3 100644
+--- a/coreutils/timeout.c
++++ b/coreutils/timeout.c
+@@ -76,6 +76,7 @@ int timeout_main(int argc UNUSED_PARAM, char **argv)
+ #endif
+ 	const char *opt_s = "TERM";
+ 	char *opt_k = NULL;
++	char **volatile prog_argv; /* computed before vfork, stable across it */
+ 
+ 	/* -p option is not documented, it is needed to support NOMMU. */
+ 
+@@ -109,6 +110,7 @@ int timeout_main(int argc UNUSED_PARAM, char **argv)
+ 	if (parent) /* we were re-execed, already grandchild */
+ 		goto grandchild;
+ 
++	prog_argv = argv + optind;
+ #if !BB_MMU
+ 	sv1 = argv[optind];
+ 	sv2 = argv[optind + 1];
+@@ -144,10 +146,9 @@ int timeout_main(int argc UNUSED_PARAM, char **argv)
+ 	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+ 		return EXIT_FAILURE;
+ 	/* Ok, exec a program as requested */
+-	argv += optind;
+ #if !BB_MMU
+-	argv[0] = sv1;
+-	argv[1] = sv2;
++	prog_argv[0] = sv1;
++	prog_argv[1] = sv2;
+ #endif
+-	BB_EXECVP_or_die(argv);
++	BB_EXECVP_or_die(prog_argv);
+ }

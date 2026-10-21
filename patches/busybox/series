@@ -20,6 +20,7 @@ seq-fallthrough-signedness.patch
 stat-signedness.patch
 tail-signedness.patch
 test-setjmp-clobber.patch
+timeout-vfork-clobber.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch
