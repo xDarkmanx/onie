@@ -18,6 +18,7 @@ ls-signedness.patch
 nproc-signedness.patch
 seq-fallthrough-signedness.patch
 stat-signedness.patch
+tail-signedness.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch

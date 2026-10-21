@@ -1,0 +1,29 @@
+Subject: [PATCH] tail: int nfiles and header_threshold
+
+i, nfiles, argc and header_threshold form one family of file
+counters; make them all int (the -q infinity becomes INT_MAX).
+
+diff --git a/coreutils/tail.c b/coreutils/tail.c
+index 6201eb0..472b852 100644
+--- a/coreutils/tail.c
++++ b/coreutils/tail.c
+@@ -119,8 +119,8 @@ int tail_main(int argc, char **argv)
+ 
+ 	char *tailbuf;
+ 	size_t tailbufsize;
+-	unsigned header_threshold = 1;
+-	unsigned nfiles;
++	int header_threshold = 1;
++	int nfiles;
+ 	int i, opt;
+ 
+ 	int *fds;
+@@ -153,7 +153,7 @@ int tail_main(int argc, char **argv)
+ 	if (opt & 0x4) count = eat_num(str_n); // -n
+ #if ENABLE_FEATURE_FANCY_TAIL
+ 	/* q: make it impossible for nfiles to be > header_threshold */
+-	if (opt & 0x8) header_threshold = UINT_MAX; // -q
++	if (opt & 0x8) header_threshold = INT_MAX; // -q
+ 	//if (opt & 0x10) // -s
+ 	if (opt & 0x20) header_threshold = 0; // -v
+ # define FOLLOW_RETRY (opt & 0x40)
