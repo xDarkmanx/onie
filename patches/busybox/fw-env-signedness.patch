@@ -1,0 +1,81 @@
+Subject: [PATCH] fw_env: fix -Wextra sign-compare
+
+- range checks: cast the size_t operand (readlen/erasesize) to off_t
+  to compare in the off_t domain (all values non-negative)
+- read/write total compares: ssize_t casts matching the syscall
+  and flash_read_buf() returns
+- crc0/crc1: uint32_t, the crc32() / env_image_t::crc domain
+diff --git a/miscutils/fw_env.c b/miscutils/fw_env.c
+index 3a85dda..1d93660 100644
+--- a/miscutils/fw_env.c
++++ b/miscutils/fw_env.c
+@@ -680,7 +680,7 @@ static int flash_read_buf (int dev, int fd, void *buf, size_t count,
+ 		if (rc < 0)		/* block test failed */
+ 			return -1;
+ 
+-		if (blockstart + block_seek + readlen > top_of_range) {
++		if (blockstart + block_seek + (off_t)readlen > top_of_range) {
+ 			/* End of range is reached */
+ 			fprintf (stderr,
+ 				 "Too few good blocks within range\n");
+@@ -699,7 +699,7 @@ static int flash_read_buf (int dev, int fd, void *buf, size_t count,
+ 		lseek (fd, blockstart + block_seek, SEEK_SET);
+ 
+ 		rc = read (fd, buf + processed, readlen);
+-		if (rc != readlen) {
++		if (rc != (ssize_t)readlen) {
+ 			fprintf (stderr, "Read error on %s: %s\n",
+ 				 DEVNAME (dev), strerror (errno));
+ 			return -1;
+@@ -782,7 +782,7 @@ static int flash_write_buf (int dev, int fd, void *buf, size_t count,
+ 
+ 		rc = flash_read_buf (dev, fd, data, write_total, erase_offset,
+ 				     mtd_type);
+-		if (write_total != rc)
++		if ((ssize_t)write_total != rc)
+ 			return -1;
+ 
+ 		/* Overwrite the old environment */
+@@ -813,7 +813,7 @@ static int flash_write_buf (int dev, int fd, void *buf, size_t count,
+ 		if (rc < 0)		/* block test failed */
+ 			return rc;
+ 
+-		if (blockstart + erasesize > top_of_range) {
++		if (blockstart + (off_t)erasesize > top_of_range) {
+ 			fprintf (stderr, "End of range reached, aborting\n");
+ 			return -1;
+ 		}
+@@ -843,7 +843,7 @@ static int flash_write_buf (int dev, int fd, void *buf, size_t count,
+ #ifdef DEBUG
+ 		printf ("Write 0x%x bytes at 0x%llx\n", erasesize, blockstart);
+ #endif
+-		if (write (fd, data + processed, erasesize) != erasesize) {
++		if (write (fd, data + processed, erasesize) != (ssize_t)erasesize) {
+ 			fprintf (stderr, "Write error on %s: %s\n",
+ 				 DEVNAME (dev), strerror (errno));
+ 			return -1;
+@@ -947,7 +947,7 @@ static int flash_read (int fd)
+ 	rc = flash_read_buf (dev_current, fd, environment.image, CONFIG_ENV_SIZE,
+ 			     DEVOFFSET (dev_current), mtdinfo.type);
+ 
+-	return (rc != CONFIG_ENV_SIZE) ? -1 : 0;
++	return (rc != (ssize_t)CONFIG_ENV_SIZE) ? -1 : 0;
+ }
+ 
+ static int flash_io (int mode)
+@@ -1030,11 +1030,13 @@ static char *envmatch (char * s1, char * s2)
+  */
+ static int env_init (void)
+ {
+-	int crc0, crc0_ok;
++	uint32_t crc0;
++	int crc0_ok;
+ 	char flag0;
+ 	void *addr0;
+ 
+-	int crc1, crc1_ok;
++	int crc1_ok;
++	uint32_t crc1;
+ 	char flag1;
+ 	void *addr1;
+ 

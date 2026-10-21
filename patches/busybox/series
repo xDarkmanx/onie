@@ -41,6 +41,7 @@ bootchartd-vfork-clobber.patch
 capability-signedness.patch
 fgets-str-signedness.patch
 u-boot-env-tools.patch
+fw-env-signedness.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch
 feature-flash-erase-command.patch
