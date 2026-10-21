@@ -13,6 +13,7 @@ unxz-fallthrough.patch
 cut-signedness.patch
 dd-count-size_t.patch
 factor-signedness.patch
+head-fallthrough.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch

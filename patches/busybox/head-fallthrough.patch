@@ -1,0 +1,19 @@
+Subject: [PATCH] head: move fall-through comment past #endif
+
+gcc does not recognize a fall-through comment separated from the
+case label by a preprocessor directive; place it after the #endif
+so it immediately precedes case n.
+diff --git a/coreutils/head.c b/coreutils/head.c
+index c7537a2..1fbd72c 100644
+--- a/coreutils/head.c
++++ b/coreutils/head.c
+@@ -207,8 +207,8 @@ int head_main(int argc, char **argv)
+ 			break;
+ 		case 'c':
+ 			count_bytes = 1;
+-			/* fall through */
+ #endif
++			/* fall through */
+ 		case 'n':
+ 			p = optarg;
+ #if ENABLE_INCLUDE_SUSv2 || ENABLE_FEATURE_FANCY_HEAD
