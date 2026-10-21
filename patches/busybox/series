@@ -6,6 +6,7 @@ bzip2-signedness.patch
 cpio-uoff-sentinel.patch
 dpkg-signedness.patch
 gzip-maxbits-bound.patch
+unzip-fallthrough.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch

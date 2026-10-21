@@ -1,0 +1,24 @@
+Subject: [PATCH] unzip: mark intentional fallthroughs
+
+Case A falls into y, case N falls into n by design; add the
+gcc-recognized fall-through comments.
+diff --git a/archival/unzip.c b/archival/unzip.c
+index 691a2d8..e39b2a4 100644
+--- a/archival/unzip.c
++++ b/archival/unzip.c
+@@ -987,6 +987,7 @@ int unzip_main(int argc, char **argv)
+ 		switch (key_buf[0]) {
+ 		case 'A':
+ 			overwrite = O_ALWAYS;
++			/* fall through */
+ 		case 'y': /* Open file and fall into unzip */
+  do_open_and_extract:
+ 			unzip_create_leading_dirs(dst_fn);
+@@ -1026,6 +1027,7 @@ int unzip_main(int argc, char **argv)
+ 
+ 		case 'N':
+ 			overwrite = O_NEVER;
++			/* fall through */
+ 		case 'n': /* Skip entry data */
+  skip_cmpsize:
+ 			unzip_skip(zip.fmt.cmpsize);
