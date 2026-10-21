@@ -23,6 +23,7 @@ test-setjmp-clobber.patch
 timeout-vfork-clobber.patch
 uudecode-signedness.patch
 ssd-vfork-clobber.patch
+awk-fallthrough.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch

@@ -1,0 +1,19 @@
+Subject: [PATCH] awk: mark OC_NEXTFILE/OC_NEXT fallthroughs
+
+The nextfile/nextrec ladder falls through by design.
+diff --git a/editors/awk.c b/editors/awk.c
+index 728ee86..3ed7f83 100644
+--- a/editors/awk.c
++++ b/editors/awk.c
+@@ -3072,9 +3072,11 @@ static var *evaluate(node *op, var *res)
+ 		case XC( OC_NEXTFILE ):
+ 			debug_printf_eval("NEXTFILE\n");
+ 			nextfile = TRUE;
++			/* fall through */
+ 		case XC( OC_NEXT ):
+ 			debug_printf_eval("NEXT\n");
+ 			nextrec = TRUE;
++			/* fall through */
+ 		case XC( OC_DONE ):
+ 			debug_printf_eval("DONE\n");
+ 			clrvar(res);
