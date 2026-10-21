@@ -1,0 +1,26 @@
+Subject: [PATCH] i2c_tools: fix -Wextra unused-function
+
+All callers of i2c_smbus_access() live under
+#if ENABLE_I2CGET || ENABLE_I2CSET || ENABLE_I2CDUMP || ENABLE_I2CDETECT;
+pull the function under the same guard so configs without these
+applets do not define it unused.
+diff --git a/miscutils/i2c_tools.c b/miscutils/i2c_tools.c
+index da26f5e..b7f39b6 100644
+--- a/miscutils/i2c_tools.c
++++ b/miscutils/i2c_tools.c
+@@ -107,6 +107,7 @@ static ALWAYS_INLINE void *itoptr(int i)
+ 	return (void*)(intptr_t)i;
+ }
+ 
++#if ENABLE_I2CGET || ENABLE_I2CSET || ENABLE_I2CDUMP || ENABLE_I2CDETECT
+ static int32_t i2c_smbus_access(int fd, char read_write, uint8_t cmd,
+ 				int size, union i2c_smbus_data *data)
+ {
+@@ -120,7 +121,6 @@ static int32_t i2c_smbus_access(int fd, char read_write, uint8_t cmd,
+ 	return ioctl(fd, I2C_SMBUS, &args);
+ }
+ 
+-#if ENABLE_I2CGET || ENABLE_I2CSET || ENABLE_I2CDUMP || ENABLE_I2CDETECT
+ static int32_t i2c_smbus_read_byte(int fd)
+ {
+ 	union i2c_smbus_data data;

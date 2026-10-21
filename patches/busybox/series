@@ -36,6 +36,7 @@ bc-fallthrough.patch
 flash-lock-signedness.patch
 flashcp-signedness.patch
 hexedit-fallthrough.patch
+i2c-tools-unused.patch
 find-signedness.patch
 grep-signedness.patch
 bootchartd-vfork-clobber.patch
