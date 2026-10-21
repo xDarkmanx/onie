@@ -1,0 +1,123 @@
+Subject: [PATCH] dpkg: signedness fixes and explicit fallthrough
+
+Harmonize unsigned receivers across the file: describe_status,
+status/state locals, package_num sentinel (unsigned)-1, drop a now
+redundant cast. search_name_hashtable returns unsigned (it never
+returns -1); probe wraparound detected without the (int) cast;
+unsigned i vs ARRAY_SIZE; intentional case fallthrough marked.
+diff --git a/archival/dpkg.c b/archival/dpkg.c
+index 8031956..411755d 100644
+--- a/archival/dpkg.c
++++ b/archival/dpkg.c
+@@ -186,7 +186,7 @@ static void make_hash(const char *key, unsigned *start, unsigned *decrement, con
+ }
+ 
+ /* this adds the key to the hash table */
+-static int search_name_hashtable(const char *key)
++static unsigned search_name_hashtable(const char *key)
+ {
+ 	unsigned probe_address;
+ 	unsigned probe_decrement;
+@@ -197,7 +197,7 @@ static int search_name_hashtable(const char *key)
+ 			return probe_address;
+ 		}
+ 		probe_address -= probe_decrement;
+-		if ((int)probe_address < 0) {
++		if (probe_address >= NAME_HASH_PRIME) { /* wrapped below zero */
+ 			probe_address += NAME_HASH_PRIME;
+ 		}
+ 	}
+@@ -571,6 +571,7 @@ static int read_package_field(const char *package_buffer, char **field_name, cha
+ 					exit_flag = TRUE;
+ 					break;
+ 				}
++				/* fall through */
+ 			case '\t':
+ 			case ' ':
+ 				/* increment the value start point if its a just filler */
+@@ -738,9 +739,9 @@ static void set_status(const unsigned status_node_num, const char *new_value, co
+ 	free(new_status);
+ }
+ 
+-static const char *describe_status(int status_num)
++static const char *describe_status(unsigned status_num)
+ {
+-	int status_want, status_state;
++	unsigned status_want, status_state;
+ 	if (status_hashtable[status_num] == NULL || status_hashtable[status_num]->status == 0)
+ 		return "is not installed or flagged to be installed";
+ 
+@@ -774,7 +775,7 @@ static void index_status_file(const char *filename)
+ 	status_file = xfopen_for_read(filename);
+ 	while ((control_buffer = xmalloc_fgetline_str(status_file, "\n\n")) != NULL) {
+ 		const unsigned package_num = fill_package_struct(control_buffer);
+-		if (package_num != -1) {
++		if (package_num != (unsigned)-1) {
+ 			status_node = xmalloc(sizeof(status_node_t));
+ 			/* fill_package_struct doesn't handle the status field */
+ 			status_line = strstr(control_buffer, "Status:");
+@@ -819,7 +820,7 @@ static void write_status_file(deb_file_t **deb_file)
+ 	char *status_from_file;
+ 	char *control_buffer = NULL;
+ 	char *tmp_string;
+-	int status_num;
++	unsigned status_num;
+ 	int field_start = 0;
+ 	int write_flag;
+ 	int i = 0;
+@@ -851,7 +852,7 @@ static void write_status_file(deb_file_t **deb_file)
+ 			const char *status_from_hashtable = name_hashtable[status_hashtable[status_num]->status];
+ 			if (strcmp(status_from_file, status_from_hashtable) != 0) {
+ 				/* New status isn't exactly the same as old status */
+-				const int state_status = get_status(status_num, 3);
++				const unsigned state_status = get_status(status_num, 3);
+ 				if ((strcmp("installed", name_hashtable[state_status]) == 0)
+ 				 || (strcmp("unpacked", name_hashtable[state_status]) == 0)
+ 				) {
+@@ -1662,7 +1663,7 @@ static void unpack_package(deb_file_t *deb_file)
+ 	FILE *out_stream;
+ 	llist_t *accept_list;
+ 	llist_t *conffile_list;
+-	int i;
++	unsigned i;
+ 
+ 	/* If existing version, remove it first */
+ 	conffile_list = NULL;
+@@ -1745,7 +1746,7 @@ static void configure_package(deb_file_t *deb_file)
+ {
+ 	const char *package_name = name_hashtable[package_hashtable[deb_file->package]->name];
+ 	const char *package_version = name_hashtable[package_hashtable[deb_file->package]->version];
+-	const int status_num = search_status_hashtable(package_name);
++	const unsigned status_num = search_status_hashtable(package_name);
+ 
+ 	printf("Setting up %s (%s)...\n", package_name, package_version);
+ 
+@@ -1765,10 +1766,10 @@ int dpkg_main(int argc UNUSED_PARAM, char **argv)
+ 	status_node_t *status_node;
+ 	char *str_f;
+ 	int opt;
+-	int package_num;
++	unsigned package_num;
+ 	int deb_count = 0;
+-	int state_status;
+-	int status_num;
++	unsigned state_status;
++	unsigned status_num;
+ 	int i;
+ #if ENABLE_LONG_OPTS
+ 	static const char dpkg_longopts[] ALIGN1 =
+@@ -1844,12 +1845,12 @@ int dpkg_main(int argc UNUSED_PARAM, char **argv)
+ 			deb_file[deb_count]->filename = xstrdup(argv[0]);
+ 			package_num = fill_package_struct(deb_file[deb_count]->control_file);
+ 
+-			if (package_num == -1) {
++			if (package_num == (unsigned)-1) {
+ 				bb_error_msg("invalid control file in %s", argv[0]);
+ 				argv++;
+ 				continue;
+ 			}
+-			deb_file[deb_count]->package = (unsigned) package_num;
++			deb_file[deb_count]->package = package_num;
+ 
+ 			/* Add the package to the status hashtable */
+ 			if (opt & (OPT_unpack | OPT_install)) {

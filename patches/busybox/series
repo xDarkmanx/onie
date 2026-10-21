@@ -4,6 +4,7 @@ gcc14-lxdialog-check.patch
 kernel68-cbq-uapi.patch
 bzip2-signedness.patch
 cpio-uoff-sentinel.patch
+dpkg-signedness.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch
