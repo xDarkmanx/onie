@@ -1,0 +1,18 @@
+Subject: [PATCH] dd: count is size_t
+
+count is parsed with XATOU_SFX and only decremented to zero;
+making it size_t aligns the FLAG_COUNT_BYTES clamp with the
+size_t ibs.
+diff --git a/coreutils/dd.c b/coreutils/dd.c
+index 3e034eb..a6c2b1b 100644
+--- a/coreutils/dd.c
++++ b/coreutils/dd.c
+@@ -390,7 +390,7 @@ int dd_main(int argc UNUSED_PARAM, char **argv)
+ 	struct {
+ 		IF_FEATURE_DD_IBS_OBS(size_t ocount;)
+ 		ssize_t prev_read_size; /* for detecting swab failure */
+-		off_t count;
++		size_t count;
+ 		off_t seek, skip;
+ 		const char *infile, *outfile;
+ 	} Z;
