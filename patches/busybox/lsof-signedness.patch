@@ -1,0 +1,17 @@
+Subject: [PATCH] lsof: fix -Wextra sign-compare
+
+proc->pid is unsigned (from /proc scan); pid_t getpid() is a
+positive value - compare in the unsigned domain.
+diff --git a/procps/lsof.c b/procps/lsof.c
+index 9cb8d06..edd58d5 100644
+--- a/procps/lsof.c
++++ b/procps/lsof.c
+@@ -53,7 +53,7 @@ int lsof_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
+ 		char *fdlink;
+ 		struct dirent *entry;
+ 
+-		if (getpid() == proc->pid)
++		if ((unsigned)getpid() == proc->pid)
+ 			continue;
+ 
+ 		baseofs = sprintf(name, "/proc/%u/fd/", proc->pid);
