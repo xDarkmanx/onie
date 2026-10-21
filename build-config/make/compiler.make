@@ -14,9 +14,12 @@
 
 # Native build: compile and link against the build container's system
 # gcc/glibc. No --sysroot indirection, no cross toolchain.
+#
+# Warning policy: warnings are errors, everywhere. Fix the code, do
+# not silence the compiler.
 export ONIE_CPPFLAGS	=
-export ONIE_CFLAGS	= -Os $(ONIE_CPPFLAGS)
-export ONIE_CXXFLAGS	= -Os $(ONIE_CPPFLAGS)
+export ONIE_CFLAGS	= -Os -Wall -Wextra -Werror $(ONIE_CPPFLAGS)
+export ONIE_CXXFLAGS	= -Os -Wall -Wextra -Werror $(ONIE_CPPFLAGS)
 export ONIE_LDFLAGS	=
 
 export ONIE_PKG_CONFIG	= \
