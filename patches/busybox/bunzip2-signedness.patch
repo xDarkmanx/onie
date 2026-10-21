@@ -1,0 +1,50 @@
+Subject: [PATCH] decompress_bunzip2: signedness + setjmp clobber fixes
+
+- get_next_block: dedicated unsigned counter for the dbuf ordering
+  loop (int i stays for the groupCount/symCount/minLen loops)
+- drop the pointless (int) cast on the unsigned origPtr check
+- unpack_bz2_data: outbuf is volatile — it is modified between
+  setjmp and longjmp-based error recovery
+
+diff --git a/archival/libarchive/decompress_bunzip2.c b/archival/libarchive/decompress_bunzip2.c
+index 4a2b668..f1233a4 100644
+--- a/archival/libarchive/decompress_bunzip2.c
++++ b/archival/libarchive/decompress_bunzip2.c
+@@ -542,11 +542,14 @@ static int get_next_block(bunzip_data *bd)
+ 	}
+ 
+ 	/* Figure out what order dbuf would be in if we sorted it. */
+-	for (i = 0; i < dbufCount; i++) {
+-		uint8_t tmp_byte = (uint8_t)dbuf[i];
+-		int tmp_count = byteCount[tmp_byte];
+-		dbuf[tmp_count] |= (i << 8);
+-		byteCount[tmp_byte] = tmp_count + 1;
++	{
++		unsigned n;
++		for (n = 0; n < dbufCount; n++) {
++			uint8_t tmp_byte = (uint8_t)dbuf[n];
++			int tmp_count = byteCount[tmp_byte];
++			dbuf[tmp_count] |= (n << 8);
++			byteCount[tmp_byte] = tmp_count + 1;
++		}
+ 	}
+ 
+ 	/* Decode first byte by hand to initialize "previous" byte.  Note that it
+@@ -554,7 +557,7 @@ static int get_next_block(bunzip_data *bd)
+ 	   it doesn't qualify as a run (hence writeRunCountdown=5). */
+ 	if (dbufCount) {
+ 		uint32_t tmp;
+-		if ((int)origPtr >= dbufCount) return RETVAL_DATA_ERROR;
++		if (origPtr >= dbufCount) return RETVAL_DATA_ERROR;
+ 		tmp = dbuf[origPtr];
+ 		bd->writeCurrent = (uint8_t)tmp;
+ 		bd->writePos = (tmp >> 8);
+@@ -850,7 +853,7 @@ unpack_bz2_stream(transformer_state_t *xstate)
+ char* FAST_FUNC
+ unpack_bz2_data(const char *packed, int packed_len, int unpacked_len)
+ {
+-	char *outbuf = NULL;
++	char *volatile outbuf = NULL;
+ 	bunzip_data *bd;
+ 	int i;
+ 	jmp_buf jmpbuf;
