@@ -1,0 +1,34 @@
+Subject: [PATCH] sys_eeprom: fix -Wextra sign-compare
+
+Loop counter i is int; cast the size_t bound (small TLV table).
+diff --git a/miscutils/sys_eeprom.c b/miscutils/sys_eeprom.c
+index 2b85235..d0d8c48 100644
+--- a/miscutils/sys_eeprom.c
++++ b/miscutils/sys_eeprom.c
+@@ -206,7 +206,7 @@ int onie_syseeprom_main(int argc, char **argv)
+ 	{0,         0,                    0,      0},
+     };
+ 
+-    for (i = 0; i < tlv_code_count; i++) {
++    for (i = 0; i < (int)tlv_code_count; i++) {
+ 	    tokens[i*2] = malloc(6);
+ 	    snprintf(tokens[(i*2)], 6,     "0x%x", tlv_code_list[i].m_code);
+ 	    /* Allow for uppercase hex digits as well */
+@@ -249,7 +249,7 @@ int onie_syseeprom_main(int argc, char **argv)
+ 			goto syseeprom_err;
+ 		    }
+ 		    tcode = strtoul(tokens[index], NULL, 0);
+-		    for (i = 0; i < tlv_code_count; i++) {
++		    for (i = 0; i < (int)tlv_code_count; i++) {
+ 			if (tlv_code_list[i].m_code == tcode) {
+ 			    tname = tlv_code_list[i].m_name;
+ 			}
+@@ -317,7 +317,7 @@ int onie_syseeprom_main(int argc, char **argv)
+ 	show_eeprom(eeprom);
+     }
+ syseeprom_err:
+-    for (i = 0; i < tlv_code_count; i++) {
++    for (i = 0; i < (int)tlv_code_count; i++) {
+ 	free(tokens[i*2]);
+ 	free(tokens[(i*2) + 1]);
+     }
