@@ -88,6 +88,8 @@ $(LINUXDIR)/.config : $(LINUX_CONFIG) $(KERNEL_PATCH_STAMP)
 #	$(Q) cat $(MACHINE_KERNEL_PATCHDIR)/config >> $(LINUXDIR)/.config
 	$(Q) echo "==== Merging patches from $(MACHINE_KERNEL_PATCHDIR)/config to $(LINUXDIR)/.config ===="
 	$(Q) $(LINUXDIR)/scripts/kconfig/merge_config.sh -r -m -O  $(LINUXDIR) $(LINUXDIR)/.config $(MACHINE_KERNEL_PATCHDIR)/config
+	$(Q) echo "==== Resolving NEW symbols with defaults (olddefconfig) ===="
+	$(Q) $(MAKE) -C $(LINUXDIR) ARCH=$(KERNEL_ARCH) olddefconfig
 
 
 # Interactive update. User selects options, or not
