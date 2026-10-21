@@ -1,0 +1,17 @@
+Subject: [PATCH] ls: unsigned len for the column width
+
+calc_name_len returns a non-negative width; compare it against the
+unsigned column_width in the same domain.
+diff --git a/coreutils/ls.c b/coreutils/ls.c
+index b69b804..5d9c3d8 100644
+--- a/coreutils/ls.c
++++ b/coreutils/ls.c
+@@ -653,7 +653,7 @@ static void display_files(struct dnode **dn, unsigned nfiles)
+ 	} else {
+ 		/* find the longest file name, use that as the column width */
+ 		for (i = 0; dn[i]; i++) {
+-			int len = calc_name_len(dn[i]->name);
++			unsigned len = calc_name_len(dn[i]->name);
+ 			if (column_width < len)
+ 				column_width = len;
+ 		}
