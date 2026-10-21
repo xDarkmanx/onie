@@ -1,0 +1,18 @@
+Subject: [PATCH] telnet: fix -Wextra implicit-fallthrough
+
+Words after "fall through" break the =3 comment regex;
+split the explanation from the canonical /* fall through */ marker.
+diff --git a/networking/telnet.c b/networking/telnet.c
+index 7a02535..0153d0e 100644
+--- a/networking/telnet.c
++++ b/networking/telnet.c
+@@ -295,7 +295,8 @@ static void handle_net_input(int len)
+ 			G.telstate = TS_COPY;
+ 			if (c == '\0')
+ 				break;
+-			/* else: fall through - need to handle CR IAC ... properly */
++			/* else: need to handle CR IAC ... properly */
++			/* fall through */
+ 
+ 		case TS_COPY: /* Prev char was ordinary */
+ 			/* Similar to NORMAL, but in TS_COPY we need to copy bytes */
