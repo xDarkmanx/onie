@@ -1,0 +1,16 @@
+Subject: [PATCH] d6_packet: fix -Wextra sign-compare
+
+bytes is int; offsetof yields size_t (small header size).
+diff --git a/networking/udhcp/d6_packet.c b/networking/udhcp/d6_packet.c
+index 142de9b..4f5e291 100644
+--- a/networking/udhcp/d6_packet.c
++++ b/networking/udhcp/d6_packet.c
+@@ -39,7 +39,7 @@ int FAST_FUNC d6_recv_kernel_packet(struct in6_addr *peer_ipv6 UNUSED_PARAM,
+ 		return bytes; /* returns -1 */
+ 	}
+ 
+-	if (bytes < offsetof(struct d6_packet, d6_options)) {
++	if (bytes < (int)offsetof(struct d6_packet, d6_options)) {
+ 		bb_simple_info_msg("packet with bad magic, ignoring");
+ 		return -2;
+ 	}
