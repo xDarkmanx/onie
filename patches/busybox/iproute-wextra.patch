@@ -1,0 +1,27 @@
+Subject: [PATCH] iproute: fix -Wextra warnings
+
+- G_filter.tb (int) vs uint32_t tid: cast tid
+- case 6 "to": NEXT_ARG() consumes the arg then falls into the
+  address parser in default: add the canonical marker after
+  the macro call
+diff --git a/networking/libiproute/iproute.c b/networking/libiproute/iproute.c
+index 4efb328..654d1e4 100644
+--- a/networking/libiproute/iproute.c
++++ b/networking/libiproute/iproute.c
+@@ -125,7 +125,7 @@ static int FAST_FUNC print_route(const struct sockaddr_nl *who UNUSED_PARAM,
+ 			}
+ 		}
+ 	} else {
+-		if (G_filter.tb > 0 && G_filter.tb != tid) {
++		if (G_filter.tb > 0 && G_filter.tb != (int)tid) {
+ 			return 0;
+ 		}
+ 	}
+@@ -1024,6 +1024,7 @@ static int iproute_get(char **argv)
+ 				break;
+ 			case 6: /* to */
+ 				NEXT_ARG();
++				/* fall through */
+ 			default:
+ 			{
+ 				inet_prefix addr;
