@@ -1,0 +1,25 @@
+Subject: [PATCH] tc: fix -Wextra unused-function
+
+print_rate() is only called from the CBQ printer, which the
+kernel-6.8 uapi guard compiles out on modern headers;
+put it under the same #ifdef TCA_CBQ_MAX.
+diff --git a/networking/tc.c b/networking/tc.c
+index 9d13d81..a5d721a 100644
+--- a/networking/tc.c
++++ b/networking/tc.c
+@@ -176,6 +176,7 @@ static int get_tc_classid(uint32_t *h, const char *str)
+ 	return 0;
+ }
+ 
++#ifdef TCA_CBQ_MAX
+ static void print_rate(char *buf, int len, uint32_t rate)
+ {
+ 	double tmp = (double)rate*8;
+@@ -196,6 +197,7 @@ static void print_rate(char *buf, int len, uint32_t rate)
+ 			snprintf(buf, len, "%.0fbit",  tmp);
+ 	}
+ }
++#endif /* TCA_CBQ_MAX */
+ 
+ #if 0
+ /* This is "pfifo_fast".  */
