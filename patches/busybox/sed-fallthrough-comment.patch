@@ -1,0 +1,21 @@
+Subject: [PATCH] sed: fall-through comment outside the P-case block
+
+gcc only recognizes the comment immediately before the case label;
+not隔着 the closing brace of the compound statement.
+diff --git a/editors/sed.c b/editors/sed.c
+index 00dde60..68da088 100644
+--- a/editors/sed.c
++++ b/editors/sed.c
+@@ -1269,10 +1269,9 @@ static void process_files(void)
+ 				*tmp = '\n';
+ 				break;
+ 			}
+-			/* Fall Through */
++			/* no newline above: fall through to 'p' */
+ 		}
+-
+-		/* Write the current pattern space to output */
++		/* fall through */
+ 		case 'p':
+ 			/* NB: we print this _before_ the last line
+ 			 * (of current file) is printed. Even if
