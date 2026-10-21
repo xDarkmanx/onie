@@ -35,6 +35,7 @@ getty-wextra.patch
 bc-fallthrough.patch
 flash-lock-signedness.patch
 flashcp-signedness.patch
+hexedit-fallthrough.patch
 find-signedness.patch
 grep-signedness.patch
 bootchartd-vfork-clobber.patch

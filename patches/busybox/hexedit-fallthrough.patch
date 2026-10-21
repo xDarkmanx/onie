@@ -1,0 +1,37 @@
+Subject: [PATCH] hexedit: fix -Wextra implicit-fallthrough
+
+PAGEUP/PAGEDOWN: add the missing /* fall through */ markers.
+Enter-goto block: the marker must sit after the closing brace,
+directly before the case label - keep the explanation separate.
+diff --git a/miscutils/hexedit.c b/miscutils/hexedit.c
+index 15ad783..77f248f 100644
+--- a/miscutils/hexedit.c
++++ b/miscutils/hexedit.c
+@@ -352,6 +352,7 @@ int hexedit_main(int argc UNUSED_PARAM, char **argv)
+ 			break;
+ 		case KEYCODE_PAGEDOWN:
+ 			cnt = G.height;
++			/* fall through */
+ 		case KEYCODE_DOWN:
+  k_down:
+ 			G.current_byte += 16;
+@@ -399,6 +400,7 @@ int hexedit_main(int argc UNUSED_PARAM, char **argv)
+ 			break;
+ 		case KEYCODE_PAGEUP:
+ 			cnt = G.height;
++			/* fall through */
+ 		case KEYCODE_UP:
+  k_up:
+ 			if ((G.current_byte - G.baseaddr) < 16) {
+@@ -447,8 +449,10 @@ int hexedit_main(int argc UNUSED_PARAM, char **argv)
+ 					redraw(cursor);
+ 					break;
+ 				}
+-				/* ^C/EOF/error: fall through to exiting */
++				/* ^C/EOF/error: */
+ 			}
++			/* fall through to exiting */
++			/* fall through */
+ 		case CTRL('X'):
+ 			restore_term();
+ 			return EXIT_SUCCESS;
