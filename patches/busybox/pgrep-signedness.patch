@@ -1,0 +1,32 @@
+Subject: [PATCH] pgrep: fix -Wextra sign-compare
+
+ppid2match/sid2match are int (with -1 sentinel); proc->ppid/sid
+are small unsigned pids - compare in the int domain.
+diff --git a/procps/pgrep.c b/procps/pgrep.c
+index 82e0032..2792730 100644
+--- a/procps/pgrep.c
++++ b/procps/pgrep.c
+@@ -173,9 +173,9 @@ int pgrep_main(int argc UNUSED_PARAM, char **argv)
+ 
+ 		if (!OPT_INVERT) {
+ 			/* Quickly reject -sN -PN mismatches... unless -v */
+-			if (ppid2match >= 0 && ppid2match != proc->ppid)
++			if (ppid2match >= 0 && ppid2match != (int)proc->ppid)
+ 				continue;
+-			if (sid2match >= 0 && sid2match != proc->sid)
++			if (sid2match >= 0 && sid2match != (int)proc->sid)
+ 				continue;
+ 		}
+ 
+@@ -205,9 +205,9 @@ int pgrep_main(int argc UNUSED_PARAM, char **argv)
+ 			 * or equivalently "ppid!=1 OR name!=firefox".
+ 			 * Check the first condition and if true, skip matching.
+ 			 */
+-			if (ppid2match >= 0 && ppid2match != proc->ppid)
++			if (ppid2match >= 0 && ppid2match != (int)proc->ppid)
+ 				goto got_it;
+-			if (sid2match >= 0 && sid2match != proc->sid)
++			if (sid2match >= 0 && sid2match != (int)proc->sid)
+ 				goto got_it;
+ 		}
+ 
