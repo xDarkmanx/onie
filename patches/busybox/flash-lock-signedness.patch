@@ -1,0 +1,17 @@
+Subject: [PATCH] flash_lock_unlock: fix -Wextra sign-compare
+
+sectors is long (holds the -1 sentinel); num is a small
+sector count - compare in the signed domain.
+diff --git a/miscutils/flash_lock_unlock.c b/miscutils/flash_lock_unlock.c
+index 12f72ef..084670f 100644
+--- a/miscutils/flash_lock_unlock.c
++++ b/miscutils/flash_lock_unlock.c
+@@ -85,7 +85,7 @@ int flash_lock_unlock_main(int argc UNUSED_PARAM, char **argv)
+ 		} else {
+ // isn't this useless?
+ 			unsigned long num = info.size / info.erasesize;
+-			if (sectors > num) {
++			if (sectors > (long)num) {
+ 				bb_error_msg_and_die("%ld are too many "
+ 						"sectors, device only has "
+ 						"%ld\n", sectors, num);
