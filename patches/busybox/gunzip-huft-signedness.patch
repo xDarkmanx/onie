@@ -1,0 +1,17 @@
+Subject: [PATCH] gunzip: unsigned w in huft_build
+
+w is only compared against the unsigned eob_len and combined with
+unsigned counters; make it unsigned.
+diff --git a/archival/libarchive/decompress_gunzip.c b/archival/libarchive/decompress_gunzip.c
+index d051ecb..7493f91 100644
+--- a/archival/libarchive/decompress_gunzip.c
++++ b/archival/libarchive/decompress_gunzip.c
+@@ -317,7 +317,7 @@ static huft_t* huft_build(const unsigned *b, const unsigned n,
+ 	huft_t *u[BMAX];        /* table stack */
+ 	unsigned v[N_MAX + 1];  /* values in order of bit length. last v[] is never used */
+ 	int ws[BMAX + 1];       /* bits decoded stack */
+-	int w;                  /* bits decoded */
++	unsigned w;             /* bits decoded */
+ 	unsigned x[BMAX + 1];   /* bit offsets, then code stack */
+ 	unsigned *xp;           /* pointer into x */
+ 	int y;                  /* number of dummy codes added */
