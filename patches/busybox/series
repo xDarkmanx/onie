@@ -61,3 +61,4 @@ telnet-fallthrough.patch
 telnetd-signedness.patch
 tftp-signedness.patch
 traceroute-signedness.patch
+wget-fallthrough.patch

@@ -1,0 +1,18 @@
+Subject: [PATCH] wget: fix -Wextra implicit-fallthrough
+
+Split the "(failed login)" explanation from the canonical
+/* fall through */ marker (trailing words break the =3 regex).
+diff --git a/networking/wget.c b/networking/wget.c
+index 9ec0e67..30cdfbe 100644
+--- a/networking/wget.c
++++ b/networking/wget.c
+@@ -854,7 +854,8 @@ static FILE* prepare_ftp_session(FILE **dfpp, struct host_info *target, len_and_
+ 	case 331:
+ 		if (ftpcmd("PASS ", pass, sfp) == 230)
+ 			break;
+-		/* fall through (failed login) */
++		/* failed login */
++		/* fall through */
+ 	default:
+ 		bb_error_msg_and_die("ftp login: %s", G.wget_buf);
+ 	}
