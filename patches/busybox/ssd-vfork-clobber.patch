@@ -1,0 +1,32 @@
+Subject: [PATCH] start_stop_daemon: volatile exec_argv across vfork
+
+execvp reads argv after two xvfork calls; finalize the pointer
+into a volatile alias before the first vfork.
+diff --git a/debianutils/start_stop_daemon.c b/debianutils/start_stop_daemon.c
+index 3e5dd9f..0956096 100644
+--- a/debianutils/start_stop_daemon.c
++++ b/debianutils/start_stop_daemon.c
+@@ -407,6 +407,7 @@ static const char start_stop_daemon_longopts[] ALIGN1 =
+ int start_stop_daemon_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+ int start_stop_daemon_main(int argc UNUSED_PARAM, char **argv)
+ {
++	char **volatile exec_argv = argv;
+ 	unsigned opt;
+ 	char *signame;
+ 	char *startas = NULL;
+@@ -466,6 +467,7 @@ int start_stop_daemon_main(int argc UNUSED_PARAM, char **argv)
+ 			startas = execname;
+ 		*--argv = startas;
+ 	}
++	exec_argv = argv; /* finalized before any vfork */
+ 	if (execname) {
+ 		G.execname_sizeof = strlen(execname) + 1;
+ 		G.execname_cmpbuf = xmalloc(G.execname_sizeof + 1);
+@@ -564,6 +566,6 @@ int start_stop_daemon_main(int argc UNUSED_PARAM, char **argv)
+ 	 * strace -oLOG start-stop-daemon -S -x /bin/usleep -a qwerty 500000
+ 	 * should exec "/bin/usleep", but argv[0] should be "qwerty":
+ 	 */
+-	execvp(execname, argv);
++	execvp(execname, exec_argv);
+ 	bb_perror_msg_and_die("can't execute '%s'", startas);
+ }
