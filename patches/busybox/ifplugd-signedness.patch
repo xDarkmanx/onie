@@ -1,0 +1,16 @@
+Subject: [PATCH] ifplugd: fix -Wextra sign-compare
+
+i is int (stored into smallint api_method_num); cast the bound.
+diff --git a/networking/ifplugd.c b/networking/ifplugd.c
+index 0b55bf4..87d32e1 100644
+--- a/networking/ifplugd.c
++++ b/networking/ifplugd.c
+@@ -442,7 +442,7 @@ static smallint detect_link(void)
+ 		smallint sv_logmode;
+ 
+ 		sv_logmode = logmode;
+-		for (i = 0; i < ARRAY_SIZE(method_table); i++) {
++		for (i = 0; i < (int)ARRAY_SIZE(method_table); i++) {
+ 			logmode = LOGMODE_NONE;
+ 			status = method_table[i].func();
+ 			logmode = sv_logmode;

@@ -52,3 +52,4 @@ feature-onie-syseeprom.patch
 onie-tlvinfo-signedness.patch
 sys-eeprom-signedness.patch
 modutils-return-local.patch
+ifplugd-signedness.patch
