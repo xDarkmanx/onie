@@ -51,3 +51,4 @@ feature-flash-erase-command.patch
 feature-onie-syseeprom.patch
 onie-tlvinfo-signedness.patch
 sys-eeprom-signedness.patch
+modutils-return-local.patch
