@@ -1,0 +1,18 @@
+Subject: [PATCH] zcip: fix -Wextra implicit-fallthrough
+
+Trailing words after "fall through" break the =3 comment regex;
+keep the explanation in a separate comment.
+diff --git a/networking/zcip.c b/networking/zcip.c
+index 311dfbe..1933c9a 100644
+--- a/networking/zcip.c
++++ b/networking/zcip.c
+@@ -432,7 +432,8 @@ int zcip_main(int argc UNUSED_PARAM, char **argv)
+ 				// NOTE: all other exit paths should deconfig...
+ 				if (QUIT)
+ 					return EXIT_SUCCESS;
+-				// fall through: switch to MONITOR
++				/* switch to MONITOR */
++				/* fall through */
+ 			default:
+ 			// case DEFEND:
+ 			// case MONITOR: (shouldn't happen, MONITOR timeout is infinite)
