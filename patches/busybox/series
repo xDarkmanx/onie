@@ -37,6 +37,7 @@ flash-lock-signedness.patch
 flashcp-signedness.patch
 hexedit-fallthrough.patch
 i2c-tools-unused.patch
+less-wextra.patch
 find-signedness.patch
 grep-signedness.patch
 bootchartd-vfork-clobber.patch

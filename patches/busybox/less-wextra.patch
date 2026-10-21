@@ -1,0 +1,139 @@
+Subject: [PATCH] less: fix -Wextra warnings
+
+cur_fline/src_idx/fline/i are int and may legitimately be negative,
+max_fline is unsigned: cast to (unsigned) at compares to preserve
+the original promoted-compare semantics exactly.
+LINENO() (uint32_t line numbers) and mark_lines[] entries are
+cast to (int) - their values are small line numbers/letters.
+MIN(...)-with-max_lineno ?: arm: cast to (int).
+opp_bracket: add the missing /* fall through */ markers.
+diff --git a/miscutils/less.c b/miscutils/less.c
+index 8a0525c..6abee26 100644
+--- a/miscutils/less.c
++++ b/miscutils/less.c
+@@ -388,7 +388,7 @@ static void re_wrap(void)
+ 				dst_idx++;
+ 				if (new_line_pos < w) {
+ 					/* if we came here thru "goto next_new" */
+-					if (src_idx > max_fline)
++					if ((unsigned)src_idx > max_fline)
+ 						break;
+ 					lineno = LINENO(s);
+ 				}
+@@ -404,7 +404,7 @@ static void re_wrap(void)
+ 			new_cur_fline = dst_idx;
+ 		src_idx++;
+ 		/* no more lines? finish last new line (and exit the loop) */
+-		if (src_idx > max_fline)
++		if ((unsigned)src_idx > max_fline)
+ 			goto next_new;
+ 		s = old_flines[src_idx];
+ 		if (lineno != LINENO(s)) {
+@@ -436,7 +436,7 @@ static void fill_match_lines(unsigned pos);
+ static int at_end(void)
+ {
+ 	return (option_mask32 & FLAG_S)
+-		? !(cur_fline <= max_fline &&
++		? !((unsigned)cur_fline <= max_fline &&
+ 			max_lineno > LINENO(flines[cur_fline]) + max_displayed_line)
+ 		: !(max_fline > cur_fline + max_displayed_line);
+ }
+@@ -653,7 +653,7 @@ static void read_lines(void)
+ #if ENABLE_FEATURE_LESS_FLAGS
+ static int safe_lineno(int fline)
+ {
+-	if (fline >= max_fline)
++	if ((unsigned)fline >= max_fline)
+ 		fline = max_fline - 1;
+ 
+ 	/* also catches empty file (max_fline == 0) */
+@@ -717,7 +717,7 @@ static void m_status_print(void)
+ 
+ 	first = safe_lineno(cur_fline);
+ 	last = (option_mask32 & FLAG_S)
+-			? MIN(first + max_displayed_line, max_lineno)
++			? (int)MIN(first + max_displayed_line, max_lineno)
+ 			: safe_lineno(cur_fline + max_displayed_line);
+ 	printf(" lines %i-%i", first, last);
+ 
+@@ -962,19 +962,19 @@ static void goto_lineno(int target)
+ 	if (target <= 0 ) {
+ 		cur_fline = 0;
+ 	}
+-	else if (target > LINENO(flines[cur_fline])) {
++	else if (target > (int)LINENO(flines[cur_fline])) {
+  retry:
+-		while (LINENO(flines[cur_fline]) != target && cur_fline < max_fline)
++		while ((int)LINENO(flines[cur_fline]) != target && cur_fline < (int)max_fline)
+ 			++cur_fline;
+ 		/* target not reached but more input is available */
+-		if (LINENO(flines[cur_fline]) != target && eof_error > 0) {
++		if ((int)LINENO(flines[cur_fline]) != target && eof_error > 0) {
+ 			read_lines();
+ 			goto retry;
+ 		}
+ 	}
+ 	else {
+ 		/* search backwards through already-read lines */
+-		while (LINENO(flines[cur_fline]) != target && cur_fline > 0)
++		while ((int)LINENO(flines[cur_fline]) != target && cur_fline > 0)
+ 			--cur_fline;
+ 	}
+ }
+@@ -982,7 +982,7 @@ static void goto_lineno(int target)
+ static void cap_cur_fline(void)
+ {
+ 	if ((option_mask32 & FLAG_S)) {
+-		if (cur_fline > max_fline)
++		if (cur_fline > (int)max_fline)
+ 			cur_fline = max_fline;
+ 		if (LINENO(flines[cur_fline]) + max_displayed_line > max_lineno + TILDES) {
+ 			goto_lineno(max_lineno - max_displayed_line + TILDES);
+@@ -1453,7 +1453,7 @@ static void number_process(int first_digit)
+ 	case 'p': case '%':
+ #if ENABLE_FEATURE_LESS_FLAGS
+ 		update_num_lines();
+-		num = num * (num_lines > 0 ? num_lines : max_lineno) / 100;
++		num = num * (num_lines > 0 ? num_lines : (int)max_lineno) / 100;
+ #else
+ 		num = num * max_lineno / 100;
+ #endif
+@@ -1607,12 +1607,12 @@ static void goto_mark(void)
+ 	clear_line();
+ 
+ 	if (isalpha(letter)) {
+-		for (i = 0; i <= num_marks; i++)
+-			if (letter == mark_lines[i][0]) {
++		for (i = 0; i <= (int)num_marks; i++)
++			if (letter == (int)mark_lines[i][0]) {
+ 				buffer_line(mark_lines[i][1]);
+ 				break;
+ 			}
+-		if (num_marks == 14 && letter != mark_lines[14][0])
++		if (num_marks == 14 && letter != (int)mark_lines[14][0])
+ 			print_statusline("Mark not set");
+ 	} else
+ 		print_statusline("Invalid mark letter");
+@@ -1625,11 +1625,13 @@ static char opp_bracket(char bracket)
+ 	switch (bracket) {
+ 		case '{': case '[': /* '}' == '{' + 2. Same for '[' */
+ 			bracket++;
++			/* fall through */
+ 		case '(':           /* ')' == '(' + 1 */
+ 			bracket++;
+ 			break;
+ 		case '}': case ']':
+ 			bracket--;
++			/* fall through */
+ 		case ')':
+ 			bracket--;
+ 			break;
+@@ -1666,7 +1668,7 @@ static void match_left_bracket(char bracket)
+ {
+ 	int i = cur_fline + max_displayed_line;
+ 
+-	if (i >= max_fline
++	if ((unsigned)i >= max_fline
+ 	 || strchr(flines[i], bracket) == NULL
+ 	) {
+ 		print_statusline("No bracket in bottom line");
