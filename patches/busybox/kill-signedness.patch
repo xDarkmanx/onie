@@ -1,0 +1,17 @@
+Subject: [PATCH] kill: fix -Wextra sign-compare
+
+p->pid is unsigned; compare in the unsigned domain (original
+promoted semantics).
+diff --git a/procps/kill.c b/procps/kill.c
+index 208efeb..1f20276 100644
+--- a/procps/kill.c
++++ b/procps/kill.c
+@@ -251,7 +251,7 @@ int kill_main(int argc UNUSED_PARAM, char **argv)
+ 					errors = 1;
+ 					goto resume;
+ 				}
+-				if (p->pid == omit)
++				if (p->pid == (unsigned)omit)
+ 					goto dont_kill;
+ 			}
+ 			kill(p->pid, signo);
