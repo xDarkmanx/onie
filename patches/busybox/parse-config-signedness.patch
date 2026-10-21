@@ -1,0 +1,17 @@
+Subject: [PATCH] parse_config: fix -Wextra sign-compare
+
+len/nlen are ssize_t (getline), line_alloc is size_t;
+len and nlen are positive at the compare - cast the sum to size_t.
+diff --git a/libbb/parse_config.c b/libbb/parse_config.c
+index 8701b01..131a631 100644
+--- a/libbb/parse_config.c
++++ b/libbb/parse_config.c
+@@ -123,7 +123,7 @@ static int get_line_with_continuation(parser_t *parser)
+ 		if (nlen <= 0)
+ 			break;
+ 
+-		if (parser->line_alloc < len + nlen + 1) {
++		if (parser->line_alloc < (size_t)(len + nlen + 1)) {
+ 			parser->line_alloc = len + nlen + 1;
+ 			line = parser->line = xrealloc(line, parser->line_alloc);
+ 		}

@@ -28,6 +28,7 @@ diff-signedness.patch
 sed-fallthrough-comment.patch
 vi-signedness.patch
 lineedit-signedness.patch
+parse-config-signedness.patch
 find-signedness.patch
 grep-signedness.patch
 bootchartd-vfork-clobber.patch
