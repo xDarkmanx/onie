@@ -1,0 +1,32 @@
+Subject: [PATCH] nc: fix -Wclobbered around xvfork
+
+sfd/cfd/do_listen/wsecs/delay/execparam are set during option
+parsing/accept and read after the repeat-server xvfork();
+mark them volatile (same approach as the timeout/ssd vfork fixes).
+sfd: replace the "int sfd = sfd" self-init hack with a plain 0 init.
+diff --git a/networking/nc.c b/networking/nc.c
+index ab13163..587f671 100644
+--- a/networking/nc.c
++++ b/networking/nc.c
+@@ -119,14 +119,15 @@ int nc_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+ int nc_main(int argc, char **argv)
+ {
+ 	/* sfd sits _here_ only because of "repeat" option (-l -l). */
+-	int sfd = sfd; /* for gcc */
+-	int cfd = 0;
++	/* volatile: these are live across the -l -l xvfork() below */
++	volatile int sfd = 0;
++	volatile int cfd = 0;
+ 	unsigned lport = 0;
+-	IF_NOT_NC_SERVER(const) unsigned do_listen = 0;
+-	IF_NOT_NC_EXTRA (const) unsigned wsecs = 0;
+-	IF_NOT_NC_EXTRA (const) unsigned delay = 0;
++	IF_NOT_NC_SERVER(const) volatile unsigned do_listen = 0;
++	IF_NOT_NC_EXTRA (const) volatile unsigned wsecs = 0;
++	IF_NOT_NC_EXTRA (const) volatile unsigned delay = 0;
+ 	IF_NOT_NC_EXTRA (const int execparam = 0;)
+-	IF_NC_EXTRA     (char **execparam = NULL;)
++	IF_NC_EXTRA     (char **volatile execparam = NULL;)
+ 	struct pollfd pfds[2];
+ 	int opt; /* must be signed (getopt returns -1) */
+ 

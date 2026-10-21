@@ -53,3 +53,4 @@ onie-tlvinfo-signedness.patch
 sys-eeprom-signedness.patch
 modutils-return-local.patch
 ifplugd-signedness.patch
+nc-vfork-clobber.patch
