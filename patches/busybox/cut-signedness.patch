@@ -1,0 +1,17 @@
+Subject: [PATCH] cut: int counters in the fields branch
+
+uu/start/end/out only compare and combine with the int linelen;
+regexec offsets are int as well.
+diff --git a/coreutils/cut.c b/coreutils/cut.c
+index 55bdd93..4c1b491 100644
+--- a/coreutils/cut.c
++++ b/coreutils/cut.c
+@@ -149,7 +149,7 @@ static void cut_file(FILE *file, const char *delim, const char *odelim,
+ 			puts(line);
+ 			goto next_line;
+ 		} else {		/* cut by fields */
+-			unsigned uu = 0, start = 0, end = 0, out = 0;
++			int uu = 0, start = 0, end = 0, out = 0;
+ 			int dcount = 0;
+ 
+ 			/* Loop through bytes, finding next delimiter */
