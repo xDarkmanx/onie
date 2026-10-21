@@ -68,3 +68,4 @@ ipneigh-signedness.patch
 iproute-wextra.patch
 libnetlink-signedness.patch
 iproute-utils-signedness.patch
+d6-dhcpc-wextra.patch
