@@ -15,6 +15,7 @@ dd-count-size_t.patch
 factor-signedness.patch
 head-fallthrough.patch
 ls-signedness.patch
+nproc-signedness.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch

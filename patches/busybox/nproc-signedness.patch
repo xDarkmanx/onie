@@ -1,0 +1,16 @@
+Subject: [PATCH] nproc: unsigned i over the affinity mask
+
+i iterates ARRAY_SIZE(mask); unsigned matches.
+diff --git a/coreutils/nproc.c b/coreutils/nproc.c
+index bb9bc56..c616dd4 100644
+--- a/coreutils/nproc.c
++++ b/coreutils/nproc.c
+@@ -53,7 +53,7 @@ int nproc_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
+ 	} else
+ #endif
+ 	if (sched_getaffinity(0, sizeof(mask), (void*)mask) == 0) {
+-		int i;
++		unsigned i;
+ 		for (i = 0; i < ARRAY_SIZE(mask); i++) {
+ 			unsigned long m = mask[i];
+ 			while (m) {
