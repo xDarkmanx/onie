@@ -14,9 +14,9 @@
 # This is a makefile fragment that defines the build of busybox
 #
 
-BUSYBOX_VERSION		= 1.25.1
+BUSYBOX_VERSION		= 1.36.1
 BUSYBOX_TARBALL		= busybox-$(BUSYBOX_VERSION).tar.bz2
-BUSYBOX_TARBALL_URLS	+= $(ONIE_MIRROR) https://www.busybox.net/downloads
+BUSYBOX_TARBALL_URLS	+= $(ONIE_MIRROR) https://www.busybox.net/downloads https://distfiles.gentoo.org/distfiles
 BUSYBOX_BUILD_DIR	= $(MBUILDDIR)/busybox
 BUSYBOX_DIR		= $(BUSYBOX_BUILD_DIR)/busybox-$(BUSYBOX_VERSION)
 BUSYBOX_CONFIG		?= conf/busybox.config

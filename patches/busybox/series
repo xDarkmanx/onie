@@ -1,10 +1,10 @@
-# This series applies on GIT commit 6bbd082c82c805ed17d4270ed18e41b5545c189b
+# Ported for busybox 1.36.1. Order matters.
 gitignore.patch
 u-boot-env-tools.patch
-fw_env-modify-crc-size-in-getenvsize.patch
-feature-iorw-command.patch
-dhcp-additional-options.patch
-feature-flash-erase-command.patch
-feature-onie-syseeprom-command.patch
-feature-onie-syseeprom-disk.patch
-feature-onie-syseeprom-sysfs.patch
+# Pending port to 1.36.1 (ONIE 1.25.1 versions below do not apply):
+#   feature-iorw-command.patch
+#   dhcp-additional-options.patch
+#   feature-flash-erase-command.patch
+#   feature-onie-syseeprom-command.patch
+#   feature-onie-syseeprom-disk.patch
+#   feature-onie-syseeprom-sysfs.patch
