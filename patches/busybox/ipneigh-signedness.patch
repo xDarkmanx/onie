@@ -1,0 +1,30 @@
+Subject: [PATCH] ipneigh, iproute: fix -Wextra sign-compare
+
+Same NLMSG_ALIGN/nlmsg_len vs int flushe compare as fixed in
+ipaddress.c - cast to the int domain.
+diff --git a/networking/libiproute/ipneigh.c b/networking/libiproute/ipneigh.c
+index b9b4f4b..4bbffc4 100644
+--- a/networking/libiproute/ipneigh.c
++++ b/networking/libiproute/ipneigh.c
+@@ -141,7 +141,7 @@ static int FAST_FUNC print_neigh(const struct sockaddr_nl *who UNUSED_PARAM,
+ 
+ 	if (G_filter.flushb) {
+ 		struct nlmsghdr *fn;
+-		if (NLMSG_ALIGN(G_filter.flushp) + n->nlmsg_len > G_filter.flushe) {
++		if ((int)NLMSG_ALIGN(G_filter.flushp) + (int)n->nlmsg_len > G_filter.flushe) {
+ 			if (flush_update())
+ 				return -1;
+ 		}
+diff --git a/networking/libiproute/iproute.c b/networking/libiproute/iproute.c
+index 5a972f8..4efb328 100644
+--- a/networking/libiproute/iproute.c
++++ b/networking/libiproute/iproute.c
+@@ -212,7 +212,7 @@ static int FAST_FUNC print_route(const struct sockaddr_nl *who UNUSED_PARAM,
+ 			return 0;
+ 		}
+ 
+-		if (NLMSG_ALIGN(G_filter.flushp) + n->nlmsg_len > G_filter.flushe) {
++		if ((int)NLMSG_ALIGN(G_filter.flushp) + (int)n->nlmsg_len > G_filter.flushe) {
+ 			if (flush_update())
+ 				xfunc_die();
+ 		}
