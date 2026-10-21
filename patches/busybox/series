@@ -28,6 +28,7 @@ diff-signedness.patch
 sed-fallthrough-comment.patch
 vi-signedness.patch
 find-signedness.patch
+grep-signedness.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch
