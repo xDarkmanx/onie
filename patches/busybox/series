@@ -31,6 +31,7 @@ find-signedness.patch
 grep-signedness.patch
 bootchartd-vfork-clobber.patch
 capability-signedness.patch
+fgets-str-signedness.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch
