@@ -1,0 +1,33 @@
+Subject: [PATCH] domain_codec: fix -Wextra sign-compare
+
+crtpos is unsigned; clen is a positive int length - compare in
+the unsigned domain (matches original promoted semantics).
+diff --git a/networking/udhcp/domain_codec.c b/networking/udhcp/domain_codec.c
+index eab4da6..c848b28 100644
+--- a/networking/udhcp/domain_codec.c
++++ b/networking/udhcp/domain_codec.c
+@@ -43,13 +43,13 @@ char* FAST_FUNC dname_dec(const uint8_t *cstr, int clen, const char *pre)
+ 	end = ret = xstrdup(pre);
+ 
+ 	/* Scan the string once, allocating new memory as needed */
+-	while (crtpos < clen) {
++	while (crtpos < (unsigned)clen) {
+ 		const uint8_t *c;
+ 		c = cstr + crtpos;
+ 
+ 		if ((*c & NS_CMPRSFLGS) == NS_CMPRSFLGS) {
+ 			/* pointer */
+-			if (crtpos + 2 > clen) /* no offset to jump to? abort */
++			if (crtpos + 2 > (unsigned)clen) /* no offset to jump to? abort */
+ 				goto error;
+ 			if (retpos == 0) /* toplevel? save return spot */
+ 				retpos = crtpos + 2;
+@@ -58,7 +58,7 @@ char* FAST_FUNC dname_dec(const uint8_t *cstr, int clen, const char *pre)
+ 		} else if (*c) {
+ 			unsigned label_len;
+ 			/* label */
+-			if (crtpos + *c + 1 > clen) /* label too long? abort */
++			if (crtpos + *c + 1 > (unsigned)clen) /* label too long? abort */
+ 				goto error;
+ 			ret = xrealloc(ret, len + *c + 1);
+ 			/* \3com ---> "com." */
