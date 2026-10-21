@@ -9,6 +9,7 @@ gzip-maxbits-bound.patch
 unzip-fallthrough.patch
 bunzip2-signedness.patch
 gunzip-huft-signedness.patch
+unxz-fallthrough.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch
