@@ -1,0 +1,36 @@
+Subject: [PATCH] tftp: fix -Wextra sign-compare
+
+- maxsize is a positive int bound: compare as (unsigned)
+- sizeof()-based space checks: cast to int to match len/io_bufsize/
+  the pointer difference (all small non-negative values)
+diff --git a/networking/tftp.c b/networking/tftp.c
+index f5b4367..b574487 100644
+--- a/networking/tftp.c
++++ b/networking/tftp.c
+@@ -244,7 +244,7 @@ static int tftp_blksize_check(const char *blksize_str, int maxsize)
+ 	 * to use blksizes smaller than 22 octets. */
+ 	unsigned blksize = bb_strtou(blksize_str, NULL, 10);
+ 	if (errno
+-	 || (blksize < 24) || (blksize > maxsize)
++	 || (blksize < 24) || (blksize > (unsigned)maxsize)
+ 	) {
+ 		bb_error_msg("bad blocksize '%s'", blksize_str);
+ 		return -1;
+@@ -456,7 +456,7 @@ static int tftp_protocol(
+ 		/* add filename and mode */
+ 		/* fill in packet if the filename fits into xbuf */
+ 		len = strlen(remote_file);
+-		if (len + 3 + sizeof("octet") >= io_bufsize) {
++		if (len + 3 + (int)sizeof("octet") >= io_bufsize) {
+ 			bb_simple_error_msg("remote filename is too long");
+ 			goto ret;
+ 		}
+@@ -469,7 +469,7 @@ static int tftp_protocol(
+ 			goto send_pkt;
+ 
+ 		/* Need to add option to pkt */
+-		if ((&xbuf[io_bufsize - 1] - cp) < sizeof("blksize NNNNN tsize ") + sizeof(off_t)*3) {
++		if ((&xbuf[io_bufsize - 1] - cp) < (int)(sizeof("blksize NNNNN tsize ") + sizeof(off_t)*3)) {
+ 			bb_simple_error_msg("remote filename is too long");
+ 			goto ret;
+ 		}
