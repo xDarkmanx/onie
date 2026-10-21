@@ -1,0 +1,17 @@
+Subject: [PATCH] nmeter: fix -Wextra sign-compare
+
+Keep the original promoted semantics: cast rem to unsigned
+(G.delta is positive here).
+diff --git a/procps/nmeter.c b/procps/nmeter.c
+index 68e6f33..73b4128 100644
+--- a/procps/nmeter.c
++++ b/procps/nmeter.c
+@@ -1002,7 +1002,7 @@ int nmeter_main(int argc UNUSED_PARAM, char **argv)
+ 				rem = G.delta - (unsigned)G.tv.tv_usec % G.deltanz;
+ 			// Sometimes kernel wakes us up just a tiny bit earlier than asked
+ 			// Do not go to very short sleep in this case
+-			if (rem < (unsigned)G.delta / 128) {
++			if ((unsigned)rem < (unsigned)G.delta / 128) {
+ 				rem += G.delta;
+ 			}
+ 			usleep(rem);
