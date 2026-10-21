@@ -86,7 +86,13 @@ CONFIG_PKCS8_MESSAGE_PARSER=y
 CONFIG_PKCS7_MESSAGE_PARSER=y
 # CONFIG_PKCS7_TEST_KEY is not set
 CONFIG_SIGNED_PE_FILE_VERIFICATION=y
-CONFIG_MODULE_SIG_KEY="ONIE-shim-key-cert.pem"
+# Module signing key: kernels >= 6.x dropped MODULE_SIG_KEY_SRCPREFIX
+# and require the external key inside the kernel tree.  Use the kernel
+# self-generated key (certs/signing_key.pem) instead — self-signed pair,
+# certificate embedded in the kernel, modules signed at build time.
+# The ONIE vendor cert (ONIE-shim-key-cert.pem, signing-keys-generate)
+# remains for the shim/UEFI secure boot chain.
+CONFIG_MODULE_SIG_KEY="certs/signing_key.pem"
 CONFIG_SYSTEM_TRUSTED_KEYRING=y
 CONFIG_SYSTEM_TRUSTED_KEYS=""
 # CONFIG_SYSTEM_EXTRA_CERTIFICATE is not set
