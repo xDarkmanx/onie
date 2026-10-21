@@ -1,0 +1,107 @@
+Subject: [PATCH] mpstat: fix -Wextra sign-compare
+
+CPU/IRQ counts are small: cast G.cpu_nr and sizeof() to int for
+the int loop counters, and int irq-count params to unsigned for
+the unsigned irq counters.
+diff --git a/procps/mpstat.c b/procps/mpstat.c
+index c78c1f0..53123b1 100644
+--- a/procps/mpstat.c
++++ b/procps/mpstat.c
+@@ -218,7 +218,7 @@ static void write_irqcpu_stats(struct stats_irqcpu *per_cpu_stats[],
+ 	}
+ 	bb_putchar('\n');
+ 
+-	for (cpu = 1; cpu <= G.cpu_nr; cpu++) {
++	for (cpu = 1; cpu <= (int)G.cpu_nr; cpu++) {
+ 		/* Check if we want stats about this CPU */
+ 		if (!is_cpu_in_bitmap(cpu) && G.p_option) {
+ 			continue;
+@@ -330,7 +330,7 @@ static void write_stats_core(int prev, int current,
+ 		//	G.header_done = 1;
+ 		//}
+ 
+-		for (cpu = 0; cpu <= G.cpu_nr; cpu++) {
++		for (cpu = 0; cpu <= (int)G.cpu_nr; cpu++) {
+ 			data_t per_cpu_itv;
+ 
+ 			/* Print stats about this particular CPU? */
+@@ -389,7 +389,7 @@ static void write_stats_core(int prev, int current,
+ 		//	G.avg_header_done = 1;
+ 		//}
+ 
+-		for (cpu = 0; cpu <= G.cpu_nr; cpu++) {
++		for (cpu = 0; cpu <= (int)G.cpu_nr; cpu++) {
+ 			data_t per_cpu_itv;
+ 
+ 			/* Print stats about this CPU? */
+@@ -560,7 +560,7 @@ static void get_irqs_from_interrupts(const char *fname,
+ // 01:32:47 PM  all    591.47
+ // 01:32:47 PM    0      0.00 <= ???
+ // 01:32:47 PM    1      0.00 <= ???
+-//	for (cpu = 1; cpu <= G.cpu_nr; cpu++) {
++//	for (cpu = 1; cpu <= (int)G.cpu_nr; cpu++) {
+ //		G.st_irq[current][cpu].irq_nr = 0;
+ //		//bb_error_msg("G.st_irq[%u][%u].irq_nr=0", current, cpu);
+ //	}
+@@ -578,7 +578,7 @@ static void get_irqs_from_interrupts(const char *fname,
+ 		char *cp, *next;
+ 		next = buf;
+ 		while ((cp = strstr(next, "CPU")) != NULL
+-		 && iindex < G.cpu_nr
++		 && iindex < (int)G.cpu_nr
+ 		) {
+ 			cpu = strtoul(cp + 3, &next, 10);
+ 			cpu_index[iindex++] = cpu;
+@@ -589,7 +589,7 @@ static void get_irqs_from_interrupts(const char *fname,
+ 
+ 	irq = 0;
+ 	while (fgets(buf, buflen, fp)
+-	 && irq < irqs_per_cpu
++	 && irq < (unsigned)irqs_per_cpu
+ 	) {
+ 		int len;
+ 		char last_char;
+@@ -603,14 +603,14 @@ static void get_irqs_from_interrupts(const char *fname,
+ 
+ 		ic = &per_cpu_stats[current][irq];
+ 		len = cp - buf;
+-		if (len >= sizeof(ic->irq_name)) {
++		if (len >= (int)sizeof(ic->irq_name)) {
+ 			len = sizeof(ic->irq_name) - 1;
+ 		}
+ 		safe_strncpy(ic->irq_name, buf, len + 1);
+ 		//bb_error_msg("%s: irq%d:'%s' buf:'%s'", fname, irq, ic->irq_name, buf);
+ 		cp++;
+ 
+-		for (cpu = 0; cpu < iindex; cpu++) {
++		for (cpu = 0; cpu < (unsigned)iindex; cpu++) {
+ 			char *next;
+ 			ic = &per_cpu_stats[current][cpu_index[cpu] * irqs_per_cpu + irq];
+ 			irq_i = &G.st_irq[current][cpu_index[cpu] + 1];
+@@ -628,7 +628,7 @@ static void get_irqs_from_interrupts(const char *fname,
+ 	fclose(fp);
+ 	free(buf);
+ 
+-	while (irq < irqs_per_cpu) {
++	while (irq < (unsigned)irqs_per_cpu) {
+ 		/* Number of interrupts per CPU has changed */
+ 		ic = &per_cpu_stats[current][irq];
+ 		ic->irq_name[0] = '\0'; /* False interrupt */
+@@ -742,7 +742,7 @@ static void main_loop(void)
+ 
+ 		if (display_opt(D_IRQ_SUM | D_IRQ_CPU)) {
+ 			int cpu;
+-			for (cpu = 1; cpu <= G.cpu_nr; cpu++) {
++			for (cpu = 1; cpu <= (int)G.cpu_nr; cpu++) {
+ 				G.st_irq[current][cpu].irq_nr = 0;
+ 			}
+ 			/* accumulates .irq_nr */
+@@ -817,7 +817,7 @@ static int get_irqcpu_nr(const char *f, int max_irqs)
+ 
+ 	irq = 0;
+ 	while (fgets(line, linelen, fp)
+-	 && irq < max_irqs
++	 && irq < (unsigned)max_irqs
+ 	) {
+ 		int p = strcspn(line, ":");
+ 		if ((p > 0) && (p < 16))
