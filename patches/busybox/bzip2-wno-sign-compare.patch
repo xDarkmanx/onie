@@ -1,22 +1,21 @@
-Subject: [PATCH] bzip2: -Wno-sign-compare for the vendored object
+Subject: [PATCH] bzip2: silence -Wsign-compare for the vendored code
 
 The vendored bzip2 code (archival/libarchive/bz/*) is kept identical
 to upstream; its uint/int loop counters trip -Wsign-compare from
-our -Wextra policy. Narrow only that check for bzip2.o via the
-kbuild per-object CFLAGS append.
-diff --git a/Makefile.flags b/Makefile.flags
-index 1cec5ba..5dddc82 100644
---- a/Makefile.flags
-+++ b/Makefile.flags
-@@ -138,6 +138,11 @@ CFLAGS += $(strip $(subst ",,$(CONFIG_EXTRA_CFLAGS)))
- #"))
- endif
- 
-+# Vendored bzip2 code (archival/libarchive/bz/*) is kept identical to
-+# upstream; its uint/int loop counters trip -Wextra's -Wsign-compare.
-+# Narrow only that check for this object, keep the rest enabled.
-+CFLAGS_bzip2.o = -Wno-sign-compare
-+
- # Note: both "" (string consisting of two quote chars) and empty string
- # are possible, and should be skipped below.
- ifneq ($(subst "",,$(CONFIG_SYSROOT)),)
+our -Wextra policy. Keep the code pristine and silence only that
+diagnostic via #pragma in the busybox wrapper TU.
+diff --git a/archival/bzip2.c b/archival/bzip2.c
+index bce13cf..67eec2a 100644
+--- a/archival/bzip2.c
++++ b/archival/bzip2.c
+@@ -6,6 +6,10 @@
+  * See README and LICENSE files in bz/ directory for more information
+  * about bzip2 library code.
+  */
++/* The vendored bzip2 code below is kept identical to upstream; its
++ * uint/int loop counters trip -Wsign-compare (from -Wextra).  Keep the
++ * code pristine and silence only that diagnostic for this TU. */
++#pragma GCC diagnostic ignored "-Wsign-compare"
+ //config:config BZIP2
+ //config:	bool "bzip2 (16 kb)"
+ //config:	default y
