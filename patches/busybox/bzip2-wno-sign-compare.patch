@@ -1,0 +1,22 @@
+Subject: [PATCH] bzip2: -Wno-sign-compare for the vendored object
+
+The vendored bzip2 code (archival/libarchive/bz/*) is kept identical
+to upstream; its uint/int loop counters trip -Wsign-compare from
+our -Wextra policy. Narrow only that check for bzip2.o via the
+kbuild per-object CFLAGS append.
+diff --git a/Makefile.flags b/Makefile.flags
+index 1cec5ba..5dddc82 100644
+--- a/Makefile.flags
++++ b/Makefile.flags
+@@ -138,6 +138,11 @@ CFLAGS += $(strip $(subst ",,$(CONFIG_EXTRA_CFLAGS)))
+ #"))
+ endif
+ 
++# Vendored bzip2 code (archival/libarchive/bz/*) is kept identical to
++# upstream; its uint/int loop counters trip -Wextra's -Wsign-compare.
++# Narrow only that check for this object, keep the rest enabled.
++CFLAGS_bzip2.o = -Wno-sign-compare
++
+ # Note: both "" (string consisting of two quote chars) and empty string
+ # are possible, and should be skipped below.
+ ifneq ($(subst "",,$(CONFIG_SYSROOT)),)
