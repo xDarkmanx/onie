@@ -32,9 +32,6 @@
 #
 # ONIE_MIRROR = http://some-local-sever/onie/mirror
 
-# Set the mirror used to download the packages for crosstool-NG
-# CROSSTOOL_ONIE_MIRROR = http://some-local-sever/onie/mirror/crosstool-NG
-
 #-------------------------------------------------------------------------------
 #
 # Local Variables:

@@ -12,10 +12,12 @@
 #  x86 Architecture and Toolchain Setup
 #
 
+# Native build: system gcc from the build container (netrix: Debian trixie).
+# No crosstool-ng / x-tools toolchain is built for this architecture.
 ARCH        ?= x86_64
-TARGET      ?= $(ARCH)-onie-linux-uclibc
-CROSSPREFIX ?= $(TARGET)-
-CROSSBIN    ?= $(XTOOLS_INSTALL_DIR)/$(TARGET)/bin
+TARGET      ?= $(ARCH)-linux-gnu
+CROSSPREFIX ?=
+CROSSBIN    ?= $(shell dirname $(shell which $(CC)))
 EFI_ARCH    ?= x64
 
 #

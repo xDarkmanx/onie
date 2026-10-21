@@ -151,69 +151,34 @@ PHONY += sysroot-check sysroot-complete
 
 CHECKROOT	= $(MBUILDDIR)/check
 
-ifeq ($(XTOOLS_LIBC),uClibc-ng)
-  SYSROOT_LIBS	= ld$(CLIB64)-uClibc.so.0 ld$(CLIB64)-uClibc-$(XTOOLS_LIBC_VERSION).so \
-		  ld$(CLIB64)-uClibc.so.1 \
-		  libc.so.0 libuClibc-$(XTOOLS_LIBC_VERSION).so \
-		  libgcc_s.so.1 libgcc_s.so
-else ifeq ($(XTOOLS_LIBC),uClibc)
-  SYSROOT_LIBS	= ld$(CLIB64)-uClibc.so.0 ld$(CLIB64)-uClibc-$(XTOOLS_LIBC_VERSION).so \
-		  libm.so.0 libm-$(XTOOLS_LIBC_VERSION).so \
-		  libgcc_s.so.1 libgcc_s.so \
-		  libc.so.0 libuClibc-$(XTOOLS_LIBC_VERSION).so \
-		  libcrypt.so.0 libcrypt-$(XTOOLS_LIBC_VERSION).so \
-		  libutil.so.0 libutil-$(XTOOLS_LIBC_VERSION).so \
-
-
-  ifeq ($(EXT3_4_ENABLE),yes)
-    SYSROOT_LIBS	+= \
-		  libdl.so.0 libdl-$(XTOOLS_LIBC_VERSION).so \
-		  libpthread.so.0 libpthread-$(XTOOLS_LIBC_VERSION).so
-  endif
-  # Add librt if ACPI or LVM2 is enabled
-  ifneq ($(filter yes, $(ACPI_ENABLE) $(LVM2_ENABLE)),)
-    SYSROOT_LIBS	+= \
-		  librt.so.0 librt-$(XTOOLS_LIBC_VERSION).so
-  endif
-else ifeq ($(XTOOLS_LIBC),glibc)
-SYSROOT_LIBS	= ld-$(XTOOLS_LIBC_VERSION).so \
-		  libm.so.6 libm-$(XTOOLS_LIBC_VERSION).so \
-		  libgcc_s.so.1 libgcc_s.so \
-		  libc.so.6 libc-$(XTOOLS_LIBC_VERSION).so \
-		  libcrypt.so.1 libcrypt-$(XTOOLS_LIBC_VERSION).so \
-		  libutil.so.1 libutil-$(XTOOLS_LIBC_VERSION).so \
-		  libdl.so.2 libdl-$(XTOOLS_LIBC_VERSION).so \
-		  libpthread.so.0 libpthread-$(XTOOLS_LIBC_VERSION).so \
-		  librt.so.1 librt-$(XTOOLS_LIBC_VERSION).so \
-		  libnss_dns.so.2 libnss_dns-$(XTOOLS_LIBC_VERSION).so \
-		  libresolv.so.2 libresolv-$(XTOOLS_LIBC_VERSION).so  \
-		  libnss_files.so.2 libnss_files-$(XTOOLS_LIBC_VERSION).so
-  ifeq ($(ARCH),arm64)
-    SYSROOT_LIBS	+= ld-linux-aarch64.so.1
-  endif
+# Native build (Debian glibc from the build container).  The runtime
+# libraries below must exist in $(DEV_SYSROOT)/lib (seeded by
+# make/sysroot.make dev-sysroot-init) and are copied into the final
+# sysroot by the sysroot-check target.
+#
+# Note: glibc >= 2.34 merged libdl/libpthread/librt/libutil into
+# libc.so.6; Debian trixie (glibc 2.41) only ships the remaining ones.
+ifeq ($(ARCH),arm64)
+  SYSROOT_LIBS	= ld-linux-aarch64.so.1 libc.so.6 libm.so.6 libgcc_s.so.1 \
+		  libresolv.so.2 libcrypt.so.1
+else
+  SYSROOT_LIBS	= ld-linux-x86-64.so.2 libc.so.6 libm.so.6 libgcc_s.so.1 \
+		  libresolv.so.2 libcrypt.so.1
 endif
 
 ifeq ($(REQUIRE_CXX_LIBS),yes)
-  SYSROOT_LIBS += libstdc++.so libstdc++.so.6
-  ifeq ($(GCC_VERSION),6.3.0)
-    SYSROOT_LIBS += libstdc++.so.6.0.22
-  else ifeq ($(GCC_VERSION),4.9.2)
-    SYSROOT_LIBS += libstdc++.so.6.0.20
-  else ifeq ($(GCC_VERSION),8.3.0)
-    SYSROOT_LIBS += libstdc++.so.6.0.25
-  else
-    $(error C++ support: Unsupported GCC version: $(GCC_VERSION))
-  endif
+  SYSROOT_LIBS += libstdc++.so.6
 endif
 
 # Optionally add debug utilities
 DEBUG_UTILS =
 
-# Add strace to the distribution by default
+# Add strace to the distribution by default (system binary from the
+# build container; the native sysroot runs the same glibc).
 STRACE_ENABLE ?= yes
 
 ifeq ($(STRACE_ENABLE),yes)
-DEBUG_UTILS += $(XTOOLS_DEBUG_ROOT)/usr/bin/strace
+DEBUG_UTILS += /usr/bin/strace
 endif
 
 # sysroot-check does the following:
@@ -243,12 +208,7 @@ $(SYSROOT_CHECK_STAMP): $(PACKAGES_INSTALL_STAMPS)
 		chmod +w $(SYSROOTDIR)/usr/bin/$$(basename $$file) ; \
 	done
 	$(Q) find $(SYSROOTDIR) -path */lib/grub/* -prune -o \( -type f -print0 \) | xargs -0 file | \
-		grep ELF | awk -F':' '{ print $$1 }' | grep -v "/lib/modules/" | xargs $(CROSSBIN)/$(CROSSPREFIX)strip
-ifeq ($(XTOOLS_ENABLE),yes)
-	$(Q) rm -rf $(CHECKROOT)
-	$(Q) $(SCRIPTDIR)/check-libs $(CROSSBIN)/$(CROSSPREFIX)populate \
-		$(DEV_SYSROOT) $(SYSROOTDIR) $(CHECKROOT)
-endif
+		grep ELF | awk -F':' '{ print $$1 }' | grep -v "/lib/modules/" | xargs strip
 	$(Q) touch $@
 
 # Setting ONIE_BUILD_MACHINE on the command line allows you "fake" a

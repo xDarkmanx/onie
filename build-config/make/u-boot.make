@@ -124,7 +124,7 @@ UBOOT_NEW = $(shell test -d $(UBOOT_DIR) && test -f $(UBOOT_BUILD_STAMP) && \
 	       find -L $(UBOOT_DIR) -newer $(UBOOT_BUILD_STAMP) -print -quit)
 endif
 
-$(UBOOT_IMAGE): $(UBOOT_PATCH_STAMP) $(UBOOT_NEW) | $(XTOOLS_BUILD_STAMP)
+$(UBOOT_IMAGE): $(UBOOT_PATCH_STAMP) $(UBOOT_NEW)
 	$(Q) echo "==== Building u-boot ($(UBOOT_MACHINE)) ===="
 	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(UBOOT_DIR)		\
 		CROSS_COMPILE=$(CROSSPREFIX) O=$(UBOOT_BUILD_DIR)/$(UBOOT_MACHINE) \

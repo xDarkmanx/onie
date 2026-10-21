@@ -184,9 +184,7 @@ TREEDIRS     += $(STAMPDIR) $(STAGE_SYSROOT) $(INITRAMFSDIR)
 #
 
 ONIE_USE_SYSTEM_DOWNLOAD_CACHE ?= FALSE
-export ONIE_USE_SYSTEM_DOWNLOAD_CACHE 
-
-XTOOLS_ENABLE ?= yes
+export ONIE_USE_SYSTEM_DOWNLOAD_CACHE
 
 # List of known ASIC vendors -- keep this list in alphabetical order
 KNOWN_ASIC_VENDORS = \
@@ -366,13 +364,6 @@ ifeq ($(SECURE_BOOT_ENABLE),yes)
 endif
 
 include make/kernel-download.make
-ifeq ($(XTOOLS_ENABLE),yes)
-  include make/crosstool-ng.make
-  ifneq ($(XTOOLS_LIBC),glibc)
-    include make/uclibc-download.make
-  endif
-  include make/xtools.make
-endif
 include make/sysroot.make
 ifeq ($(GNU_EFI_ENABLE),yes)
   include make/gnu-efi.make

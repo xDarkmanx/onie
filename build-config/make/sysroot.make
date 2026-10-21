@@ -27,7 +27,7 @@ SYSROOT_CHECK_STAMP	= $(STAMPDIR)/sysroot-check
 SYSROOT_COMPLETE_STAMP	= $(STAMPDIR)/sysroot-complete
 SYSROOT			= $(SYSROOT_COMPLETE_STAMP)
 
-USER_BUILDDIR		= $(BUILDDIR)/user/$(XTOOLS_VERSION)
+USER_BUILDDIR		= $(BUILDDIR)/user
 USER_STAMPDIR		= $(USER_BUILDDIR)/stamp
 DEV_SYSROOT		= $(USER_BUILDDIR)/dev-sysroot
 
@@ -65,13 +65,32 @@ $(SYSROOT_INIT_STAMP): $(TREE_STAMP)
 
 # Development sysroot, used for compiling and linking user space
 # applications and libraries.
+#
+# Native build: there is no toolchain sysroot to seed from.  Populate
+# $(DEV_SYSROOT)/lib with the system glibc runtime libraries that the
+# final sysroot check (make/images.make) copies into the recovery
+# image.  Compilation itself uses the container's system headers/libs
+# directly (see make/compiler.make).
 dev-sysroot-init: $(DEV_SYSROOT_INIT_STAMP)
-$(DEV_SYSROOT_INIT_STAMP): $(USER_TREE_STAMP) | $(XTOOLS_BUILD_STAMP)
+$(DEV_SYSROOT_INIT_STAMP): $(USER_TREE_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Preparing a new development sysroot ===="
 	$(Q) [ -d $(DEV_SYSROOT) ] && chmod +w -R $(DEV_SYSROOT) || true
 	$(Q) rm -rf $(DEV_SYSROOT)
-	$(Q) cp -a $$($(CROSSBIN)/$(CROSSPREFIX)gcc -print-sysroot) $(DEV_SYSROOT)
+	$(Q) mkdir -p $(DEV_SYSROOT)/lib $(DEV_SYSROOT)/usr/lib
+ifeq ($(ARCH),arm64)
+	$(Q) cp -aL /lib/ld-linux-aarch64.so.1 $(DEV_SYSROOT)/lib/ 2>/dev/null || true
+	$(Q) cp -aL /lib/aarch64-linux-gnu/*.so* $(DEV_SYSROOT)/lib/ 2>/dev/null || true
+	$(Q) cp -aL /usr/lib/aarch64-linux-gnu/*.so* $(DEV_SYSROOT)/lib/ 2>/dev/null || true
+else
+	$(Q) cp -aL /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 $(DEV_SYSROOT)/lib/ 2>/dev/null || true
+	$(Q) cp -aL /lib/x86_64-linux-gnu/libc.so.6 $(DEV_SYSROOT)/lib/ 2>/dev/null || true
+	$(Q) cp -aL /lib/x86_64-linux-gnu/libm.so.6 $(DEV_SYSROOT)/lib/ 2>/dev/null || true
+	$(Q) cp -aL /lib/x86_64-linux-gnu/libgcc_s.so.1 $(DEV_SYSROOT)/lib/ 2>/dev/null || true
+	$(Q) cp -aL /lib/x86_64-linux-gnu/libresolv.so.2 $(DEV_SYSROOT)/lib/ 2>/dev/null || true
+	$(Q) cp -aL /lib/x86_64-linux-gnu/libcrypt.so.1 $(DEV_SYSROOT)/lib/ 2>/dev/null || true
+	$(Q) cp -aL /usr/lib/x86_64-linux-gnu/libstdc++.so.6 $(DEV_SYSROOT)/lib/ 2>/dev/null || true
+endif
 	$(Q) chmod +w -R $(DEV_SYSROOT)
 	$(Q) touch $@
 
@@ -89,7 +108,7 @@ dev-sysroot-clean:
 	$(Q) rm -rf $(DEV_SYSROOT)
 	$(Q) rm -f $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -rf $(USER_BUILDDIR)
-	$(Q) echo "=== Finished making $@ for $(XTOOLS_VERSION)"
+	$(Q) echo "=== Finished making $@ for native build"
 
 #
 # Local Variables:

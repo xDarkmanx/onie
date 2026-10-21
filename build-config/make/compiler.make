@@ -12,14 +12,16 @@
 # Note: The kernel and u-boot do not use these options.
 #
 
-export ONIE_CPPFLAGS	= --sysroot=$(DEV_SYSROOT)
+# Native build: compile and link against the build container's system
+# gcc/glibc. No --sysroot indirection, no cross toolchain.
+export ONIE_CPPFLAGS	=
 export ONIE_CFLAGS	= -Os $(ONIE_CPPFLAGS)
 export ONIE_CXXFLAGS	= -Os $(ONIE_CPPFLAGS)
-export ONIE_LDFLAGS	= --sysroot=$(DEV_SYSROOT)
+export ONIE_LDFLAGS	=
 
 export ONIE_PKG_CONFIG	= \
-	PKG_CONFIG_SYSROOT_DIR=$(DEV_SYSROOT) \
-	PKG_CONFIG_LIBDIR=$(DEV_SYSROOT)/usr/lib/pkgconfig
+	PKG_CONFIG_SYSROOT_DIR=/ \
+	PKG_CONFIG_LIBDIR=/usr/lib/$(ARCH)-linux-gnu/pkgconfig
 
 #-------------------------------------------------------------------------------
 #
