@@ -1,0 +1,16 @@
+Subject: [PATCH] adduser: fix -Wextra sign-compare
+
+max holds uid values compared against pw_uid - make it uid_t.
+diff --git a/loginutils/adduser.c b/loginutils/adduser.c
+index d3c795a..ca02e59 100644
+--- a/loginutils/adduser.c
++++ b/loginutils/adduser.c
+@@ -91,7 +91,7 @@
+ /* recoded such that the uid may be passed in *p */
+ static void passwd_study(struct passwd *p)
+ {
+-	int max = CONFIG_LAST_ID;
++	uid_t max = CONFIG_LAST_ID;
+ 
+ 	if (getpwnam(p->pw_name)) {
+ 		bb_error_msg_and_die("%s '%s' in use", "user", p->pw_name);
