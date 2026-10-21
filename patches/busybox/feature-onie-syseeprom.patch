@@ -7,6 +7,10 @@ The onie-syseeprom tool with TLV decode/encode (onie_tlvinfo.c), the
 Combines three ONIE patches (feature-onie-syseeprom-command, -disk,
 -sysfs) rebased for 1.36.1: registration via //config://applet://
 kbuild: comments in sys_eeprom.c; fix implicit-int cmd_usage().
+gcc-14 warning cleanup: const-correct tlv_code_desc/tlv_type2name,
+crc32 prototype, (void) prototypes, drop unused is_sys_eeprom_valid
+and unused local, no overlapping sprintf in decode_tlv_value,
+initialize tname, u_int8_t cast in set_mac.
 
 diff --git a/include/24cXX.h b/include/24cXX.h
 new file mode 100644
@@ -418,16 +422,18 @@ index 0000000..23f7c2c
 +#endif /* _LINUX_I2C_DEV_H */
 diff --git a/include/onie_tlvinfo.h b/include/onie_tlvinfo.h
 new file mode 100644
-index 0000000..baa39ab
+index 0000000..6c7381e
 --- /dev/null
 +++ b/include/onie_tlvinfo.h
-@@ -0,0 +1,174 @@
+@@ -0,0 +1,176 @@
 +/*
 + *  The Definition of the TlvInfo EEPROM format can be found at onie.org or
 + *  github.com/onie
 + */
 +#include "libbb.h"
 +#include <asm/byteorder.h>
++
++unsigned long crc32 (unsigned long crc, const unsigned char *buf, unsigned len);
 +
 +#define be16_to_cpu(x)  __be16_to_cpu(x)
 +#define cpu_to_be16(x)   __cpu_to_be16(x)
@@ -502,7 +508,7 @@ index 0000000..baa39ab
 + */
 +struct tlv_code_desc {
 +    u_int8_t m_code;
-+    char* m_name;
++    const char* m_name;
 +};
 +
 +/*
@@ -530,7 +536,7 @@ index 0000000..baa39ab
 +
 +static inline const char* tlv_type2name(u_int8_t type)
 +{
-+    char* name = "Unknown";
++    const char* name = "Unknown";
 +    int   i;
 +
 +    for (i = 0; i < sizeof(tlv_code_list)/sizeof(tlv_code_list[0]); i++) {
@@ -794,10 +800,10 @@ index 0000000..ccc0965
 +}
 diff --git a/miscutils/onie_tlvinfo.c b/miscutils/onie_tlvinfo.c
 new file mode 100644
-index 0000000..26b6ec5
+index 0000000..cb68688
 --- /dev/null
 +++ b/miscutils/onie_tlvinfo.c
-@@ -0,0 +1,754 @@
+@@ -0,0 +1,751 @@
 +#include "libbb.h"
 +#include "onie_tlvinfo.h"
 +#include "sys_eeprom.h"
@@ -1007,7 +1013,7 @@ index 0000000..26b6ec5
 +	    p = (*end) ? end + 1 : end;
 +	}
 +    }
-+    if (!is_valid_ether_addr((char *)buf)) {
++    if (!is_valid_ether_addr((const u_int8_t *)buf)) {
 +	printf("ERROR: MAC address must not be 00:00:00:00:00:00, "
 +	       "a multicast address or FF:FF:FF:FF:FF:FF.\n");
 +	printf("ERROR: Bad MAC address format: %s\n", string);
@@ -1078,9 +1084,12 @@ index 0000000..26b6ec5
 +	break;
 +    case TLV_CODE_VENDOR_EXT:
 +	value[0] = 0;
-+	for (i = 0; (i < (TLV_DECODE_VALUE_MAX_LEN/5)) && (i < tlv->length);
-+	     i++) {
-+	    sprintf(value, "%s 0x%02X", value, tlv->value[i]);
++	{
++	    char *p = value;
++	    for (i = 0; (i < (TLV_DECODE_VALUE_MAX_LEN/5)) && (i < tlv->length);
++		 i++) {
++		p += sprintf(p, " 0x%02X", tlv->value[i]);
++	    }
 +	}
 +	break;
 +    case TLV_CODE_CRC_32:
@@ -1090,9 +1099,12 @@ index 0000000..26b6ec5
 +	break;
 +    default:
 +	value[0] = 0;
-+	for (i = 0; (i < (TLV_DECODE_VALUE_MAX_LEN/5)) && (i < tlv->length);
-+	     i++) {
-+	    sprintf(value, "%s 0x%02X", value, tlv->value[i]);
++	{
++	    char *p = value;
++	    for (i = 0; (i < (TLV_DECODE_VALUE_MAX_LEN/5)) && (i < tlv->length);
++		 i++) {
++		p += sprintf(p, " 0x%02X", tlv->value[i]);
++	    }
 +	}
 +	break;
 +    }
@@ -1117,7 +1129,6 @@ index 0000000..26b6ec5
 +{
 +    char name[DECODE_NAME_MAX];
 +    char value[TLV_DECODE_VALUE_MAX_LEN];
-+    int i;
 +
 +    decode_tlv_value(tlv, value);
 +
@@ -1320,14 +1331,6 @@ index 0000000..26b6ec5
 +
 +    printf("Programming passed.\n");
 +    return 0;
-+}
-+
-+/*
-+ * is_sys_eeprom_valid - Is the EEPROM binary data in hardware valid
-+ */
-+static int is_sys_eeprom_valid()
-+{
-+    return hw_eeprom_valid;
 +}
 +
 +/*
@@ -1554,10 +1557,10 @@ index 0000000..26b6ec5
 +}
 diff --git a/miscutils/sys_eeprom.c b/miscutils/sys_eeprom.c
 new file mode 100644
-index 0000000..1fb74d1
+index 0000000..2b85235
 --- /dev/null
 +++ b/miscutils/sys_eeprom.c
-@@ -0,0 +1,324 @@
+@@ -0,0 +1,325 @@
 +#include "libbb.h"
 +#include "onie_tlvinfo.h"
 +#include "sys_eeprom.h"
@@ -1747,7 +1750,8 @@ index 0000000..1fb74d1
 +    int count = 0;
 +    int err = 0;
 +    int update = 0;
-+    char *value, *subopts, *tname;
++    char *value, *subopts;
++    const char *tname = "unknown";
 +    int index, c, i, option_index, tcode;
 +    char tlv_value[TLV_DECODE_VALUE_MAX_LEN];
 +
