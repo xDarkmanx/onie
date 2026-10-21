@@ -6,7 +6,4 @@ u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch
 feature-flash-erase-command.patch
-# Pending port to 1.36.1 (ONIE 1.25.1 versions below do not apply):
-#   feature-onie-syseeprom-command.patch
-#   feature-onie-syseeprom-disk.patch
-#   feature-onie-syseeprom-sysfs.patch
+feature-onie-syseeprom.patch

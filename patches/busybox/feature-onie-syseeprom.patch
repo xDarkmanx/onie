@@ -1,10 +1,12 @@
-Add to support onie-syseeprom command.
+Subject: [PATCH] feature: onie-syseeprom, ported for busybox 1.36.1
 
-Copyright (C) 2013,2018 Curt Brune <curt@cumulusnetworks.com>
-Copyright (C) 2014,2016,2017 david_yang <david_yang@accton.com>
-Copyright (C) 2015 Ellen Wang <ellen@cumulusnetworks.com>
+The onie-syseeprom tool with TLV decode/encode (onie_tlvinfo.c), the
+24cXX i2c EEPROM access layer and four backends: i2c, MTD, disk
+(sectors before the first GPT partition) and sysfs file.
 
-SPDX-License-Identifier:     GPL-2.0
+Combines three ONIE patches (feature-onie-syseeprom-command, -disk,
+-sysfs) rebased for 1.36.1: registration via //config://applet://
+kbuild: comments in sys_eeprom.c; fix implicit-int cmd_usage().
 
 diff --git a/include/24cXX.h b/include/24cXX.h
 new file mode 100644
@@ -78,18 +80,6 @@ index 0000000..5fb4641
 +int eeprom_write_byte(struct eeprom *e, __u16 mem_addr, __u8 data);
 +
 +#endif
-diff --git a/include/applets.src.h b/include/applets.src.h
-index b9df5a1..71b8cbd 100644
---- a/include/applets.src.h
-+++ b/include/applets.src.h
-@@ -344,6 +344,7 @@ IF_WC(APPLET(wc, BB_DIR_USR_BIN, BB_SUID_DROP))
- IF_WHOAMI(APPLET_NOFORK(whoami, whoami, BB_DIR_USR_BIN, BB_SUID_DROP, whoami))
- IF_YES(APPLET_NOFORK(yes, yes, BB_DIR_USR_BIN, BB_SUID_DROP, yes))
- IF_ZCIP(APPLET(zcip, BB_DIR_SBIN, BB_SUID_DROP))
-+IF_SYS_EEPROM(APPLET_ODDNAME(onie-syseeprom, onie_syseeprom, BB_DIR_USR_BIN, BB_SUID_DROP, onie_syseeprom))
- 
- #if !defined(PROTOTYPES) && !defined(NAME_MAIN) && !defined(MAKE_USAGE) \
- 	&& !defined(MAKE_LINKS) && !defined(MAKE_SUID)
 diff --git a/include/i2c-dev.h b/include/i2c-dev.h
 new file mode 100644
 index 0000000..23f7c2c
@@ -428,10 +418,10 @@ index 0000000..23f7c2c
 +#endif /* _LINUX_I2C_DEV_H */
 diff --git a/include/onie_tlvinfo.h b/include/onie_tlvinfo.h
 new file mode 100644
-index 0000000..23ec9c5
+index 0000000..baa39ab
 --- /dev/null
 +++ b/include/onie_tlvinfo.h
-@@ -0,0 +1,173 @@
+@@ -0,0 +1,174 @@
 +/*
 + *  The Definition of the TlvInfo EEPROM format can be found at onie.org or
 + *  github.com/onie
@@ -577,6 +567,7 @@ index 0000000..23ec9c5
 +#define SYS_EEPROM_I2C_ADDR          CONFIG_SYS_EEPROM_I2C_ADDR
 +#define SYS_EEPROM_I2C_MEM_ADDR_BITS CONFIG_SYS_EEPROM_I2C_MEM_ADDR_BITS
 +#define SYS_EEPROM_MTD_DEVICE        CONFIG_SYS_EEPROM_MTD_DEVICE
++#define SYS_EEPROM_SYSFS_FILE_PATH   CONFIG_SYS_EEPROM_SYSFS_FILE_PATH
 +#define SYS_EEPROM_MAX_SIZE          CONFIG_SYS_EEPROM_MAX_SIZE
 +#define SYS_EEPROM_OFFSET            CONFIG_SYS_EEPROM_OFFSET
 +
@@ -801,130 +792,6 @@ index 0000000..ccc0965
 +		return -1;
 +	}
 +}
-diff --git a/miscutils/Config.src b/miscutils/Config.src
-index 4d6425f..cdae45b 100644
---- a/miscutils/Config.src
-+++ b/miscutils/Config.src
-@@ -546,4 +546,108 @@ config WATCHDOG
- 	  certain amount of time, the watchdog device assumes the system has
- 	  hung, and will cause the hardware to reboot.
- 
-+config SYS_EEPROM
-+	bool "ONIE system EEPROM"
-+	default n
-+	help
-+	  Display and program the system EEPROM data block.
-+	  The onie-syseeprom tool is included.
-+
-+menu "ONIE system EEPROM config"
-+	depends on SYS_EEPROM
-+
-+choice
-+	prompt "Choose which device type of EEPROM"
-+	depends on SYS_EEPROM
-+	help
-+	  Choose which device type of EEPROM.
-+
-+config SYS_EEPROM_DEVICE_I2C
-+	bool "i2c"
-+
-+config SYS_EEPROM_DEVICE_MTD
-+	bool "MTD"
-+
-+endchoice
-+
-+config SYS_EEPROM_I2C_DEVICE
-+	string "i2c bus"
-+	default "/dev/i2c-1"
-+	depends on SYS_EEPROM_DEVICE_I2C
-+	help
-+	  i2c bus name of the eeprom. e.g., /dev/i2c-1.
-+
-+config SYS_EEPROM_I2C_ADDR
-+	hex "device address on the i2c bus"
-+	default 0
-+	depends on SYS_EEPROM_DEVICE_I2C
-+	help
-+	  i2c device address of the eeprom. e.g., 0x57.
-+
-+config SYS_EEPROM_I2C_MEM_ADDR_BITS
-+	int "eeprom address bits"
-+	range 8 16
-+	default 8
-+	depends on SYS_EEPROM_DEVICE_I2C
-+	help
-+	  Number of bits needed to address a byte in the EEPROM.
-+	  e.g., 8 or 16.
-+
-+config SYS_EEPROM_I2C_WRITE_1B_DELAY
-+	int "delay time for i2c writing 1 byte"
-+	range 10 1000000
-+	default 10
-+	depends on SYS_EEPROM_DEVICE_I2C
-+	help
-+	  Delay number of microseconds after writing 1 byte.
-+
-+config SYS_EEPROM_I2C_WRITE_2B_DELAY
-+	int "delay time for i2c writing 2 bytes"
-+	range 10 1000000
-+	default 1000
-+	depends on SYS_EEPROM_DEVICE_I2C
-+	help
-+	  Delay number of microseconds after writing 2 bytes.
-+
-+config SYS_EEPROM_I2C_WRITE_3B_DELAY
-+	int "delay time for i2c writing 3 bytes"
-+	range 10 1000000
-+	default 10
-+	depends on SYS_EEPROM_DEVICE_I2C
-+	help
-+	  Delay number of microseconds after writing 3 bytes.
-+
-+config SYS_EEPROM_MTD_DEVICE
-+	string "MTD device"
-+	default "/dev/mtd-hw-info"
-+	depends on SYS_EEPROM_DEVICE_MTD
-+	help
-+	  MTD device name of the eeprom. e.g., /dev/mtd-hw-info.
-+
-+config SYS_EEPROM_OFFSET
-+	int "offset"
-+	range 0 65536
-+	default 0
-+	depends on SYS_EEPROM
-+	help
-+	  Offset from where the ONIE header starts.
-+
-+config SYS_EEPROM_SIZE
-+	int "usable eeprom size in byte"
-+	range 0 2048
-+	default 0
-+	depends on SYS_EEPROM
-+	help
-+	  Size of usable eeprom.
-+
-+config SYS_EEPROM_MAX_SIZE
-+	int "total size in byte"
-+	range 256 65536
-+	default 2048
-+	depends on SYS_EEPROM
-+	help
-+	  Total size of the eeprom.
-+
-+endmenu
-+
- endmenu
-diff --git a/miscutils/Kbuild.src b/miscutils/Kbuild.src
-index 9177818..a78273d 100644
---- a/miscutils/Kbuild.src
-+++ b/miscutils/Kbuild.src
-@@ -51,3 +51,6 @@ lib-$(CONFIG_TTYSIZE)     += ttysize.o
- lib-$(CONFIG_UBOOT_ENV)   += fw_env.o
- lib-$(CONFIG_VOLNAME)     += volname.o
- lib-$(CONFIG_WATCHDOG)    += watchdog.o
-+lib-$(CONFIG_SYS_EEPROM)  += sys_eeprom.o onie_tlvinfo.o
-+lib-$(CONFIG_SYS_EEPROM_DEVICE_I2C) += sys_eeprom_i2c.o 24cXX.o
-+lib-$(CONFIG_SYS_EEPROM_DEVICE_MTD) += sys_eeprom_mtd.o
 diff --git a/miscutils/onie_tlvinfo.c b/miscutils/onie_tlvinfo.c
 new file mode 100644
 index 0000000..26b6ec5
@@ -1687,13 +1554,149 @@ index 0000000..26b6ec5
 +}
 diff --git a/miscutils/sys_eeprom.c b/miscutils/sys_eeprom.c
 new file mode 100644
-index 0000000..a24d6bb
+index 0000000..1fb74d1
 --- /dev/null
 +++ b/miscutils/sys_eeprom.c
-@@ -0,0 +1,188 @@
+@@ -0,0 +1,324 @@
 +#include "libbb.h"
 +#include "onie_tlvinfo.h"
++#include "sys_eeprom.h"
 +#include <getopt.h>
++//config:config SYS_EEPROM
++//config:	bool "ONIE system EEPROM"
++//config:	default n
++//config:	help
++//config:	Display and program the system EEPROM data block.
++//config:	The onie-syseeprom tool is included.
++//config:
++//config:menu "ONIE system EEPROM config"
++//config:	depends on SYS_EEPROM
++//config:
++//config:choice
++//config:	prompt "Choose which device type of EEPROM"
++//config:	depends on SYS_EEPROM
++//config:	help
++//config:	Choose which device type of EEPROM.
++//config:
++//config:config SYS_EEPROM_DEVICE_I2C
++//config:	bool "i2c"
++//config:
++//config:config SYS_EEPROM_DEVICE_MTD
++//config:	bool "MTD"
++//config:
++//config:config SYS_EEPROM_DEVICE_DISK
++//config:	bool "disk (not recommended)"
++//config:
++//config:config SYS_EEPROM_SYSFS_FILE
++//config:	bool "sysfs file"
++//config:
++//config:endchoice
++//config:
++//config:config SYS_EEPROM_I2C_DEVICE
++//config:	string "i2c bus"
++//config:	default "/dev/i2c-1"
++//config:	depends on SYS_EEPROM_DEVICE_I2C
++//config:	help
++//config:	i2c bus name of the eeprom. e.g., /dev/i2c-1.
++//config:
++//config:config SYS_EEPROM_I2C_ADDR
++//config:	hex "device address on the i2c bus"
++//config:	default 0
++//config:	depends on SYS_EEPROM_DEVICE_I2C
++//config:	help
++//config:	i2c device address of the eeprom. e.g., 0x57.
++//config:
++//config:config SYS_EEPROM_I2C_MEM_ADDR_BITS
++//config:	int "eeprom address bits"
++//config:	range 8 16
++//config:	default 8
++//config:	depends on SYS_EEPROM_DEVICE_I2C
++//config:	help
++//config:	Number of bits needed to address a byte in the EEPROM.
++//config:	e.g., 8 or 16.
++//config:
++//config:config SYS_EEPROM_I2C_WRITE_1B_DELAY
++//config:	int "delay time for i2c writing 1 byte"
++//config:	range 10 1000000
++//config:	default 10
++//config:	depends on SYS_EEPROM_DEVICE_I2C
++//config:	help
++//config:	Delay number of microseconds after writing 1 byte.
++//config:
++//config:config SYS_EEPROM_I2C_WRITE_2B_DELAY
++//config:	int "delay time for i2c writing 2 bytes"
++//config:	range 10 1000000
++//config:	default 1000
++//config:	depends on SYS_EEPROM_DEVICE_I2C
++//config:	help
++//config:	Delay number of microseconds after writing 2 bytes.
++//config:
++//config:config SYS_EEPROM_I2C_WRITE_3B_DELAY
++//config:	int "delay time for i2c writing 3 bytes"
++//config:	range 10 1000000
++//config:	default 10
++//config:	depends on SYS_EEPROM_DEVICE_I2C
++//config:	help
++//config:	Delay number of microseconds after writing 3 bytes.
++//config:
++//config:config SYS_EEPROM_MTD_DEVICE
++//config:	string "MTD device"
++//config:	default "/dev/mtd-hw-info"
++//config:	depends on SYS_EEPROM_DEVICE_MTD
++//config:	help
++//config:	MTD device name of the eeprom. e.g., /dev/mtd-hw-info.
++//config:
++//config:config SYS_EEPROM_DISK_DEVICE
++//config:	string "disk device"
++//config:	default "/dev/sda"
++//config:	depends on SYS_EEPROM_DEVICE_DISK
++//config:	help
++//config:	device name of the on-disk "eeprom". e.g., /dev/sda.
++//config:
++//config:config SYS_EEPROM_SYSFS_FILE_PATH
++//config:	string "Path for sysfs eeprom file"
++//config:	depends on SYS_EEPROM_SYSFS_FILE
++//config:	help
++//config:	sysfs file path of the eeprom.
++//config:	e.g., /sys/bus/i2c/devices/1-0050/eeprom
++//config:
++//config:config SYS_EEPROM_OFFSET
++//config:	int "offset"
++//config:	range 0 0 if SYS_EEPROM_DEVICE_DISK
++//config:	range 0 65536
++//config:	default 0
++//config:	depends on SYS_EEPROM
++//config:	help
++//config:	Offset from where the ONIE header starts.
++//config:
++//config:config SYS_EEPROM_SIZE
++//config:	int "usable eeprom size in byte"
++//config:	range 2048 2048 if SYS_EEPROM_DEVICE_DISK
++//config:	range 0 2048
++//config:	default 2048 if SYS_EEPROM_DEVICE_DISK
++//config:	default 0
++//config:	depends on SYS_EEPROM
++//config:	help
++//config:	Size of usable eeprom.
++//config:
++//config:config SYS_EEPROM_MAX_SIZE
++//config:	int "total size in byte"
++//config:	range 2048 2048 if SYS_EEPROM_DEVICE_DISK
++//config:	range 256 65536
++//config:	default 2048
++//config:	depends on SYS_EEPROM
++//config:	help
++//config:	Total size of the eeprom.
++//config:
++//config:endmenu
++
++//applet:IF_SYS_EEPROM(APPLET_ODDNAME(onie-syseeprom, onie_syseeprom, BB_DIR_USR_BIN, BB_SUID_DROP, onie_syseeprom))
++
++//kbuild:lib-$(CONFIG_SYS_EEPROM)  += sys_eeprom.o onie_tlvinfo.o
++//kbuild:lib-$(CONFIG_SYS_EEPROM_DEVICE_I2C) += sys_eeprom_i2c.o 24cXX.o
++//kbuild:lib-$(CONFIG_SYS_EEPROM_DEVICE_MTD) += sys_eeprom_mtd.o
++//kbuild:lib-$(CONFIG_SYS_EEPROM_DEVICE_DISK) += sys_eeprom_disk.o
++//kbuild:lib-$(CONFIG_SYS_EEPROM_SYSFS_FILE) += sys_eeprom_sysfs_file.o
 +
 +static u_int8_t eeprom[SYS_EEPROM_SIZE];
 +/*
@@ -1711,7 +1714,7 @@ index 0000000..a24d6bb
 +//usage:     "\n		If no value, TLV is deleted."
 +//usage:       "\n"
 +
-+cmd_usage()
++static void cmd_usage(void)
 +{
 +    static const char *usage =
 +	"Display and program the system EEPROM data block.\n"
@@ -1878,6 +1881,124 @@ index 0000000..a24d6bb
 +	free(tokens[(i*2) + 1]);
 +    }
 +    return  (err == 0) ? 0 : 1;
++}
+diff --git a/miscutils/sys_eeprom_disk.c b/miscutils/sys_eeprom_disk.c
+new file mode 100644
+index 0000000..440b490
+--- /dev/null
++++ b/miscutils/sys_eeprom_disk.c
+@@ -0,0 +1,112 @@
++#include "libbb.h"
++#include "onie_tlvinfo.h"
++#include "sys_eeprom.h"
++
++/*
++ * Storing the "eeprom" on "disk".
++ *
++ * This is not recommended practice.
++ * In fact, this should be a last resort, for machines that
++ * have no usable eeprom of any sort (ha! pun).
++ *
++ * The data is kept in the sectors just before the first GPT
++ * partition.  It's part of the GPT area but currently unused.
++ * The sector address is hard coded and must match that in
++ * onie/installer/x86_64/install-arch (currently 2048).
++ *
++ * Also, the device name is configurable but fixed at build time,
++ * and must match the actual boot device, which may have been
++ * dynamically discovered at onie install time.
++ */
++
++#if CONFIG_SYS_EEPROM_OFFSET != 0
++#error CONFIG_SYS_EEPROM_OFFSET must be 0 for disk eeprom type
++#endif
++
++#if CONFIG_SYS_EEPROM_SIZE != 2048
++#error CONFIG_SYS_EEPROM_SIZE must be 2048 for disk eeprom type
++#endif
++
++#if CONFIG_SYS_EEPROM_MAX_SIZE != 2048
++#error CONFIG_SYS_EEPROM_MAX_SIZE must be 2048 for disk eeprom type
++#endif
++
++#define START_SECTOR (2048 - CONFIG_SYS_EEPROM_MAX_SIZE / 512)
++
++static int open_dev(int offset)
++{
++    int fd;
++    off64_t offset64;
++
++    fd = open(CONFIG_SYS_EEPROM_DISK_DEVICE, O_RDWR);
++    if (fd < 0) {
++        printf("ERROR: open(%s): %s\n",
++               CONFIG_SYS_EEPROM_DISK_DEVICE, strerror(errno));
++        return -1;
++    }
++    offset64 = (off64_t) 512 * START_SECTOR +
++	       CONFIG_SYS_EEPROM_OFFSET + offset;
++    if (lseek64(fd, offset64, SEEK_SET) < 0) {
++        printf("ERROR: lseek64(%s): %s\n",
++               CONFIG_SYS_EEPROM_DISK_DEVICE, strerror(errno));
++        close(fd);
++        return -1;
++    }
++    return fd;
++}
++
++int read_sys_eeprom(void *eeprom_data, int offset, int len)
++{
++    int fd;
++    ssize_t n;
++    int ret = -1;
++
++    fd = open_dev(offset);
++    if (fd < 0)
++        goto out;
++    n = read(fd, eeprom_data, len);
++    if (n < 0) {
++        printf("ERROR: read(%s): %s\n",
++               CONFIG_SYS_EEPROM_DISK_DEVICE, strerror(errno));
++        goto out;
++    }
++    if (n != len) {
++	printf("ERROR: read(%s): read %zd byte(s) instead of %d bytes\n",
++               CONFIG_SYS_EEPROM_DISK_DEVICE, n, len);
++        goto out;
++    }
++    ret = 0;
++
++out:
++    if (fd >= 0)
++        close(fd);
++    return ret;
++}
++
++int write_sys_eeprom(void *eeprom_data, int len)
++{
++    int fd;
++    ssize_t n;
++    int ret = -1;
++
++    fd = open_dev(0);
++    if (fd < 0)
++        goto out;
++    n = write(fd, eeprom_data, len);
++    if (n < 0) {
++        printf("ERROR: write(%s): %s\n",
++               CONFIG_SYS_EEPROM_DISK_DEVICE, strerror(errno));
++        goto out;
++    }
++    if (n != len) {
++	printf("ERROR: write(%s): wrote %zd byte(s) instead of %d bytes\n",
++               CONFIG_SYS_EEPROM_DISK_DEVICE, n, len);
++        goto out;
++    }
++    ret = 0;
++
++out:
++    if (fd >= 0)
++        close(fd);
++    return ret;
 +}
 diff --git a/miscutils/sys_eeprom_i2c.c b/miscutils/sys_eeprom_i2c.c
 new file mode 100644
@@ -2079,4 +2200,95 @@ index 0000000..119d77c
 +    }
 +
 +    return ret;
++}
+diff --git a/miscutils/sys_eeprom_sysfs_file.c b/miscutils/sys_eeprom_sysfs_file.c
+new file mode 100644
+index 0000000..68f33c9
+--- /dev/null
++++ b/miscutils/sys_eeprom_sysfs_file.c
+@@ -0,0 +1,85 @@
++#include "libbb.h"
++#include "onie_tlvinfo.h"
++#include "sys_eeprom.h"
++#include <mtd/mtd-user.h>
++
++/*
++ * read_sys_eeprom - read the hwinfo from MTD EEPROM
++ */
++int read_sys_eeprom(void *eeprom_data, int offset, int len)
++{
++	int rc;
++	int ret = 0;
++	int fd;
++	u_int8_t *c;
++
++	c = eeprom_data;
++
++	fd = open(SYS_EEPROM_SYSFS_FILE_PATH, O_RDONLY);
++	if (fd < 0) {
++		fprintf (stderr, "Can't open %s: %s\n",
++			SYS_EEPROM_SYSFS_FILE_PATH, strerror (errno));
++		return -1;
++	}
++
++	if (lseek (fd, offset + SYS_EEPROM_OFFSET, SEEK_SET) == -1) {
++		fprintf (stderr, "Seek error on %s: %s\n",
++			SYS_EEPROM_SYSFS_FILE_PATH, strerror (errno));
++		return -1;
++	}
++
++	rc = read (fd, c, len);
++	if (rc != len) {
++		fprintf (stderr, "Read error on %s: %s\n",
++			SYS_EEPROM_SYSFS_FILE_PATH, strerror (errno));
++		return -1;
++	}
++
++	if (close (fd)) {
++		fprintf (stderr, "I/O error on %s: %s\n",
++			SYS_EEPROM_SYSFS_FILE_PATH, strerror (errno));
++		return -1;
++	}
++	return ret;
++}
++
++/*
++ * write_sys_eeprom - write the hwinfo to MTD EEPROM
++ */
++int write_sys_eeprom(void *eeprom_data, int len)
++{
++	int rc;
++	int ret = 0;
++	int fd;
++	u_int8_t *c;
++
++	c = eeprom_data;
++
++	fd = open(SYS_EEPROM_SYSFS_FILE_PATH, O_RDWR);
++	if (fd < 0) {
++		fprintf (stderr, "Can't open %s: %s\n",
++			SYS_EEPROM_SYSFS_FILE_PATH, strerror (errno));
++		return -1;
++	}
++
++	if (lseek (fd, SYS_EEPROM_OFFSET, SEEK_SET) == -1) {
++		fprintf (stderr, "Seek error on %s: %s\n",
++			SYS_EEPROM_SYSFS_FILE_PATH, strerror (errno));
++		return -1;
++	}
++
++	rc = write (fd, c, len);
++	if (rc != len) {
++		fprintf (stderr, "Write error on %s: %s\n",
++			SYS_EEPROM_SYSFS_FILE_PATH, strerror (errno));
++		return -1;
++	}
++
++	if (close (fd)) {
++		fprintf (stderr, "I/O error on %s: %s\n",
++			SYS_EEPROM_SYSFS_FILE_PATH, strerror (errno));
++		return -1;
++	}
++
++	return ret;
 +}
