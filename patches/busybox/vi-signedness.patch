@@ -1,0 +1,76 @@
+Subject: [PATCH] vi: int terminal dimensions, marked fallthroughs
+
+rows/columns are consumed by int arithmetic all over vi; make them
+int (query_screen_dimensions adapts via unsigned temporaries).
+Mark the undo_queue and append/insert fallthroughs with the
+gcc-recognized comment spelling. Explicit int cast for the constant
+lmc bound; unsigned i for the mark array walk.
+diff --git a/editors/vi.c b/editors/vi.c
+index 2645afe..94bc37b 100644
+--- a/editors/vi.c
++++ b/editors/vi.c
+@@ -344,7 +344,7 @@ struct globals {
+ 	int cmdline_filecnt;     // how many file names on cmd line
+ 	int cmdcnt;              // repetition count
+ 	char *rstart;            // start of text in Replace mode
+-	unsigned rows, columns;	 // the terminal screen is this size
++	int rows, columns;         // the terminal screen is this size
+ #if ENABLE_FEATURE_VI_ASK_TERMINAL
+ 	int get_rowcol_error;
+ #endif
+@@ -598,7 +598,10 @@ static void write1(const char *out)
+ #if ENABLE_FEATURE_VI_WIN_RESIZE
+ static int query_screen_dimensions(void)
+ {
+-	int err = get_terminal_width_height(STDIN_FILENO, &columns, &rows);
++	unsigned w, h;
++	int err = get_terminal_width_height(STDIN_FILENO, &w, &h);
++	columns = w;
++	rows = h;
+ 	if (rows > MAX_SCR_ROWS)
+ 		rows = MAX_SCR_ROWS;
+ 	if (columns > MAX_SCR_COLS)
+@@ -1165,7 +1168,7 @@ static int get_one_char(void)
+ 	}
+ 	// we are adding STDIN chars to q.
+ 	c = readit();
+-	if (lmc_len >= ARRAY_SIZE(last_modifying_cmd) - 2) {
++	if (lmc_len >= (int)(ARRAY_SIZE(last_modifying_cmd) - 2)) {
+ 		// last_modifying_cmd[] is too small, can't remember the cmd
+ 		// - drop it
+ 		adding2q = 0;
+@@ -1511,7 +1514,7 @@ static uintptr_t text_hole_make(char *p, int size)	// at "p", make a 'size' byte
+ 		p           += bias;
+ #if ENABLE_FEATURE_VI_YANKMARK
+ 		{
+-			int i;
++			unsigned i;
+ 			for (i = 0; i < ARRAY_SIZE(mark); i++)
+ 				if (mark[i])
+ 					mark[i] += bias;
+@@ -1645,6 +1648,7 @@ static void undo_push(char *src, unsigned length, int u_type)
+ 		switch (undo_queue_state) {
+ 		case UNDO_EMPTY:
+ 			undo_queue_state = UNDO_DEL;
++			/* fall through */
+ 		case UNDO_DEL:
+ 			undo_queue_spos = src;
+ 			undo_q++;
+@@ -4156,7 +4160,7 @@ static void do_cmd(int c)
+ 		break;
+ 	case 'A':			// A- append at e-o-l
+ 		dot_end();		// go to e-o-l
+-		//**** fall through to ... 'a'
++		/* fall through */
+ 	case 'a':			// a- append after current char
+ 		if (*dot != '\n')
+ 			dot++;
+@@ -4227,7 +4231,7 @@ static void do_cmd(int c)
+ 	case 'I':			// I- insert before first non-blank
+ 		dot_begin();	// 0
+ 		dot_skip_over_ws();
+-		//**** fall through to ... 'i'
++		/* fall through */
+ 	case 'i':			// i- insert before current char
+ 	case KEYCODE_INSERT:	// Cursor Key Insert
+  dc_i:

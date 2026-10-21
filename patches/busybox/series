@@ -26,6 +26,7 @@ ssd-vfork-clobber.patch
 awk-fallthrough.patch
 diff-signedness.patch
 sed-fallthrough-comment.patch
+vi-signedness.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch
