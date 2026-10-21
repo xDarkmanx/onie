@@ -1,0 +1,142 @@
+Subject: [PATCH] bzip2: fix signedness of loop counters and bounds
+
+Harmonize int/unsigned types in the vendored bzip2 sort and Huffman
+grouping code so every comparison is between same-signedness types:
+loop counters, group bounds (gs/ge), selector counts, nPart, the
+Knuth increments table and nblock in mainGtU. No casts, no pragmas;
+values are non-negative by construction.
+diff --git a/archival/libarchive/bz/blocksort.c b/archival/libarchive/bz/blocksort.c
+index 74f9575..6386c9d 100644
+--- a/archival/libarchive/bz/blocksort.c
++++ b/archival/libarchive/bz/blocksort.c
+@@ -384,7 +384,7 @@ int mainGtU(EState* state,
+ 
+ 	uint8_t  *const block    = state->block;
+ 	uint16_t *const quadrant = state->quadrant;
+-	const int32_t   nblock   = state->nblock;
++	const uint32_t  nblock   = state->nblock;
+ 
+ /* Loop unrolling here is actually very useful
+  * (generated code is much simpler),
+@@ -459,7 +459,7 @@ int mainGtU(EState* state,
+  * usually small, typically <= 20.
+  */
+ static
+-const uint32_t incs[14] ALIGN4 = {
++const int32_t incs[14] ALIGN4 = {
+ 	1, 4, 13, 40, 121, 364, 1093, 3280,
+ 	9841, 29524, 88573, 265720,
+ 	797161, 2391484
+@@ -835,13 +835,13 @@ void mainSort(EState* state)
+ 	{
+ 		/* bbox: was: int32_t h = 1; */
+ 		/* do h = 3 * h + 1; while (h <= 256); */
+-		unsigned h = 364;
++		int32_t h = 364;
+ 
+ 		do {
+ 			/*h = h / 3;*/
+ 			h = (h * 171) >> 9; /* bbox: fast h/3 */
+ 			for (i = h; i <= 255; i++) {
+-				unsigned vv, jh;
++				int32_t vv, jh;
+ 				vv = runningOrder[i]; /* uint8[] */
+ 				j = i;
+ 				while (jh = j - h, BIGFREQ(runningOrder[jh]) > BIGFREQ(vv)) {
+@@ -860,7 +860,7 @@ void mainSort(EState* state)
+ 	 */
+ 
+ 	for (i = 0; /*i <= 255*/; i++) {
+-		unsigned ss;
++		int32_t ss;
+ 
+ 		/*
+ 		 * Process big buckets, starting with the least full.
+@@ -1030,7 +1030,7 @@ int32_t BZ2_blockSort(EState* state)
+ 	/* In original bzip2 1.0.4, it's a parameter, but 30
+ 	 * (which was the default) should work ok. */
+ 	enum { wfact = 30 };
+-	unsigned i;
++	int32_t i;
+ 	int32_t origPtr = origPtr;
+ 
+ 	if (state->nblock >= 10000) {
+diff --git a/archival/libarchive/bz/compress.c b/archival/libarchive/bz/compress.c
+index 539ab92..d5e0871 100644
+--- a/archival/libarchive/bz/compress.c
++++ b/archival/libarchive/bz/compress.c
+@@ -302,9 +302,9 @@ void sendMTFValues(EState* s)
+ {
+ 	int32_t t, i;
+ 	unsigned iter;
+-	unsigned gs;
++	int32_t gs;
+ 	int32_t alphaSize;
+-	unsigned nSelectors, selCtr;
++	int32_t nSelectors, selCtr;
+ 	int32_t nGroups;
+ 
+ 	/*
+@@ -326,7 +326,7 @@ void sendMTFValues(EState* s)
+ 
+ 	alphaSize = s->nInUse + 2;
+ 	for (t = 0; t < BZ_N_GROUPS; t++) {
+-		unsigned v;
++		int32_t v;
+ 		for (v = 0; v < alphaSize; v++)
+ 			s->len[t][v] = BZ_GREATER_ICOST;
+ 	}
+@@ -346,14 +346,14 @@ void sendMTFValues(EState* s)
+ 
+ 	/*--- Generate an initial set of coding tables ---*/
+ 	{
+-		unsigned nPart, remF;
++		int32_t nPart, remF;
+ 
+ 		nPart = nGroups;
+ 		remF  = s->nMTF;
+ 		gs = 0;
+ 		while (nPart > 0) {
+-			unsigned v;
+-			unsigned ge;
++			int32_t v;
++			int32_t ge;
+ 			unsigned tFreq, aFreq;
+ 
+ 			tFreq = remF / nPart;
+@@ -389,7 +389,7 @@ void sendMTFValues(EState* s)
+ 	 */
+ 	for (iter = 0; iter < BZ_N_ITERS; iter++) {
+ 		for (t = 0; t < nGroups; t++) {
+-			unsigned v;
++			int32_t v;
+ 			for (v = 0; v < alphaSize; v++)
+ 				s->rfreq[t][v] = 0;
+ 		}
+@@ -400,7 +400,7 @@ void sendMTFValues(EState* s)
+ 		 * the common case (nGroups == 6).
+ 		 */
+ 		if (nGroups == 6) {
+-			unsigned v;
++			int32_t v;
+ 			for (v = 0; v < alphaSize; v++) {
+ 				s->len_pack[v][0] = (s->len[1][v] << 16) | s->len[0][v];
+ 				s->len_pack[v][1] = (s->len[3][v] << 16) | s->len[2][v];
+@@ -411,7 +411,7 @@ void sendMTFValues(EState* s)
+ 		nSelectors = 0;
+ 		gs = 0;
+ 		while (1) {
+-			unsigned ge;
++			int32_t ge;
+ 			unsigned bt, bc;
+ 
+ 			/*--- Set group start & end marks. --*/
+@@ -616,7 +616,7 @@ void sendMTFValues(EState* s)
+ 	selCtr = 0;
+ 	gs = 0;
+ 	while (1) {
+-		unsigned ge;
++		int32_t ge;
+ 
+ 		if (gs >= s->nMTF)
+ 			break;

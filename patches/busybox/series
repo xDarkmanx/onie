@@ -2,7 +2,7 @@
 gitignore.patch
 gcc14-lxdialog-check.patch
 kernel68-cbq-uapi.patch
-bzip2-wno-sign-compare.patch
+bzip2-signedness.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch
