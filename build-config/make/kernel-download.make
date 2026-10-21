@@ -14,7 +14,7 @@
 #
 
 #-------------------------------------------------------------------------------
-# Need the Linux kernel downloaded before building xtools
+# Download the Linux kernel tarball (standalone target: kernel-download)
 
 LINUX_VERSION		?= 5.4
 LINUX_MAJOR_VERSION	= $(firstword $(subst ., ,$(LINUX_VERSION)))
