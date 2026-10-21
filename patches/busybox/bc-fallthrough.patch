@@ -1,0 +1,35 @@
+Subject: [PATCH] bc: fix -Wextra implicit-fallthrough
+
+Leading words before "fall through" break the =3 comment regex;
+keep the explanation in a separate comment above the canonical
+/* fall through */ marker. For JUMP_ZERO move the marker past the
+closing brace so it sits directly before the case label.
+The marker must also come AFTER any preprocessor directive:
+before "#if ENABLE_BC" gcc does not recognize it (verified with
+a probe: comment after #if suppresses, before #if does not).
+diff --git a/miscutils/bc.c b/miscutils/bc.c
+index c629c47..528cd85 100644
+--- a/miscutils/bc.c
++++ b/miscutils/bc.c
+@@ -6689,8 +6689,9 @@ static BC_STATUS zxc_program_exec(void)
+ 				bc_vec_pop(&G.prog.exestack);
+ 				goto read_updated_ip;
+ 			}
+-			// bc: fall through
++			/* bc: */
+ #if ENABLE_BC
++			/* fall through */
+ 		case BC_INST_RET0:
+ 			dbg_exec("BC_INST_RET[0]:");
+ 			s = zbc_program_return(inst);
+@@ -6707,8 +6708,9 @@ static BC_STATUS zxc_program_exec(void)
+ 				xc_program_index(code, &ip->inst_idx);
+ 				break;
+ 			}
+-			// else: fall through
+ 		}
++		/* zero: take the jump */
++		/* fall through */
+ 		case BC_INST_JUMP: {
+ 			size_t idx = xc_program_index(code, &ip->inst_idx);
+ 			size_t *addr = bc_vec_item(&func->labels, idx);

@@ -32,6 +32,7 @@ parse-config-signedness.patch
 time-signedness.patch
 adduser-signedness.patch
 getty-wextra.patch
+bc-fallthrough.patch
 find-signedness.patch
 grep-signedness.patch
 bootchartd-vfork-clobber.patch
