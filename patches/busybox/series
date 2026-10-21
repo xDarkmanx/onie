@@ -29,6 +29,7 @@ sed-fallthrough-comment.patch
 vi-signedness.patch
 lineedit-signedness.patch
 parse-config-signedness.patch
+time-signedness.patch
 find-signedness.patch
 grep-signedness.patch
 bootchartd-vfork-clobber.patch
