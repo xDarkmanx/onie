@@ -1,0 +1,26 @@
+Subject: [PATCH] libnetlink: fix -Wextra sign-compare
+
+RTA_ALIGN() yields size_t; maxlen is int with small attribute
+lengths - compare in the int domain.
+diff --git a/networking/libiproute/libnetlink.c b/networking/libiproute/libnetlink.c
+index 7e3473a..89587dc 100644
+--- a/networking/libiproute/libnetlink.c
++++ b/networking/libiproute/libnetlink.c
+@@ -395,7 +395,7 @@ int FAST_FUNC rta_addattr32(struct rtattr *rta, int maxlen, int type, uint32_t d
+ 	int len = RTA_LENGTH(4);
+ 	struct rtattr *subrta;
+ 
+-	if (RTA_ALIGN(rta->rta_len + len) > maxlen) {
++	if ((int)RTA_ALIGN(rta->rta_len + len) > maxlen) {
+ 		return -1;
+ 	}
+ 	subrta = (struct rtattr*)(((char*)rta) + RTA_ALIGN(rta->rta_len));
+@@ -411,7 +411,7 @@ int FAST_FUNC rta_addattr_l(struct rtattr *rta, int maxlen, int type, void *data
+ 	struct rtattr *subrta;
+ 	int len = RTA_LENGTH(alen);
+ 
+-	if (RTA_ALIGN(rta->rta_len + len) > maxlen) {
++	if ((int)RTA_ALIGN(rta->rta_len + len) > maxlen) {
+ 		return -1;
+ 	}
+ 	subrta = (struct rtattr*)(((char*)rta) + RTA_ALIGN(rta->rta_len));
