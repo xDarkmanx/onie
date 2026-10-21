@@ -1,60 +1,18 @@
-feature iorw command patch
+Subject: [PATCH] feature: iorw command, ported for busybox 1.36.1
 
-Copyright (C) 2013,2014,2015 Curt Brune <curt@cumulusnetworks.com>
+Add the iorw command, which allows root to peek/poke arbitrary
+memory mapped locations (Curt Brune, ONIE).
 
-SPDX-License-Identifier:     GPL-2.0
-
-Add the iorw command, which allows root to peek/poke arbitrary memory
-locations.
-
-diff --git a/include/applets.src.h b/include/applets.src.h
-index caf3c8259eae..267a8f3032c8 100644
---- a/include/applets.src.h
-+++ b/include/applets.src.h
-@@ -170,6 +170,7 @@ IF_INETD(APPLET(inetd, BB_DIR_USR_SBIN, BB_SUID_DROP))
- IF_INOTIFYD(APPLET(inotifyd, BB_DIR_SBIN, BB_SUID_DROP))
- IF_INSTALL(APPLET(install, BB_DIR_USR_BIN, BB_SUID_DROP))
- IF_IONICE(APPLET(ionice, BB_DIR_BIN, BB_SUID_DROP))
-+IF_IORW(APPLET(iorw, BB_DIR_USR_SBIN, BB_SUID_DROP))
- #if ENABLE_FEATURE_IP_ADDRESS \
-  || ENABLE_FEATURE_IP_ROUTE \
-  || ENABLE_FEATURE_IP_LINK \
-diff --git a/miscutils/Config.src b/miscutils/Config.src
-index 682173640853..e5bc7013bdf8 100644
---- a/miscutils/Config.src
-+++ b/miscutils/Config.src
-@@ -375,6 +375,13 @@ config FEATURE_HDPARM_HDIO_GETSET_DMA
- 	help
- 	  Enables the 'hdparm -d' option to get/set using_dma flag.
- 
-+config IORW
-+	bool "iorw"
-+	default n
-+	help
-+	  Enables the 'iorw' command, a way to peek/poke arbitrary
-+	  memory mapped locations.
-+
- config MAKEDEVS
- 	bool "makedevs"
- 	default y
-diff --git a/miscutils/Kbuild.src b/miscutils/Kbuild.src
-index 5d42ede9f252..25382f57efc4 100644
---- a/miscutils/Kbuild.src
-+++ b/miscutils/Kbuild.src
-@@ -24,6 +24,7 @@ lib-$(CONFIG_FLASH_LOCK)     += flash_lock_unlock.o
- lib-$(CONFIG_FLASH_UNLOCK)   += flash_lock_unlock.o
- lib-$(CONFIG_IONICE)      += ionice.o
- lib-$(CONFIG_HDPARM)      += hdparm.o
-+lib-$(CONFIG_IORW)        += iorw.o
- lib-$(CONFIG_INOTIFYD)    += inotifyd.o
- 
- ifeq ($(CONFIG_FEATURE_LAST_FANCY),y)
+Ported for 1.36.1: registration via //config://applet://kbuild:
+comments; fix read16() declared as returning uint8_t (truncated
+16-bit reads to 8 bits); drop "\n" from bb_error_msg() strings
+(bb_error_msg appends a newline itself).
 diff --git a/miscutils/iorw.c b/miscutils/iorw.c
 new file mode 100644
-index 000000000000..c397159d89c7
+index 0000000..1f20bbf
 --- /dev/null
 +++ b/miscutils/iorw.c
-@@ -0,0 +1,255 @@
+@@ -0,0 +1,260 @@
 +/*
 +* Author:  Curt Brune, curt@cumulusnetworks.com
 +*
@@ -76,6 +34,16 @@ index 000000000000..c397159d89c7
 +* Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 +* MA 02111-1307 USA
 +*/
++//config:config IORW
++//config:	bool "iorw"
++//config:	default n
++//config:	help
++//config:	  Enables the 'iorw' command, a way to peek/poke arbitrary
++//config:	  memory mapped locations.
++
++//applet:IF_IORW(APPLET(iorw, BB_DIR_USR_SBIN, BB_SUID_DROP))
++
++//kbuild:lib-$(CONFIG_IORW) += iorw.o
 +
 +#include "libbb.h"
 +#include <stdint.h>
@@ -132,7 +100,7 @@ index 000000000000..c397159d89c7
 +#define mb()	asm volatile("" ::: "memory")
 +#elif defined(__ARMEL__)
 +#define mb()    asm volatile("dmb ish" : : : "memory")
-+#elif (__aarch64__) || (__ARM_ARCH_ISA_A64)
++#elif defined(__aarch64__) || defined(__ARM_ARCH_ISA_A64)
 +#define dsb(opt)        asm volatile("dsb " #opt : : : "memory")
 +#define mb()            dsb(sy)
 +#else
@@ -151,7 +119,7 @@ index 000000000000..c397159d89c7
 +	mb();
 +}
 +
-+static inline uint8_t read16(uintptr_t addr)
++static inline uint16_t read16(uintptr_t addr)
 +{
 +	mb();
 +	return *((volatile uint16_t *)addr);
@@ -199,7 +167,7 @@ index 000000000000..c397159d89c7
 +	char* p;
 +
 +	if ( argc < 3 ) {
-+		bb_error_msg("Not enough arguments.\n");
++		bb_error_msg("Not enough arguments.");
 +		bb_show_usage();
 +		return -1;
 +	}
@@ -208,7 +176,7 @@ index 000000000000..c397159d89c7
 +	if ( ((p[0] != 'r') && (p[0] != 'w')) ||
 +	     (p[1] != '.') ||
 +	     ((p[2] != 'b') && (p[2] != 'w') && (p[2] != 'l'))) {
-+		bb_error_msg("Unknown operation %s\n", p);
++		bb_error_msg("Unknown operation %s", p);
 +		bb_show_usage();
 +		return -1;
 +	}
@@ -222,7 +190,7 @@ index 000000000000..c397159d89c7
 +	case 'w':
 +		sz = 2;
 +		if ( phys_addr & 0x1) {
-+			bb_error_msg("2-byte access requested, but physical address 0x%08x is not 2-byte aligned.\n",
++			bb_error_msg("2-byte access requested, but physical address 0x%08x is not 2-byte aligned.",
 +				     phys_addr);
 +			bb_show_usage();
 +			return -1;
@@ -231,21 +199,21 @@ index 000000000000..c397159d89c7
 +	case 'l':
 +		sz = 4;
 +		if ( phys_addr & 0x3) {
-+			bb_error_msg("4-byte access requested, but physical address 0x%08x is not 4-byte aligned.\n",
++			bb_error_msg("4-byte access requested, but physical address 0x%08x is not 4-byte aligned.",
 +				     phys_addr);
 +			bb_show_usage();
 +			return -1;
 +		}
 +		break;
 +	default:
-+		bb_error_msg("Unknown data width '%c'\n", p[2]);
++		bb_error_msg("Unknown data width '%c'", p[2]);
 +		bb_show_usage();
 +		return -1;
-+	};
++	}
 +
 +	if ( p[0] == 'w') {
 +		if (argc != 4) {
-+			bb_error_msg("Bad format for write command\n");
++			bb_error_msg("Bad format for write command");
 +			bb_show_usage();
 +			return -1;
 +		}
@@ -256,19 +224,14 @@ index 000000000000..c397159d89c7
 +		num_items = strtoul( argv[3], NULL, 0);
 +	}
 +
-+	//    printf("op:%c, sz:%d, phys_addr:0x%08x, num_items:%d, val:0x%08x\n",
-+	//           p[0], sz, phys_addr, num_items, val);
-+
 +	map_addr = phys_addr - (phys_addr % getpagesize());
 +	offset = phys_addr % getpagesize();
 +
 +	range = (((sz * num_items) + (phys_addr - map_addr) + getpagesize() - 1) /
 +		 getpagesize()) * getpagesize();
 +
-+	// printf("map_addr: 0x%08x, range: 0x%08x, offset: 0x%08x\n", map_addr, range, offset);
-+
 +	if ( mmap_map_addr( map_addr, range, &virt_addr) != 0) {
-+		bb_error_msg("mmap() failed.\n");
++		bb_error_msg("mmap() failed.");
 +		return -1;
 +	}
 +
@@ -283,7 +246,7 @@ index 000000000000..c397159d89c7
 +		case 'l':
 +			write32( virt_addr + offset, val);
 +			break;
-+		};
++		}
 +	}
 +	else {
 +		for ( i = 0; i < num_items; i++) {
@@ -301,7 +264,7 @@ index 000000000000..c397159d89c7
 +			case 'l':
 +				rval = read32( addr);
 +				break;
-+			};
++			}
 +			printf( "0x%08x: 0x%0*x\n", phys_addr + (i*sz), sz*2, rval);
 +		}
 +	}

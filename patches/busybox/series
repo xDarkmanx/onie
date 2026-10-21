@@ -3,8 +3,8 @@ gitignore.patch
 gcc14-lxdialog-check.patch
 kernel68-cbq-uapi.patch
 u-boot-env-tools.patch
+feature-iorw-command.patch
 # Pending port to 1.36.1 (ONIE 1.25.1 versions below do not apply):
-#   feature-iorw-command.patch
 #   dhcp-additional-options.patch
 #   feature-flash-erase-command.patch
 #   feature-onie-syseeprom-command.patch
