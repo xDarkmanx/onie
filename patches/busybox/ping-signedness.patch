@@ -1,0 +1,44 @@
+Subject: [PATCH] ping: fix -Wextra sign-compare
+
+sz is int; cast the unsigned datalen and sizeof() operands
+to compare in the int domain.
+diff --git a/networking/ping.c b/networking/ping.c
+index 9805695..004f290 100644
+--- a/networking/ping.c
++++ b/networking/ping.c
+@@ -696,7 +696,7 @@ static int unpack4(char *buf, int sz, struct sockaddr_in *from)
+ 	int hlen;
+ 
+ 	/* discard if too short */
+-	if (sz < (datalen + ICMP_MINLEN))
++	if (sz < ((int)datalen + ICMP_MINLEN))
+ 		return 0;
+ 
+ 	/* check IP header */
+@@ -711,7 +711,7 @@ static int unpack4(char *buf, int sz, struct sockaddr_in *from)
+ 		uint16_t recv_seq = ntohs(icmppkt->icmp_seq);
+ 		uint32_t *tp = NULL;
+ 
+-		if (sz >= ICMP_MINLEN + sizeof(uint32_t))
++		if (sz >= ICMP_MINLEN + (int)sizeof(uint32_t))
+ 			tp = (uint32_t *) icmppkt->icmp_data;
+ 		unpack_tail(sz, tp,
+ 			inet_ntoa(*(struct in_addr *) &from->sin_addr.s_addr),
+@@ -732,7 +732,7 @@ static int unpack6(char *packet, int sz, struct sockaddr_in6 *from, int hoplimit
+ 	char buf[INET6_ADDRSTRLEN];
+ 
+ 	/* discard if too short */
+-	if (sz < (datalen + sizeof(struct icmp6_hdr)))
++	if (sz < ((int)datalen + (int)sizeof(struct icmp6_hdr)))
+ 		return 0;
+ 
+ 	icmppkt = (struct icmp6_hdr *) packet;
+@@ -743,7 +743,7 @@ static int unpack6(char *packet, int sz, struct sockaddr_in6 *from, int hoplimit
+ 		uint16_t recv_seq = ntohs(icmppkt->icmp6_seq);
+ 		uint32_t *tp = NULL;
+ 
+-		if (sz >= sizeof(struct icmp6_hdr) + sizeof(uint32_t))
++		if (sz >= (int)sizeof(struct icmp6_hdr) + (int)sizeof(uint32_t))
+ 			tp = (uint32_t *) &icmppkt->icmp6_data8[4];
+ 		unpack_tail(sz, tp,
+ 			inet_ntop(AF_INET6, &from->sin6_addr,

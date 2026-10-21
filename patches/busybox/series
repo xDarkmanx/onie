@@ -55,3 +55,4 @@ modutils-return-local.patch
 ifplugd-signedness.patch
 nc-vfork-clobber.patch
 nslookup-signedness.patch
+ping-signedness.patch
