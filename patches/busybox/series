@@ -29,6 +29,7 @@ sed-fallthrough-comment.patch
 vi-signedness.patch
 find-signedness.patch
 grep-signedness.patch
+bootchartd-vfork-clobber.patch
 u-boot-env-tools.patch
 feature-iorw-command.patch
 dhcp-additional-options.patch

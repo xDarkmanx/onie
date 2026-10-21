@@ -1,0 +1,30 @@
+Subject: [PATCH] bootchartd: stable exec_argv across vfork
+
+Shift argv into a volatile pointer finalized before the vfork.
+diff --git a/init/bootchartd.c b/init/bootchartd.c
+index ae1ee9d..ef47def 100644
+--- a/init/bootchartd.c
++++ b/init/bootchartd.c
+@@ -345,6 +345,7 @@ static void finalize(char *tempdir, const char *prog, int process_accounting)
+ int bootchartd_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+ int bootchartd_main(int argc UNUSED_PARAM, char **argv)
+ {
++	char **volatile exec_argv; /* finalized before forks, stable across */
+ 	unsigned sample_period_us;
+ 	pid_t parent_pid, logger_pid;
+ 	smallint cmd;
+@@ -456,10 +457,11 @@ int bootchartd_main(int argc UNUSED_PARAM, char **argv)
+ 	}
+ 
+ 	if (cmd == CMD_START && argv[2]) { /* "start PROG ARGS" */
+-		pid_t pid = xvfork();
++		pid_t pid;
++		exec_argv = argv + 2;
++		pid = xvfork();
+ 		if (pid == 0) { /* child */
+-			argv += 2;
+-			BB_EXECVP_or_die(argv);
++			BB_EXECVP_or_die(exec_argv);
+ 		}
+ 		/* parent */
+ 		waitpid(pid, NULL, 0);
