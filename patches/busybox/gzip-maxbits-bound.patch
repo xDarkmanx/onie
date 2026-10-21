@@ -1,0 +1,17 @@
+Subject: [PATCH] gzip: loop bound via MAX_BITS, not ARRAY_SIZE
+
+gen_bitlen iterates int bits over G2.bl_count[MAX_BITS+1]; spell
+the bound as MAX_BITS + 1 so both sides of the comparison stay int.
+diff --git a/archival/gzip.c b/archival/gzip.c
+index 91bd4d0..28a9872 100644
+--- a/archival/gzip.c
++++ b/archival/gzip.c
+@@ -1166,7 +1166,7 @@ static void gen_bitlen(const tree_desc *desc)
+ 	int bits;       /* bit length */
+ 	int overflow;   /* number of elements with bit length too large */
+ 
+-	for (bits = 0; bits < ARRAY_SIZE(G2.bl_count); bits++)
++	for (bits = 0; bits < MAX_BITS + 1; bits++)
+ 		G2.bl_count[bits] = 0;
+ 
+ 	/* In a first pass, compute the optimal bit lengths (which may
