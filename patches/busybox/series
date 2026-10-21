@@ -58,3 +58,4 @@ nslookup-signedness.patch
 ping-signedness.patch
 tc-unused.patch
 telnet-fallthrough.patch
+telnetd-signedness.patch

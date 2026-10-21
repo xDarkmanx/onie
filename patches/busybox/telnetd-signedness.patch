@@ -1,0 +1,17 @@
+Subject: [PATCH] telnetd: fix -Wextra sign-compare
+
+wr only holds tsession_t int indexes (wridx1, found - buf, small
+counts) - make it int to match ts->rdidx1.
+diff --git a/networking/telnetd.c b/networking/telnetd.c
+index 0805e46..581aade 100644
+--- a/networking/telnetd.c
++++ b/networking/telnetd.c
+@@ -178,7 +178,7 @@ struct globals {
+ static ssize_t
+ safe_write_to_pty_decode_iac(struct tsession *ts)
+ {
+-	unsigned wr;
++	int wr; /* indexes into the int ts->*idx1 domain */
+ 	ssize_t rc;
+ 	unsigned char *buf;
+ 	unsigned char *found;
