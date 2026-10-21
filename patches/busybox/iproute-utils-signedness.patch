@@ -1,0 +1,26 @@
+Subject: [PATCH] iproute utils: fix -Wextra sign-compare
+
+plen is unsigned; bitlen is int16_t (32/128 max) - compare unsigned,
+matching the original promoted semantics.
+diff --git a/networking/libiproute/utils.c b/networking/libiproute/utils.c
+index 4ce2303..46b71db 100644
+--- a/networking/libiproute/utils.c
++++ b/networking/libiproute/utils.c
+@@ -167,7 +167,7 @@ static void get_prefix_1(inet_prefix *dst, char *arg, int family)
+ 
+ 			netmask_pfx.family = AF_UNSPEC;
+ 			plen = bb_strtou(slash + 1, NULL, 0);
+-			if ((errno || plen > dst->bitlen)
++			if ((errno || plen > (unsigned)dst->bitlen)
+ 			 && get_addr_1(&netmask_pfx, slash + 1, family) != 0
+ 			) {
+ 				goto bad;
+@@ -183,7 +183,7 @@ static void get_prefix_1(inet_prefix *dst, char *arg, int family)
+ 
+ 				for (plen = 0; mask; mask <<= 1)
+ 					++plen;
+-				if (plen > dst->bitlen)
++				if (plen > (unsigned)dst->bitlen)
+ 					goto bad;
+ 				/* dst->flags |= PREFIXLEN_SPECIFIED; */
+ 			}
