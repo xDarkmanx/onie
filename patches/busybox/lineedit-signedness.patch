@@ -1,0 +1,78 @@
+Subject: [PATCH] lineedit: fix -Wextra sign-compare
+
+- load_history: make idx/i int to match int max_history/cnt_history
+- line_input_t.cnt_history_in_file: unsigned -> int (compared to int max_history*4)
+- ALT_BACKSPACE: sc unsigned to match cursor
+- cursor/command_len bound checks and cmdedit_y vs new_y: explicit (int) casts
+  (command_len is signed by design: it becomes -1 on break_out)
+diff --git a/include/libbb.h b/include/libbb.h
+index cca33a1..6df1bfd 100644
+--- a/include/libbb.h
++++ b/include/libbb.h
+@@ -1960,7 +1960,7 @@ typedef struct line_input_t {
+ 	 * if FEATURE_EDITING_SAVE_ON_EXIT: "how many in-memory lines are
+ 	 * also in on-disk history (and thus need to be skipped on save)"
+ 	 */
+-	unsigned cnt_history_in_file;
++	int cnt_history_in_file;
+ 	const char *hist_file;
+ #  endif
+ 	char *history[MAX_HISTORY + 1];
+diff --git a/libbb/lineedit.c b/libbb/lineedit.c
+index c87d606..3c05463 100644
+--- a/libbb/lineedit.c
++++ b/libbb/lineedit.c
+@@ -479,7 +479,7 @@ static void put_cur_glyph_and_inc_cursor(void)
+ /* Move to end of line (by printing all chars till the end) */
+ static void put_till_end_and_adv_cursor(void)
+ {
+-	while (cursor < command_len)
++	while ((int)cursor < command_len)
+ 		put_cur_glyph_and_inc_cursor();
+ }
+ 
+@@ -684,7 +684,7 @@ static void input_backspace(void)
+ /* Move forward one character */
+ static void input_forward(void)
+ {
+-	if (cursor < command_len)
++	if ((int)cursor < command_len)
+ 		put_cur_glyph_and_inc_cursor();
+ }
+ 
+@@ -1492,7 +1492,7 @@ static void load_history(line_input_t *st_parm)
+ 	char *temp_h[MAX_HISTORY];
+ 	char *line;
+ 	FILE *fp;
+-	unsigned idx, i, line_len;
++	int idx, i, line_len;
+ 
+ 	/* NB: do not trash old history if file can't be opened */
+ 
+@@ -2146,7 +2146,7 @@ static void cmdedit_setwidth(void)
+ 	/* new y for current cursor */
+ 	new_y = (cursor + cmdedit_prmt_len) / cmdedit_termw;
+ 	/* redraw */
+-	redraw((new_y >= cmdedit_y ? new_y : cmdedit_y), command_len - cursor);
++	redraw((new_y >= (int)cmdedit_y ? new_y : (int)cmdedit_y), command_len - cursor);
+ }
+ 
+ static void win_changed(int nsig UNUSED_PARAM)
+@@ -2691,7 +2691,7 @@ int FAST_FUNC read_line_input(line_input_t *st, const char *prompt, char *comman
+ 		}
+ 		case KEYCODE_ALT_BACKSPACE: {
+ 			/* Delete word backward */
+-			int sc = cursor;
++			unsigned sc = cursor;
+ 			ctrl_left();
+ 			while (sc-- > cursor)
+ 				input_delete(1);
+@@ -2933,7 +2933,7 @@ int FAST_FUNC read_line_input(line_input_t *st, const char *prompt, char *comman
+ 			}
+ 
+ 			command_len++;
+-			if (cursor == (command_len - 1)) {
++			if ((int)cursor == command_len - 1) {
+ 				/* We are at the end, append */
+ 				command_ps[cursor] = ic;
+ 				command_ps[cursor + 1] = BB_NUL;

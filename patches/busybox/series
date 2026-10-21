@@ -27,6 +27,7 @@ awk-fallthrough.patch
 diff-signedness.patch
 sed-fallthrough-comment.patch
 vi-signedness.patch
+lineedit-signedness.patch
 find-signedness.patch
 grep-signedness.patch
 bootchartd-vfork-clobber.patch
