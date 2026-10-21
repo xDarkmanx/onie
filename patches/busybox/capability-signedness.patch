@@ -1,0 +1,15 @@
+Subject: [PATCH] capability: unsigned i over the versions table
+
+diff --git a/libbb/capability.c b/libbb/capability.c
+index e3c252a..378fbab 100644
+--- a/libbb/capability.c
++++ b/libbb/capability.c
+@@ -96,7 +96,7 @@ void FAST_FUNC getcaps(void *arg)
+ 		_LINUX_CAPABILITY_U32S_2, /* = 2 */
+ 		_LINUX_CAPABILITY_U32S_1, /* = 1 */
+ 	};
+-	int i;
++	unsigned i;
+ 	struct caps *caps = arg;
+ 
+ 	caps->header.pid = 0;
