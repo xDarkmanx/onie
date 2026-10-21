@@ -1,0 +1,39 @@
+Subject: [PATCH] onie_tlvinfo: fix -Wextra sign-compare
+
+Cast sizeof()-based loop bounds and the sizeof(tlvinfo_tlv_t) sum
+to int to compare in the int domain (all values are small).
+diff --git a/include/onie_tlvinfo.h b/include/onie_tlvinfo.h
+index 6c7381e..328e0a7 100644
+--- a/include/onie_tlvinfo.h
++++ b/include/onie_tlvinfo.h
+@@ -111,7 +111,7 @@ static inline const char* tlv_type2name(u_int8_t type)
+     const char* name = "Unknown";
+     int   i;
+ 
+-    for (i = 0; i < sizeof(tlv_code_list)/sizeof(tlv_code_list[0]); i++) {
++    for (i = 0; i < (int)(sizeof(tlv_code_list)/sizeof(tlv_code_list[0])); i++) {
+ 	if (tlv_code_list[i].m_code == type) {
+ 	    name = tlv_code_list[i].m_name;
+ 	    break;
+diff --git a/miscutils/onie_tlvinfo.c b/miscutils/onie_tlvinfo.c
+index cb68688..8f1b78f 100644
+--- a/miscutils/onie_tlvinfo.c
++++ b/miscutils/onie_tlvinfo.c
+@@ -697,7 +697,7 @@ bool tlvinfo_add_tlv(u_int8_t * eeprom, int tcode, char * strval)
+     }
+ 
+     // Is there room for this TLV?
+-    if ((be16_to_cpu(eeprom_hdr->totallen) + sizeof(tlvinfo_tlv_t) +
++    if ((be16_to_cpu(eeprom_hdr->totallen) + (int)sizeof(tlvinfo_tlv_t) +
+ 	 new_tlv_len) > max_size) {
+ 	printf("ERROR: There is not enough room in the EERPOM to save data.\n");
+ 	return(FALSE);
+@@ -743,7 +743,7 @@ void show_tlv_code_list(void)
+ 
+     printf("TLV Code    TLV Name\n");
+     printf("========    =================\n");
+-    for (i = 0; i < sizeof(tlv_code_list)/sizeof(tlv_code_list[0]); i++) {
++    for (i = 0; i < (int)(sizeof(tlv_code_list)/sizeof(tlv_code_list[0])); i++) {
+ 	printf("0x%02x        %s\n",
+ 	       tlv_code_list[i].m_code,
+ 	       tlv_code_list[i].m_name);
