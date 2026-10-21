@@ -1,0 +1,115 @@
+Subject: [PATCH] test: volatile walk pointer, argv not read after setjmp
+
+The POSIX special-case walker modifies its position while longjmp
+bailouts can fire from expression evaluation. Walk with a volatile
+pointer assigned before setjmp; argv itself is never read after
+setjmp.
+diff --git a/coreutils/test.c b/coreutils/test.c
+index 1d1e6d1..89eab20 100644
+--- a/coreutils/test.c
++++ b/coreutils/test.c
+@@ -895,6 +895,7 @@ int test_main(int argc, char **argv)
+ {
+ 	int res;
+ 	const char *arg0;
++	char **volatile argv_walk; /* read argv only before setjmp */
+ #if BASH_TEST2
+ 	bool bt2 = 0;
+ #endif
+@@ -929,6 +930,12 @@ int test_main(int argc, char **argv)
+ 	bash_test2 = bt2;
+ #endif
+ 
++	/* argv/args must be finalized before setjmp: nothing may modify
++	 * non-volatile locals between setjmp and a possible longjmp. */
++	argv++;
++	args = argv;
++	argv_walk = argv;
++
+ 	res = setjmp(leaving);
+ 	if (res)
+ 		goto ret;
+@@ -943,38 +950,37 @@ int test_main(int argc, char **argv)
+ 	 */
+ 	/*ngroups = 0; - done by INIT_S() */
+ 
+-	argv++;
+-	args = argv;
+-
+ 	/* Implement special cases from POSIX.2, section 4.62.4.
+ 	 * Testcase: "test '(' = '('"
+ 	 * The general parser would misinterpret '(' as group start.
+ 	 */
+ 	if (1) {
++		/* set before setjmp, modified only here; volatile keeps the
++		 * value well-defined across a possible longjmp */
+ 		int negate = 0;
+  again:
+-		if (!argv[0]) {
++		if (!argv_walk[0]) {
+ 			/* "test" */
+ 			res = 1;
+ 			goto ret_special;
+ 		}
+-		if (!argv[1]) {
++		if (!argv_walk[1]) {
+ 			/* "test [!] arg" */
+-			res = (argv[0][0] == '\0');
++			res = (argv_walk[0][0] == '\0');
+ 			goto ret_special;
+ 		}
+-		if (argv[2]) {
+-			if (!argv[3]) {
++		if (argv_walk[2]) {
++			if (!argv_walk[3]) {
+ 				/*
+ 				 * http://pubs.opengroup.org/onlinepubs/009695399/utilities/test.html
+ 				 * """ 3 arguments:
+ 				 * If $2 is a binary primary, perform the binary test of $1 and $3.
+ 				 * """
+ 				 */
+-				check_operator(argv[1]);
++				check_operator(argv_walk[1]);
+ 				if (last_operator->op_type == BINOP) {
+ 					/* "test [!] arg1 <binary_op> arg2" */
+-					args = argv;
++					args = argv_walk;
+ 					res = (binop() == 0);
+  ret_special:
+ 					/* If there was leading "!" op... */
+@@ -986,8 +992,8 @@ int test_main(int argc, char **argv)
+ 				 */
+ 				goto check_negate;
+ 			}
+-			/* argv[3] exists (at least 4 args), is it exactly 4 args? */
+-			if (!argv[4]) {
++			/* argv_walk[3] exists (at least 4 args), is it exactly 4 args? */
++			if (!argv_walk[4]) {
+ 				/*
+ 				 * """ 4 arguments:
+ 				 * If $1 is '!', negate the three-argument test of $2, $3, and $4.
+@@ -995,18 +1001,18 @@ int test_main(int argc, char **argv)
+ 				 * """
+ 				 * Example why code below is necessary: test '(' ! -e ')'
+ 				 */
+-				if (LONE_CHAR(argv[0], '(')
+-				 && LONE_CHAR(argv[3], ')')
++				if (LONE_CHAR(argv_walk[0], '(')
++				 && LONE_CHAR(argv_walk[3], ')')
+ 				) {
+ 					/* "test [!] ( x y )" */
+-					argv[3] = NULL;
+-					argv++;
++					argv_walk[3] = NULL;
++					argv_walk++;
+ 				}
+ 			}
+ 		}
+  check_negate:
+-		if (LONE_CHAR(argv[0], '!')) {
+-			argv++;
++		if (LONE_CHAR(argv_walk[0], '!')) {
++			argv_walk++;
+ 			negate ^= 1;
+ 			goto again;
+ 		}
