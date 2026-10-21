@@ -1,0 +1,16 @@
+Subject: [PATCH] traceroute: fix -Wextra sign-compare
+
+seq is a small int probe counter; compare ntohl(seq6) in int domain.
+diff --git a/networking/traceroute.c b/networking/traceroute.c
+index 4bbe1ab..97a35c6 100644
+--- a/networking/traceroute.c
++++ b/networking/traceroute.c
+@@ -790,7 +790,7 @@ packet6_ok(int read_len, int seq)
+ 			pkt = (struct outdata6_t *) (up + 1);
+ 
+ 			if (pkt->ident6 == ident
+-			 && ntohl(pkt->seq6) == seq
++			 && (int)ntohl(pkt->seq6) == seq
+ 			) {
+ 				return (type == ICMP6_TIME_EXCEEDED ? -1 : (code<<8)+1);
+ 			}
