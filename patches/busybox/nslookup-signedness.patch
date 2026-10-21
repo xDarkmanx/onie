@@ -1,0 +1,78 @@
+Subject: [PATCH] nslookup: fix -Wextra sign-compare
+
+qn/rc/c/n_replies/save_idx are int loop counters; cast the
+unsigned query/serv counts and the ARRAY_SIZE bound (all small).
+diff --git a/networking/nslookup.c b/networking/nslookup.c
+index 6da97ba..bf1d296 100644
+--- a/networking/nslookup.c
++++ b/networking/nslookup.c
+@@ -550,7 +550,7 @@ static int send_queries(struct ns *ns)
+ 
+ 		if (tcur - tsent >= retry_interval) {
+  send:
+-			for (qn = 0; qn < G.query_count; qn++) {
++			for (qn = 0; qn < (int)G.query_count; qn++) {
+ 				if (G.query[qn].qlen == 0)
+ 					continue; /* this one was replied already */
+ 
+@@ -600,7 +600,7 @@ static int send_queries(struct ns *ns)
+ 				dbg("response matches query %u\n", qn);
+ 				break;
+ 			}
+-			if (++qn >= G.query_count) {
++			if (++qn >= (int)G.query_count) {
+ 				dbg("response does not match any query\n");
+ 				goto next;
+ 			}
+@@ -664,7 +664,7 @@ static int send_queries(struct ns *ns)
+  */
+ 		bb_putchar('\n');
+ 		n_replies++;
+-		if (n_replies >= G.query_count)
++		if (n_replies >= (int)G.query_count)
+ 			goto ret;
+ #else
+ //used to store replies and process them later
+@@ -678,7 +678,7 @@ static int send_queries(struct ns *ns)
+ 		/* G.query[0..save_idx] have replies, move to next one, if exists */
+ 		for (;;) {
+ 			save_idx++;
+-			if (save_idx >= G.query_count)
++			if (save_idx >= (int)G.query_count)
+ 				goto ret; /* all are full: we have all results */
+ 			if (!G.query[save_idx].rlen)
+ 				break; /* this one is empty */
+@@ -972,13 +972,13 @@ int nslookup_main(int argc UNUSED_PARAM, char **argv)
+ 		}
+ 	} else {
+ 		int c;
+-		for (c = 0; c < ARRAY_SIZE(qtypes); c++) {
++		for (c = 0; c < (int)ARRAY_SIZE(qtypes); c++) {
+ 			if (types & (1 << c))
+ 				add_query_with_search(qtypes[c].type, argv[0]);
+ 		}
+ 	}
+ 
+-	for (rc = 0; rc < G.serv_count;) {
++	for (rc = 0; rc < (int)G.serv_count;) {
+ 		int c;
+ 
+ 		c = send_queries(&G.server[rc]);
+@@ -996,7 +996,7 @@ int nslookup_main(int argc UNUSED_PARAM, char **argv)
+ 		/* c = 0: timed out waiting for replies */
+ 		/* c < 0: error (message already printed) */
+ 		rc++;
+-		if (rc >= G.serv_count) {
++		if (rc >= (int)G.serv_count) {
+ //
+ // NB: bind-utils-9.11.3 behavior (all to stdout, not stderr):
+ //
+@@ -1021,7 +1021,7 @@ int nslookup_main(int argc UNUSED_PARAM, char **argv)
+ 	}
+ 
+ 	err = 0;
+-	for (rc = 0; rc < G.query_count; rc++) {
++	for (rc = 0; rc < (int)G.query_count; rc++) {
+ 		if (G.query[rc].qlen) {
+ 			printf("*** Can't find %s: No answer\n", G.query[rc].name);
+ 			err = 1;
