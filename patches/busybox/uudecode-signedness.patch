@@ -1,0 +1,38 @@
+Subject: [PATCH] uudecode: unsigned rem/out for the column split
+
+rem/out/col/size are all non-negative sizes; unify on unsigned,
+ 
+cast the printf precision explicitly.
+diff --git a/coreutils/uudecode.c b/coreutils/uudecode.c
+index 63a8d4d..7579436 100644
+--- a/coreutils/uudecode.c
++++ b/coreutils/uudecode.c
+@@ -282,6 +282,7 @@ int baseNUM_main(int argc UNUSED_PARAM, char **argv)
+ 	FILE *src_stream;
+ 	unsigned opts;
+ 	unsigned col = 76;
++	unsigned rem;
+ 
+ 	opts = getopt32(argv, "^" "diw:+" "\0" "?1"/* 1 arg max*/, &col);
+ 	argv += optind;
+@@ -307,7 +308,7 @@ int baseNUM_main(int argc UNUSED_PARAM, char **argv)
+ 		 */
+ 		char dst_buf[((DST_BUF_SIZE + /*gap:*/ 16) /*round up to 16:*/ | 0xf) + 1];
+ #define src_buf (dst_buf + sizeof(dst_buf) - SRC_BUF_SIZE)
+-		int src_fd, rem;
++		int src_fd;
+ 
+ 		src_fd = fileno(src_stream);
+ 		rem = 0;
+@@ -336,9 +337,9 @@ int baseNUM_main(int argc UNUSED_PARAM, char **argv)
+ 				if (rem == 0)
+ 					rem = col;
+ 				while (1) {
+-					int out = size < rem ? size : rem;
++					size_t out = size < rem ? size : rem;
+ 					rem -= out;
+-					printf(rem != 0 ? "%.*s" : "%.*s\n", out, result);
++					printf(rem != 0 ? "%.*s" : "%.*s\n", (int)out, result);
+ 					if (rem != 0)
+ 						break;
+ 					size -= out;
