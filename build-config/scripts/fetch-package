@@ -75,7 +75,12 @@ else
 		echo "  Getting ${FILE} from ${DOWNLOAD_CACHE_DIR} "
 	else
 		while [ $# -ge 1 ] ; do
-			URL="$1/$FILE"
+			# A trailing '/' marks a directory-style URL (the file name is
+			# appended); anything else is an exact URL (e.g. github archives).
+			case "$1" in
+				*/) URL="$1$FILE" ;;
+				*)  URL="$1" ;;
+			esac
 			echo "  Downloading $FILE from: $URL"
 			wget --no-verbose --no-check-certificate -O "${OUTDIR}/${FILE}" $URL
 			if [ $? -eq 0 ] ; then

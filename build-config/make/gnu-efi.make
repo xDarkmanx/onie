@@ -12,7 +12,7 @@
 GNU_EFI_VERSION			= 4.0.4
 GNU_EFI_TARBALL			= gnu-efi-$(GNU_EFI_VERSION).tar.gz
 GNU_EFI_TARBALL_URLS		+= $(ONIE_MIRROR) \
-				   https://github.com/ncroxon/gnu-efi/archive/$(GNU_EFI_VERSION).tar.gz
+				   https://github.com/ncroxon/gnu-efi/archive/refs/tags/$(GNU_EFI_VERSION).tar.gz
 GNU_EFI_BUILD_DIR		= $(USER_BUILDDIR)/gnu-efi
 GNU_EFI_DIR			= $(GNU_EFI_BUILD_DIR)/gnu-efi-$(GNU_EFI_VERSION)
 
