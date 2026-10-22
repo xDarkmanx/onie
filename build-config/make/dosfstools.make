@@ -78,7 +78,7 @@ $(DOSFSTOOLS_CONFIGURE_STAMP): $(DOSFSTOOLS_PATCH_STAMP) | $(DEV_SYSROOT_INIT_ST
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Configure dosfstools-$(DOSFSTOOLS_VERSION) ===="
 	$(Q) cd $(DOSFSTOOLS_DIR) && PATH='$(CROSSBIN):$(PATH)'	\
-		./configure --prefix=/usr --disable-nls --host=$(TARGET)	\
+		./configure --prefix=/usr --disable-nls --enable-compat-symlinks --host=$(TARGET)	\
 		CC=$(CROSSPREFIX)gcc				\
 		CFLAGS="$(filter-out -Werror,$(ONIE_CFLAGS))"	\
 		LDFLAGS="$(ONIE_LDFLAGS)"
@@ -88,9 +88,8 @@ $(DOSFSTOOLS_BUILD_STAMP): $(DOSFSTOOLS_CONFIGURE_STAMP) $(DOSFSTOOLS_NEW_FILES)
 				| $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building dosfstools-$(DOSFSTOOLS_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(DOSFSTOOLS_DIR) $(DOSFSTOOLS_MAKE_VARS)
 	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(DOSFSTOOLS_DIR) $(DOSFSTOOLS_MAKE_VARS) \
-		install-symlinks
+		install
 	$(Q) touch $@
 
 dosfstools-install: $(DOSFSTOOLS_INSTALL_STAMP)
