@@ -99,6 +99,9 @@ $(FLASHROM_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(FLASHROM_BUILD_STAMP) $(PCIUT
 	$(Q) for file in $(FLASHROM_PROGRAMS); do \
 		cp -av --remove-destination $(DEV_SYSROOT)/usr/sbin/$$file $(SYSROOTDIR)/usr/sbin ; \
 	     done
+	$(Q) for lib in $(wildcard $(DEV_SYSROOT)/usr/lib/*/libflashrom.so*); do \
+		cp -av --remove-destination $$lib $(SYSROOTDIR)/usr/lib ; \
+	     done
 	$(Q) touch $@
 
 USER_CLEAN += flashrom-clean
