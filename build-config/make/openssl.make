@@ -75,18 +75,80 @@ $(OPENSSL_SOURCE_STAMP): $(USER_TREE_STAMP) | $(OPENSSL_DOWNLOAD_STAMP)
 	$(Q) $(SCRIPTDIR)/extract-package $(OPENSSL_BUILD_DIR) $(DOWNLOADDIR)/$(OPENSSL_TARBALL)
 	$(Q) touch $@
 
-openssl-configure: $(OPENSSL_CONFIGURE_STAMP)
-$(OPENSSL_CONFIGURE_STAMP): $(OPENSSL_SOURCE_STAMP) $(ZLIB_BUILD_STAMP) \
-				| $(DEV_SYSROOT_INIT_STAMP)
-	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
-	$(Q) echo "====  Configure openssl-$(OPENSSL_VERSION) ===="
 $(OPENSSL_PATCH_STAMP): $(OPENSSL_SRCPATCHDIR)/* $(OPENSSL_SOURCE_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Patching openssl ===="
 	$(Q) $(SCRIPTDIR)/apply-patch-series $(OPENSSL_SRCPATCHDIR)/series $(OPENSSL_DIR)
 	$(Q) touch $@
 
-$(OPENSSL_CONFIGURE_STAMP): $(OPENSSL_PATCH_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
+openssl-configure: $(OPENSSL_CONFIGURE_STAMP)
+$(OPENSSL_CONFIGURE_STAMP): $(OPENSSL_SOURCE_STAMP) $(ZLIB_BUILD_STAMP) \
+				$(OPENSSL_PATCH_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
+	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
+	$(Q) echo "====  Configure openssl-$(OPENSSL_VERSION) ===="
+	$(Q) cd $(OPENSSL_DIR) && PATH='$(CROSSBIN):$(PATH)'	\
+		MACHINE=$(TARGET) RELEASE=$(LINUX_RELEASE)	\
+		$(OPENSSL_DIR)/config				\
+		$(OPENSSL_ARCH)					\
+		--prefix=/usr					\
+		--libdir=lib					\
+		--cross-compile-prefix=$(CROSSPREFIX)		\
+		--with-zlib-include=$(DEV_SYSROOT)/usr/include	\
+		--with-zlib-lib=$(DEV_SYSROOT)/usr/lib		\
+		shared						\
+		enable-ssl-trace				\
+		zlib						\
+		no-threads					\
+		"$(ONIE_CFLAGS) -Wno-missing-field-initializers -Wno-unused-parameter"
+	$(Q) touch $@
+
+ifndef MAKE_CLEAN
+OPENSSL_NEW_FILES = $(shell test -d $(OPENSSL_DIR) && test -f $(OPENSSL_BUILD_STAMP) && \
+	              find -L $(OPENSSL_DIR) -newer $(OPENSSL_BUILD_STAMP) -type f \
+			\! -name symlinks \! -name symlinks.o -print -quit)
+endif
+
+openssl-build: $(OPENSSL_BUILD_STAMP)
+$(OPENSSL_BUILD_STAMP): $(OPENSSL_NEW_FILES) $(OPENSSL_CONFIGURE_STAMP)
+	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
+	$(Q) echo "====  Building openssl-$(OPENSSL_VERSION) ===="
+	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(OPENSSL_DIR)
+	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(OPENSSL_DIR) \
+		DESTDIR=$(DEV_SYSROOT) install_sw install_ssldirs
+	$(Q) for file in $(OPENSSL_LIBS) ; do \
+		chmod u+w -R $(DEV_SYSROOT)/usr/lib/$$file ; \
+	     done
+	$(Q) touch $@
+
+openssl-install: $(OPENSSL_INSTALL_STAMP)
+$(OPENSSL_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(OPENSSL_BUILD_STAMP) $(ZLIB_INSTALL_STAMP)
+	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
+	$(Q) echo "==== Installing openssl in $(SYSROOTDIR) ===="
+	$(Q) cp -av --remove-destination $(DEV_SYSROOT)/usr/ssl $(SYSROOTDIR)/usr
+	$(Q) for file in $(OPENSSL_LIBS) ; do \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ ; \
+	     done
+	$(Q) for file in $(OPENSSL_BINS) ; do \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/bin/$$file $(SYSROOTDIR)/usr/bin/ ; \
+	     done
+	$(Q) touch $@
+
+USER_CLEAN += openssl-clean
+openssl-clean:
+	$(Q) rm -rf $(OPENSSL_BUILD_DIR)
+	$(Q) rm -f $(OPENSSL_STAMP)
+	$(Q) echo "=== Finished making $@ for $(PLATFORM)"
+
+DOWNLOAD_CLEAN += openssl-download-clean
+openssl-download-clean:
+	$(Q) rm -f $(OPENSSL_DOWNLOAD_STAMP) $(DOWNLOADDIR)/openssl*
+
+#-------------------------------------------------------------------------------
+#
+# Local Variables:
+# mode: makefile-gmake
+# End:
+
 	$(Q) cd $(OPENSSL_DIR) && PATH='$(CROSSBIN):$(PATH)'	\
 		MACHINE=$(TARGET) RELEASE=$(LINUX_RELEASE)	\
 		$(OPENSSL_DIR)/config				\
