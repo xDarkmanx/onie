@@ -89,3 +89,4 @@ shell-common-signedness.patch
 logread-wextra.patch
 acpid-signedness.patch
 cal-signedness.patch
+fdisk-wextra.patch

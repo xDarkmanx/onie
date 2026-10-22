@@ -1,0 +1,54 @@
+Subject: [PATCH] fdisk: fix -Wextra warnings
+
+- unsigned-i loops over int g_partitions: (unsigned) cast
+  (preserves promoted compare)
+- lastplusoff/sector_size bounds: cast to the compared domain
+- case i: SGI info falls into l: list types - add marker
+diff --git a/util-linux/fdisk.c b/util-linux/fdisk.c
+index 20e7d56..39e2b19 100644
+--- a/util-linux/fdisk.c
++++ b/util-linux/fdisk.c
+@@ -2061,7 +2061,7 @@ wrong_p_order(int *prev)
+ 	sector_t last_p_start_pos = 0, p_start_pos;
+ 	unsigned i, last_i = 0;
+ 
+-	for (i = 0; i < g_partitions; i++) {
++	for (i = 0; i < (unsigned)g_partitions; i++) {
+ 		if (i == 4) {
+ 			last_i = 4;
+ 			last_p_start_pos = 0;
+@@ -2333,7 +2333,7 @@ fill_bounds(sector_t *first, sector_t *last)
+ 	const struct pte *pe = &ptes[0];
+ 	const struct partition *p;
+ 
+-	for (i = 0; i < g_partitions; pe++,i++) {
++	for (i = 0; i < (unsigned)g_partitions; pe++,i++) {
+ 		p = pe->part_table;
+ 		if (!p->sys_ind || IS_EXTENDED(p->sys_ind)) {
+ 			first[i] = 0xffffffff;
+@@ -2493,7 +2493,7 @@ add_partition(int n, int sys)
+ 			if (start == ptes[i].offset_from_dev_start)
+ 				start += sector_offset;
+ 			lastplusoff = last[i] + ((n < 4) ? 0 : sector_offset);
+-			if (start >= first[i] && start <= lastplusoff)
++			if (start >= first[i] && start <= (sector_t)lastplusoff)
+ 				start = lastplusoff + 1;
+ 		}
+ 		if (start > limit)
+@@ -2732,7 +2732,7 @@ print_buffer(char *pbuffer)
+ {
+ 	int i,l;
+ 
+-	for (i = 0, l = 0; i < sector_size; i++, l++) {
++	for (i = 0, l = 0; i < (int)sector_size; i++, l++) {
+ 		if (l == 0)
+ 			printf("0x%03X:", i);
+ 		printf(" %02X", (unsigned char) pbuffer[i]);
+@@ -3184,6 +3184,7 @@ int fdisk_main(int argc UNUSED_PARAM, char **argv)
+ 				create_sgiinfo();
+ 			else
+ 				unknown_command(c);
++			/* fall through */
+ 		case 'l':
+ 			list_types(get_sys_types());
+ 			break;
