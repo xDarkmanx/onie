@@ -19,7 +19,8 @@ PATCH_ROOT=`dirname $SERIES`
 cd "$SRC" || exit 1
 
 if git rev-parse --verify refs/stacks/main >/dev/null 2>&1 || \
-   git config --get branch.main.stgit.stack >/dev/null 2>&1 ; then
+   git config --get branch.main.stgit.stack >/dev/null 2>&1 || \
+   test -d "$(git rev-parse --git-path patches)/main" ; then
     # Already an stgit-managed source tree (patch stage re-run after
     # series/patches changed): tolerate re-init and re-import; stg
     # skips patches that are already applied.
