@@ -1,0 +1,23 @@
+Subject: [PATCH] volume_id: fix -Wextra sign-compare
+
+lseek/full_read results vs uint64_t off / size_t len: compare in
+the signed syscall domain (offsets and lengths fit).
+diff --git a/util-linux/volume_id/util.c b/util-linux/volume_id/util.c
+index 061545f..8f37516 100644
+--- a/util-linux/volume_id/util.c
++++ b/util-linux/volume_id/util.c
+@@ -228,12 +228,12 @@ void *volume_id_get_buffer(struct volume_id *id, uint64_t off, size_t len)
+ 	dbg("read seekbuf off:0x%llx len:0x%zx",
+ 				(unsigned long long) off, len);
+  do_read:
+-	if (lseek(id->fd, off, SEEK_SET) != off) {
++	if (lseek(id->fd, off, SEEK_SET) != (off_t)off) {
+ 		dbg("seek(0x%llx) failed", (unsigned long long) off);
+ 		goto err;
+ 	}
+ 	read_len = full_read(id->fd, dst, len);
+-	if (read_len != len) {
++	if (read_len != (ssize_t)len) {
+ 		dbg("requested 0x%x bytes, got 0x%x bytes",
+ 				(unsigned) len, (unsigned) read_len);
+  err:
