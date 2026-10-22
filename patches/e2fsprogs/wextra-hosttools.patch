@@ -1,0 +1,57 @@
+Subject: [PATCH] fix -Wextra warnings in host tools and lib/ext2fs
+
+- util/subst.c: (void)filename when HAVE_FUTIMES
+- gen_crc32ctable.c: (void) argc/argv
+- rw_bitmaps.c: calloc(nmemb, size) argument order
+- tdb.c: calloc order
+--- a/util/subst.c	2026-03-06 20:17:36.000000000 +0300
++++ b/util/subst.c	2026-10-22 13:35:55.439814923 +0300
+@@ -304,6 +304,9 @@
+ void set_utimes(const char *filename, int fd, const struct timeval times[2])
+ {
+ #ifdef HAVE_FUTIMES
++	(void)filename;
++#endif
++#ifdef HAVE_FUTIMES
+ 	if (futimes(fd, times) < 0)
+ 		perror("futimes");
+ #elif HAVE_UTIMES
+--- a/lib/ext2fs/gen_crc32ctable.c	2026-03-06 20:17:36.000000000 +0300
++++ b/lib/ext2fs/gen_crc32ctable.c	2026-10-22 13:37:59.352748629 +0300
+@@ -92,6 +92,7 @@
+ 
+ int main(int argc, char **argv)
+ {
++	(void) argc; (void) argv;
+ 	printf("/* this file is generated - do not edit */\n\n");
+ 
+ 	if (CRC_BE_BITS > 1) {
+--- a/lib/ext2fs/rw_bitmaps.c	2026-03-06 20:17:36.000000000 +0300
++++ b/lib/ext2fs/rw_bitmaps.c	2026-10-22 13:38:26.918336939 +0300
+@@ -574,12 +574,12 @@
+ 	if (retval)
+ 		return retval;
+ 
+-	thread_ids = calloc(sizeof(pthread_t), num_threads);
++	thread_ids = calloc(num_threads, sizeof(pthread_t));
+ 	if (!thread_ids)
+ 		return ENOMEM;
+ 
+-	thread_infos = calloc(sizeof(struct read_bitmaps_thread_info),
+-				num_threads);
++	thread_infos = calloc(num_threads,
++				sizeof(struct read_bitmaps_thread_info));
+ 	if (!thread_infos)
+ 		goto out;
+ 
+--- a/lib/ext2fs/tdb.c	2026-03-06 20:17:36.000000000 +0300
++++ b/lib/ext2fs/tdb.c	2026-10-22 13:38:26.918720058 +0300
+@@ -1634,7 +1634,7 @@
+ 	}
+ 
+ 	tdb->transaction = (struct tdb_transaction *)
+-		calloc(sizeof(struct tdb_transaction), 1);
++		calloc(1, sizeof(struct tdb_transaction));
+ 	if (tdb->transaction == NULL) {
+ 		tdb->ecode = TDB_ERR_OOM;
+ 		return -1;
