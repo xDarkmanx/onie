@@ -1,0 +1,16 @@
+Subject: [PATCH] sk-ecdsa: fix -Wextra pointer-sign
+
+Cast buffer/key pointers to the expected signedness; no behavior change.
+diff --git a/src/sk-ecdsa.c b/src/sk-ecdsa.c
+index bed7e50..fa9b715 100644
+--- a/src/sk-ecdsa.c
++++ b/src/sk-ecdsa.c
+@@ -29,7 +29,7 @@ int buf_sk_ecdsa_verify(buffer *buf, const ecc_key *key, const buffer *data_buf,
+ 	/* create the message to be signed */
+ 	sk_buffer = buf_new (2*SHA256_HASH_SIZE+5);
+ 	sha256_init (&hs);
+-	sha256_process (&hs, app, applen);
++	sha256_process (&hs, (const unsigned char*)app, applen);
+ 	sha256_done (&hs, subhash);
+ 	buf_putbytes (sk_buffer, subhash, sizeof (subhash));
+ 	buf_putbyte (sk_buffer, flags);

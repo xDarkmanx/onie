@@ -1,0 +1,16 @@
+Subject: [PATCH] svr-kex: fix -Wextra pointer-sign
+
+Cast buffer/key pointers to the expected signedness; no behavior change.
+diff --git a/src/svr-kex.c b/src/svr-kex.c
+index 44939e0..9e50091 100644
+--- a/src/svr-kex.c
++++ b/src/svr-kex.c
+@@ -251,7 +251,7 @@ static void send_msg_kexdh_reply(mp_int *dh_e, buffer *q_c) {
+ 			struct kex_curve25519_param *param = gen_kexcurve25519_param();
+ 			kexcurve25519_comb_key(param, q_c, svr_opts.hostkey);
+ 
+-			buf_putstring(ses.writepayload, param->pub, CURVE25519_LEN);
++			buf_putstring(ses.writepayload, (const char*)param->pub, CURVE25519_LEN);
+ 			free_kexcurve25519_param(param);
+ 			}
+ 			break;

@@ -1,0 +1,16 @@
+Subject: [PATCH] svr-authpubkey: fix -Wextra pointer-sign
+
+Cast buffer/key pointers to the expected signedness; no behavior change.
+diff --git a/src/svr-authpubkey.c b/src/svr-authpubkey.c
+index 938b52d..cfd2e94 100644
+--- a/src/svr-authpubkey.c
++++ b/src/svr-authpubkey.c
+@@ -421,7 +421,7 @@ static int checkpubkey_line(buffer* line, int line_num, const char* filename,
+ 	if (infolen > 0) {
+ 		info_str = m_malloc(infolen + 1);
+ 		buf_setpos(line, infopos);
+-		strncpy(info_str, buf_getptr(line, infolen), infolen);
++		strncpy(info_str, (const char*)buf_getptr(line, infolen), infolen);
+ 	}
+ 
+ 	/* truncate to base64 data length */

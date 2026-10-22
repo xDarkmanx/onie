@@ -1,0 +1,16 @@
+Subject: [PATCH] sk-ed25519: fix -Wextra pointer-sign
+
+Cast buffer/key pointers to the expected signedness; no behavior change.
+diff --git a/src/sk-ed25519.c b/src/sk-ed25519.c
+index b4827e3..37b2be6 100644
+--- a/src/sk-ed25519.c
++++ b/src/sk-ed25519.c
+@@ -37,7 +37,7 @@ int buf_sk_ed25519_verify(buffer *buf, const dropbear_ed25519_key *key, const bu
+ 	/* create the message to be signed */
+ 	sk_buffer = buf_new (2*SHA256_HASH_SIZE+5);
+ 	sha256_init (&hs);
+-	sha256_process (&hs, app, applen);
++	sha256_process (&hs, (const unsigned char*)app, applen);
+ 	sha256_done (&hs, hash);
+ 	buf_putbytes (sk_buffer, hash, sizeof (hash));
+ 	buf_putbyte (sk_buffer, flags);

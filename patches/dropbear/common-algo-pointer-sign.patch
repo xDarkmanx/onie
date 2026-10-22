@@ -1,0 +1,16 @@
+Subject: [PATCH] common-algo: fix -Wextra pointer-sign
+
+Cast buffer/key pointers to the expected signedness; no behavior change.
+diff --git a/src/common-algo.c b/src/common-algo.c
+index c68eafb..b98c993 100644
+--- a/src/common-algo.c
++++ b/src/common-algo.c
+@@ -431,7 +431,7 @@ static void get_algolist(char* algolist, unsigned int algolist_len,
+ /* Return DROPBEAR_SUCCESS if the namelist contains algo,
+ DROPBEAR_FAILURE otherwise. buf position is not incremented. */
+ int buf_has_algo(buffer *buf, const char *algo) {
+-	unsigned char* algolist = NULL;
++	char* algolist = NULL;
+ 	unsigned int orig_pos = buf->pos;
+ 	unsigned int len, remotecount, i;
+ 	const char *remotenames[MAX_PROPOSED_ALGO];

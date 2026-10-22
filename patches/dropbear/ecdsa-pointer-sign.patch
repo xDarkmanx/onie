@@ -1,0 +1,18 @@
+Subject: [PATCH] ecdsa: fix -Wextra pointer-sign
+
+Cast buffer/key pointers to the expected signedness; no behavior change.
+diff --git a/src/ecdsa.c b/src/ecdsa.c
+index 8e27ae9..2a4b82f 100644
+--- a/src/ecdsa.c
++++ b/src/ecdsa.c
+@@ -86,8 +86,8 @@ ecc_key *buf_get_ecdsa_pub_key(buffer* buf) {
+ 	/* string   "[identifier]" */
+ 	identifier = (unsigned char*)buf_getstring(buf, &identifier_len);
+ 
+-	if (strcmp (key_ident, "sk-ecdsa-sha2-nistp256@openssh.com") == 0) {
+-		if (strcmp (identifier, "nistp256") != 0) {
++	if (strcmp ((const char*)key_ident, "sk-ecdsa-sha2-nistp256@openssh.com") == 0) {
++		if (strcmp ((const char*)identifier, "nistp256") != 0) {
+ 			TRACE(("mismatching identifiers"))
+ 			goto out;
+ 		}

@@ -1,1 +1,11 @@
 cli-kex-pointer-sign.patch
+common-algo-pointer-sign.patch
+ecdsa-pointer-sign.patch
+ed25519-pointer-sign.patch
+keyimport-pointer-sign.patch
+signkey-pointer-sign.patch
+sk-ecdsa-pointer-sign.patch
+sk-ed25519-pointer-sign.patch
+svr-authpubkey-pointer-sign.patch
+svr-kex-pointer-sign.patch
+svr-runopts-pointer-sign.patch

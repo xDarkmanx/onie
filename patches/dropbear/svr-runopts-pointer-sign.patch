@@ -1,0 +1,16 @@
+Subject: [PATCH] svr-runopts: fix -Wextra pointer-sign
+
+Cast buffer/key pointers to the expected signedness; no behavior change.
+diff --git a/src/svr-runopts.c b/src/svr-runopts.c
+index 2baec6b..c30f32a 100644
+--- a/src/svr-runopts.c
++++ b/src/svr-runopts.c
+@@ -484,7 +484,7 @@ void svr_getopts(int argc, char ** argv) {
+ 	}
+ 
+ 	if (reexec_fd_arg) {
+-		if (m_str_to_uint(reexec_fd_arg, &svr_opts.reexec_childpipe) == DROPBEAR_FAILURE
++		if (m_str_to_uint(reexec_fd_arg, (unsigned int*)&svr_opts.reexec_childpipe) == DROPBEAR_FAILURE
+ 			|| svr_opts.reexec_childpipe < 0) {
+ 			dropbear_exit("Bad -2");
+ 		}

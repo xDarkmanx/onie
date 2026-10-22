@@ -1,0 +1,16 @@
+Subject: [PATCH] signkey: fix -Wextra pointer-sign
+
+Cast buffer/key pointers to the expected signedness; no behavior change.
+diff --git a/src/signkey.c b/src/signkey.c
+index 162752b..c372a77 100644
+--- a/src/signkey.c
++++ b/src/signkey.c
+@@ -579,7 +579,7 @@ static char * sign_key_sha256_fingerprint(const unsigned char* keyblob,
+ 	ret = m_malloc(start + b64size);
+ 
+ 	memcpy(ret, prefix, start);
+-	err = base64_encode(hash, SHA256_HASH_SIZE, &ret[start], &b64size);
++	err = base64_encode(hash, SHA256_HASH_SIZE, (unsigned char*)&ret[start], &b64size);
+ 	if (err != CRYPT_OK) {
+ 		dropbear_exit("base64 failed");
+ 	}

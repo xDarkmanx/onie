@@ -1,0 +1,25 @@
+Subject: [PATCH] ed25519: fix -Wextra pointer-sign
+
+Cast buffer/key pointers to the expected signedness; no behavior change.
+diff --git a/src/ed25519.c b/src/ed25519.c
+index f200e13..555b27b 100644
+--- a/src/ed25519.c
++++ b/src/ed25519.c
+@@ -121,7 +121,7 @@ void buf_put_ed25519_pub_key(buffer *buf, const dropbear_ed25519_key *key) {
+ 	dropbear_assert(key != NULL);
+ 
+ 	buf_putstring(buf, SSH_SIGNKEY_ED25519, SSH_SIGNKEY_ED25519_LEN);
+-	buf_putstring(buf, key->pub, CURVE25519_LEN);
++	buf_putstring(buf, (const char*)key->pub, CURVE25519_LEN);
+ 
+ 	TRACE(("leave buf_put_ed25519_pub_key"))
+ }
+@@ -152,7 +152,7 @@ void buf_put_ed25519_sign(buffer* buf, const dropbear_ed25519_key *key, const bu
+ 
+ 	dropbear_ed25519_sign(data_buf->data, data_buf->len, s, &slen, key->priv, key->pub);
+ 	buf_putstring(buf, SSH_SIGNKEY_ED25519, SSH_SIGNKEY_ED25519_LEN);
+-	buf_putstring(buf, s, slen);
++	buf_putstring(buf, (const char*)s, slen);
+ 
+ 	TRACE(("leave buf_put_ed25519_sign"))
+ }

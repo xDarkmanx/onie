@@ -1,0 +1,25 @@
+Subject: [PATCH] keyimport: fix -Wextra pointer-sign
+
+Cast buffer/key pointers to the expected signedness; no behavior change.
+diff --git a/src/keyimport.c b/src/keyimport.c
+index f83d2a6..94bbea6 100644
+--- a/src/keyimport.c
++++ b/src/keyimport.c
+@@ -448,7 +448,7 @@ static struct openssh_key *load_openssh_key(const char *filename)
+ 			headers_done = 1;
+ 			len = strlen(buffer);
+ 			buf = buf_resize(buf, buf->size + len);
+-			buf_putbytes(buf, buffer, len);
++			buf_putbytes(buf, (const unsigned char*)buffer, len);
+ 		}
+ 	}
+ 
+@@ -1024,7 +1024,7 @@ static int openssh_write(const char *filename, sign_key *key,
+ 		for (i = 1; len - extrablob->len > 0; i++)
+ 			buf_putbyte(extrablob, i);
+ 		buf_setpos(extrablob, 0);
+-		buf_putbytes(extrablob, "\0\0\0\0\0\0\0\0", 8);
++		buf_putbytes(extrablob, (const unsigned char*)"\0\0\0\0\0\0\0\0", 8);
+ 		buf_putbufstring(buf, extrablob);
+ 
+ 		outlen = len = pos = buf->len;
