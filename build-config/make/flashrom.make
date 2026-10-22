@@ -88,7 +88,7 @@ $(FLASHROM_BUILD_STAMP): $(FLASHROM_SOURCE_STAMP) $(PCIUTILS_BUILD_STAMP) \
 		PKG_CONFIG_PATH=$(DEV_SYSROOT)/usr/lib/pkgconfig	\
 		PKG_CONFIG_SYSROOT_DIR=$(DEV_SYSROOT)		\
 		ninja -C $(FLASHROM_DIR)/buildd
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	ninja -C $(FLASHROM_DIR)/buildd install \
+	$(Q) PATH='$(CROSSBIN):$(PATH)'	meson install -C $(FLASHROM_DIR)/buildd \
 		--destdir $(DEV_SYSROOT)
 	$(Q) touch $@
 
