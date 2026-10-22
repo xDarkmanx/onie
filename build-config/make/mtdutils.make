@@ -18,18 +18,21 @@ MTDUTILS_DIR		= $(MTDUTILS_BUILD_DIR)/mtd-utils-$(MTDUTILS_VERSION)
 
 MTDUTILS_DOWNLOAD_STAMP	= $(DOWNLOADDIR)/mtdutils-$(MTDUTILS_VERSION)-download
 MTDUTILS_SOURCE_STAMP	= $(USER_STAMPDIR)/mtdutils-source
+MTDUTILS_PATCH_STAMP	= $(USER_STAMPDIR)/mtdutils-patch
 MTDUTILS_CONFIGURE_STAMP	= $(USER_STAMPDIR)/mtdutils-configure
 MTDUTILS_BUILD_STAMP	= $(USER_STAMPDIR)/mtdutils-build
 MTDUTILS_INSTALL_STAMP	= $(STAMPDIR)/mtdutils-install
 MTDUTILS_STAMP		= $(MTDUTILS_SOURCE_STAMP) \
+			  $(MTDUTILS_PATCH_STAMP) \
 			  $(MTDUTILS_CONFIGURE_STAMP) \
 			  $(MTDUTILS_BUILD_STAMP) \
 			  $(MTDUTILS_INSTALL_STAMP)
 
+MTDUTILS_SRCPATCHDIR	= $(PATCHDIR)/mtdutils
 MTDBINS = mkfs.jffs2 mkfs.ubifs ubinize ubiformat ubinfo mtdinfo 
 UBIBINS = ubiattach ubimkvol ubidetach ubirmvol
 
-PHONY += mtdutils mtdutils-download mtdutils-source mtdutils-configure \
+PHONY += mtdutils mtdutils-download mtdutils-source mtdutils-patch mtdutils-configure \
 	 mtdutils-build mtdutils-install mtdutils-clean mtdutils-download-clean
 
 mtdutils: $(MTDUTILS_STAMP)
@@ -56,8 +59,15 @@ MTDUTILS_NEW_FILES = $(shell test -d $(MTDUTILS_DIR) && test -f $(MTDUTILS_BUILD
 	              find -L $(MTDUTILS_DIR) -newer $(MTDUTILS_BUILD_STAMP) -type f -print -quit)
 endif
 
+mtdutils-patch: $(MTDUTILS_PATCH_STAMP)
+$(MTDUTILS_PATCH_STAMP): $(MTDUTILS_SRCPATCHDIR)/* $(MTDUTILS_SOURCE_STAMP)
+	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
+	$(Q) echo "==== Patching mtd-utils ===="
+	$(Q) $(SCRIPTDIR)/apply-patch-series $(MTDUTILS_SRCPATCHDIR)/series $(MTDUTILS_DIR)
+	$(Q) touch $@
+
 mtdutils-configure: $(MTDUTILS_CONFIGURE_STAMP)
-$(MTDUTILS_CONFIGURE_STAMP): $(UTILLINUX_BUILD_STAMP) \
+$(MTDUTILS_CONFIGURE_STAMP): $(MTDUTILS_PATCH_STAMP) $(UTILLINUX_BUILD_STAMP) \
 			     $(LZO_BUILD_STAMP) $(ZLIB_BUILD_STAMP) \
 			     $(MTDUTILS_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)

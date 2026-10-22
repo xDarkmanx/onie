@@ -1,0 +1,17 @@
+Subject: [PATCH] ubinize: fix calloc-transposed-args
+
+Swap calloc() arguments to canonical (nmemb, size) order; identical
+result, silences -Wcalloc-transposed-args.
+diff --git a/ubi-utils/ubinize.c b/ubi-utils/ubinize.c
+index 9c950b1..923f9d3 100644
+--- a/ubi-utils/ubinize.c
++++ b/ubi-utils/ubinize.c
+@@ -480,7 +480,7 @@ int main(int argc, char * const argv[])
+ 		goto out_dict;
+ 	}
+ 
+-	vi = calloc(sizeof(struct ubigen_vol_info), sects);
++	vi = calloc(sects, sizeof(struct ubigen_vol_info));
+ 	if (!vi) {
+ 		err = -1;
+ 		errmsg("cannot allocate memory");
