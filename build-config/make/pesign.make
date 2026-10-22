@@ -10,7 +10,7 @@
 # This is a makefile fragment that defines the build of pesign
 #
 
-PESIGN_VERSION			= 113
+PESIGN_VERSION			= 116
 PESIGN_TARBALL			= pesign-$(PESIGN_VERSION).tar.bz2
 PESIGN_TARBALL_URLS		+= $(ONIE_MIRROR) https://github.com/rhinstaller/pesign/releases/download/$(PESIGN_VERSION)
 PESIGN_BUILD_DIR		= $(USER_BUILDDIR)/pesign
