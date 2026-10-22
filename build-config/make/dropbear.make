@@ -10,7 +10,7 @@
 # This is a makefile fragment that defines the build of dropbear
 #
 
-DROPBEAR_VERSION		= 2020.81
+DROPBEAR_VERSION		= 2026.94
 DROPBEAR_TARBALL		= dropbear-$(DROPBEAR_VERSION).tar.bz2
 DROPBEAR_TARBALL_URLS		+= $(ONIE_MIRROR) https://matt.ucc.asn.au/dropbear/releases
 DROPBEAR_BUILD_DIR		= $(USER_BUILDDIR)/dropbear
@@ -73,7 +73,7 @@ $(DROPBEAR_CONFIGURE_STAMP): $(DROPBEAR_SOURCE_STAMP) $(ZLIB_BUILD_STAMP) \
 		--prefix=/usr					\
 		--host=$(TARGET)				\
 		--disable-harden				\
-		CFLAGS="$(ONIE_CFLAGS)" 			\
+		CFLAGS="$(filter-out -Werror,$(ONIE_CFLAGS))"	\
 		LDFLAGS="$(ONIE_LDFLAGS)"
 	$(Q) touch $@
 
@@ -86,9 +86,10 @@ $(DROPBEAR_BUILD_STAMP): $(DROPBEAR_DIR)/localoptions.h $(DROPBEAR_NEW_FILES)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building dropbear-$(DROPBEAR_VERSION) ===="
 	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(DROPBEAR_DIR) DESTDIR=$(DEV_SYSROOT) \
-		PROGRAMS="$(DROPBEAR_PROGRAMS)" MULTI=1 SCPPROGRESS=1
+		PROGRAMS="$(DROPBEAR_PROGRAMS)" MULTI=1 SCPPROGRESS=1 \
+		CFLAGS="$(ONIE_CFLAGS)"
 	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(DROPBEAR_DIR) DESTDIR=$(DEV_SYSROOT) \
-		PROGRAMS="$(DROPBEAR_PROGRAMS)" MULTI=1 install
+		PROGRAMS="$(DROPBEAR_PROGRAMS)" MULTI=1 CFLAGS="$(ONIE_CFLAGS)" install
 	$(Q) touch $@
 
 #
