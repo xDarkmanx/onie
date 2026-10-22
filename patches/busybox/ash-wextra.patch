@@ -1,0 +1,129 @@
+Subject: [PATCH] ash: fix -Wextra warnings
+
+- fmtstr ?: result and subevalvar/getoptscmd/get_builtin_name:
+  explicit domain casts preserving promoted semantics
+- evalcommand: brace the TRACE-only if body (TRACE is empty
+  in non-debug builds)
+- simplecmd: canonical /* fall through */ markers, placed after
+  the BASH_TEST2 #endif (gcc requires marker after directives)
+- expandstr/evalfun: keep ps/savetrap in volatile storage across
+  setjmp
+diff --git a/shell/ash.c b/shell/ash.c
+index 9344e4d..f65d833 100644
+--- a/shell/ash.c
++++ b/shell/ash.c
+@@ -790,7 +790,7 @@ fmtstr(char *outbuf, size_t length, const char *fmt, ...)
+ 	ret = vsnprintf(outbuf, length, fmt, ap);
+ 	va_end(ap);
+ 	INT_ON;
+-	return ret > (int)length ? length : ret;
++	return ret > (int)length ? (int)length : ret;
+ }
+ 
+ static void
+@@ -7179,7 +7179,7 @@ subevalvar(char *start, char *str, int strloc,
+ 			/* ${VAR:$((-n)):l} starts n chars from the end */
+ 			pos = orig_len + pos;
+ 		}
+-		if ((unsigned)pos >= orig_len) {
++		if ((unsigned)pos >= (unsigned)orig_len) {
+ 			/* apart from obvious ${VAR:999999:l},
+ 			 * covers ${VAR:$((-9999999)):l} - result is ""
+ 			 * (bash compat)
+@@ -7191,7 +7191,7 @@ subevalvar(char *start, char *str, int strloc,
+ 			/* ${VAR:N:-M} sets LEN to strlen()-M */
+ 			len = (orig_len - pos) + len;
+ 		}
+-		if ((unsigned)len > (orig_len - pos))
++		if ((unsigned)len > (unsigned)(orig_len - pos))
+ 			len = orig_len - pos;
+ 
+ 		if (!quotes) {
+@@ -9909,7 +9909,7 @@ evalfun(struct funcnode *func, int argc, char **argv, int flags)
+ 	int savelineno;
+ 	int savefuncline;
+ 	char *savefuncname;
+-	char *savetrap = NULL;
++	char *volatile savetrap = NULL;
+ 
+ 	if (!Eflag) {
+ 		savetrap = trap[NTRAP_ERR];
+@@ -10291,7 +10291,7 @@ find_builtin(const char *name)
+ static const char * FAST_FUNC
+ get_builtin_name(int i)
+ {
+-	return /*i >= 0 &&*/ i < ARRAY_SIZE(builtintab) ? builtintab[i].name + 1 : NULL;
++	return /*i >= 0 &&*/ i < (int)ARRAY_SIZE(builtintab) ? builtintab[i].name + 1 : NULL;
+ }
+ #endif
+ 
+@@ -10599,8 +10599,9 @@ evalcommand(union node *cmd, int flags)
+ 	} /* switch */
+ 
+ 	status = waitforjob(jp);
+-	if (jp)
++	if (jp) {
+ 		TRACE(("forked child exited with %d\n", status));
++	}
+ 	FORCE_INT_ON;
+ 
+  out:
+@@ -11739,13 +11740,13 @@ getoptscmd(int argc, char **argv)
+ 		ash_msg_and_raise_error("usage: getopts optstring var [arg]");
+ 	if (argc == 3) {
+ 		optbase = shellparam.p;
+-		if ((unsigned)shellparam.optind > shellparam.nparam + 1) {
++		if ((unsigned)shellparam.optind > (unsigned)(shellparam.nparam + 1)) {
+ 			shellparam.optind = 1;
+ 			shellparam.optoff = -1;
+ 		}
+ 	} else {
+ 		optbase = &argv[3];
+-		if ((unsigned)shellparam.optind > argc - 2) {
++		if ((unsigned)shellparam.optind > (unsigned)(argc - 2)) {
+ 			shellparam.optind = 1;
+ 			shellparam.optoff = -1;
+ 		}
+@@ -12065,6 +12066,7 @@ simplecmd(void)
+ 			/* pass "&&" or "||" to [[ ]] as literal args */
+ 			wordtext = (char *) (t == TAND ? "&&" : "||");
+ #endif
++			/* fall through */
+ 		case TWORD:
+ 			n = stzalloc(sizeof(struct narg));
+ 			n->type = NARG;
+@@ -12105,8 +12107,8 @@ simplecmd(void)
+ 				case TWORD:
+ 					if (strcmp("[[", wordtext) == 0)
+ 						goto do_func;
+-					/* fall through */
+ # endif
++					/* fall through */
+ 				default:
+ 					raise_error_unexpected_syntax(-1);
+ 				}
+@@ -13404,6 +13406,7 @@ expandstr(const char *ps, int syntax_type)
+ 	struct parsefile *file_stop;
+ 	struct jmploc *volatile savehandler;
+ 	struct heredoc *saveheredoclist;
++	const char *volatile ps_v; /* ps across setjmp */
+ 	const char *result;
+ 	int saveprompt;
+ 	struct jmploc jmploc;
+@@ -13413,13 +13416,14 @@ expandstr(const char *ps, int syntax_type)
+ 	file_stop = g_parsefile;
+ 
+ 	/* XXX Fix (char *) cast. */
+-	setinputstring((char *)ps);
++	ps_v = ps;
++	setinputstring((char *)ps_v);
+ 
+ 	saveheredoclist = heredoclist;
+ 	heredoclist = NULL;
+ 	saveprompt = doprompt;
+ 	doprompt = 0;
+-	result = ps;
++	result = ps_v;
+ 	savehandler = exception_handler;
+ 	err = setjmp(jmploc.loc);
+ 	if (err)

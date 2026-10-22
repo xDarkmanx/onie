@@ -84,3 +84,4 @@ top-signedness.patch
 chpst-signedness.patch
 sv-wextra.patch
 svlogd-signedness.patch
+ash-wextra.patch
