@@ -9,10 +9,10 @@
 # This is a makefile fragment that defines the build of shim
 #
 
-SHIM_VERSION		= 15
+SHIM_VERSION		= 16.1
 SHIM_TARBALL		= shim-$(SHIM_VERSION).tar.bz2
 SHIM_TARBALL_URLS	+= $(ONIE_MIRROR) \
-				https://github.com/rhinstaller/shim/releases/download/$(SHIM_VERSION)
+				https://github.com/rhboot/shim/releases/download/$(SHIM_VERSION)
 SHIM_BUILD_DIR		= $(MBUILDDIR)/shim
 SHIM_DIR		= $(SHIM_BUILD_DIR)/shim-$(SHIM_VERSION)
 
@@ -91,23 +91,21 @@ SHIM_NEW_FILES = $(shell test -d $(SHIM_DIR) && test -f $(SHIM_BUILD_STAMP) && \
 	              find -L $(SHIM_DIR) -newer $(SHIM_BUILD_STAMP) -type f -print -quit)
 endif
 
+# 16.x: gnu-efi is vendored in-tree (EFI_PATH/LIB_PATH/EFI_INCLUDE
+# are rejected); ENABLE_HTTPBOOT was removed upstream
 SHIM_BUILD_ARGS = \
 	CROSS_COMPILE=$(CROSSPREFIX) \
 	RELEASE=onie-$(SHIM_VERSION) \
-	ENABLE_HTTPBOOT=yes \
 	ENABLE_SHIM_HASH=yes \
 	ENABLE_SHIM_CERT=yes \
 	VENDOR_CERT_FILE=$(ONIE_VENDOR_CERT_DER) \
 	ARCH=$(ARCH) \
-	TOPDIR=$(SHIM_DIR) \
-	LIB_PATH="$(DEV_SYSROOT)/usr/lib" \
-	EFI_PATH="$(GNU_EFI_LIB_PATH)" \
-	EFI_INCLUDE="$(GNU_EFI_INCLUDE)"
+	TOPDIR=$(SHIM_DIR)
 
 # Note that ONIE_VENDOR_CERT_DIR must reference the key to be
 #  embedded in the shim
 shim-build: $(SHIM_BUILD_STAMP)
-$(SHIM_BUILD_STAMP): $(SHIM_PATCH_STAMP) $(SHIM_NEW_FILES) $(GNU_EFI_INSTALL_STAMP) \
+$(SHIM_BUILD_STAMP): $(SHIM_PATCH_STAMP) $(SHIM_NEW_FILES) \
 			$(PESIGN_INSTALL_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building shim-$(SHIM_VERSION) ===="
