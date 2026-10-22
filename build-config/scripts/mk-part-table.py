@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python3
 
 from struct import pack
 import sys
@@ -23,8 +23,8 @@ fs_type = 0xef
 # See MBR partition table entry format here:
 # http://en.wikipedia.org/wiki/Master_boot_record#Partition_table_entries
 def chs(sector_z):
-    C = sector_z / (63 * 255)
-    H = (sector_z % (63 * 255)) / 63
+    C = sector_z // (63 * 255)
+    H = (sector_z % (63 * 255)) // 63
     # convert zero-based sector to CHS format
     S = (sector_z % 63) + 1
     # munge accord to partition table format
