@@ -92,7 +92,8 @@ $(E2FSPROGS_CONFIGURE_STAMP): $(ZLIB_BUILD_STAMP) $(LZO_BUILD_STAMP) \
         --disable-libblkid \
 		CC=$(CROSSPREFIX)gcc				\
 		CFLAGS="$(filter-out -Werror,$(ONIE_CFLAGS))"		\
-		LDFLAGS="$(ONIE_LDFLAGS)"			\
+		CPPFLAGS="-I$(DEV_SYSROOT)/usr/include"		\
+		LDFLAGS="-L$(DEV_SYSROOT)/usr/lib $(ONIE_LDFLAGS)"	\
 		$(ONIE_PKG_CONFIG)
 	$(Q) touch $@
 
