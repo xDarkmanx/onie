@@ -1,3 +1,4 @@
 ubinize-calloc.patch
 flashcp-no-warning.patch
 nandwrite-wextra.patch
+mkfs-ubifs-xattr-guard.patch

@@ -1,0 +1,24 @@
+Subject: [PATCH] mkfs.ubifs: guard add_xattr with WITH_XATTR
+
+Only the real inode_add_xattr calls add_xattr; with --without-xattr
+the definition is unused and fails -Wunused-function.
+diff --git a/ubifs-utils/mkfs.ubifs/mkfs.ubifs.c b/ubifs-utils/mkfs.ubifs/mkfs.ubifs.c
+index b5f3892..992bc50 100644
+--- a/ubifs-utils/mkfs.ubifs/mkfs.ubifs.c
++++ b/ubifs-utils/mkfs.ubifs/mkfs.ubifs.c
+@@ -1116,6 +1116,7 @@ static int add_node(union ubifs_key *key, char *name, int name_len, void *node,
+ 	return 0;
+ }
+ 
++#ifdef WITH_XATTR
+ static int add_xattr(struct ubifs_ino_node *host_ino, struct stat *st,
+ 		     ino_t inum, char *name, const void *data,
+ 		     unsigned int data_len)
+@@ -1199,6 +1200,7 @@ out:
+ 	return ret;
+ }
+ 
++#endif
+ #ifndef WITH_XATTR
+ static inline int create_inum_attr(ino_t inum, const char *name)
+ {
