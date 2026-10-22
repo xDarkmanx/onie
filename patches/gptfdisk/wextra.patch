@@ -1,0 +1,66 @@
+Subject: [PATCH] fix -Wextra -Werror build (gcc-14)
+
+- gptcl.cc: (void) filename; drop unused numOptions;
+  complete poptOption terminator initializer
+- parttypes: add missing operator=(const PartType&) - implicit
+  deprecated copy-assign (copy ctor exists)
+--- a/gptcl.cc	2024-02-20 03:55:41.000000000 +0300
++++ b/gptcl.cc	2026-10-22 13:42:50.553763868 +0300
+@@ -38,6 +38,7 @@
+ } // GPTDataCL constructor
+ 
+ GPTDataCL::GPTDataCL(string filename) {
++   (void) filename;
+ } // GPTDataCL constructor with filename
+ 
+ GPTDataCL::~GPTDataCL(void) {
+@@ -65,7 +66,7 @@
+ // 8 = disk replication operation (-R) failed
+ int GPTDataCL::DoOptions(int argc, char* argv[]) {
+    GPTData secondDevice;
+-   int opt, numOptions = 0, saveData = 0, neverSaveData = 0;
++   int opt, saveData = 0, neverSaveData = 0;
+    int partNum = 0, newPartNum = -1, saveNonGPT = 1, retval = 0, pretend = 0;
+    int byteSwapPartNum = 0;
+    uint64_t low, high, startSector, endSector, sSize, mainTableLBA, secondTableLBA;
+@@ -117,7 +118,7 @@
+       {"version", 'V', POPT_ARG_NONE, NULL, 'V', "display version information", ""},
+       {"zap", 'z', POPT_ARG_NONE, NULL, 'z', "zap (destroy) GPT (but not MBR) data structures", ""},
+       {"zap-all", 'Z', POPT_ARG_NONE, NULL, 'Z', "zap (destroy) GPT and MBR data structures", ""},
+-      POPT_AUTOHELP { NULL, 0, 0, NULL, 0 }
++      POPT_AUTOHELP { NULL, 0, 0, NULL, 0, NULL, NULL }
+       // TODO: Incorrect(ly documented) (long) arguments are silently swallowed and seem to take the next argument with them!
+    };
+ 
+@@ -153,7 +154,6 @@
+          default:
+             break;
+       } // switch
+-      numOptions++;
+    } // while
+ 
+    // Assume first non-option argument is the device filename....
+--- a/parttypes.h	2024-02-20 03:55:41.000000000 +0300
++++ b/parttypes.h	2026-10-22 13:42:50.553969724 +0300
+@@ -45,6 +45,7 @@
+    // Set up type information
+    int AddType(uint16_t mbrType, const char * guidData, const char * name, int toDisplay = 1);
+ 
++   PartType & operator=(const PartType & orig);
+    // New assignment operators....
+    PartType & operator=(const std::string & orig);
+    PartType & operator=(const char * orig);
+--- a/parttypes.cc	2024-02-20 03:55:41.000000000 +0300
++++ b/parttypes.cc	2026-10-22 13:42:50.554126689 +0300
+@@ -564,6 +564,11 @@
+ // interpret it as a gdisk hex code; if it's longer, interpret it as
+ // a direct entry of a GUID value. If a short string isn't a hex
+ // number, do nothing.
++PartType & PartType::operator=(const PartType & orig) {
++   GUIDData::operator=(orig);
++   return *this;
++} // PartType::operator=(const PartType & orig)
++
+ PartType & PartType::operator=(const string & orig) {
+    uint32_t hexCode;
+ 

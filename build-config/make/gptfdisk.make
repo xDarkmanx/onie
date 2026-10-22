@@ -9,9 +9,9 @@
 # This is a makefile fragment that defines the build of gptfdisk
 #
 
-GPTFDISK_VERSION		= 0.8.8
+GPTFDISK_VERSION		= 1.0.10
 GPTFDISK_TARBALL		= gptfdisk-$(GPTFDISK_VERSION).tar.gz
-GPTFDISK_TARBALL_URLS		+= $(ONIE_MIRROR) http://sourceforge.net/projects/gptfdisk/files/gptfdisk/$(GPTFDISK_VERSION)/
+GPTFDISK_TARBALL_URLS		+= $(ONIE_MIRROR) https://sourceforge.net/projects/gptfdisk/files/gptfdisk/$(GPTFDISK_VERSION)/
 GPTFDISK_BUILD_DIR		= $(USER_BUILDDIR)/gptfdisk
 GPTFDISK_DIR			= $(GPTFDISK_BUILD_DIR)/gptfdisk-$(GPTFDISK_VERSION)
 
@@ -69,7 +69,11 @@ $(GPTFDISK_BUILD_STAMP): $(E2FSPROGS_BUILD_STAMP) $(POPT_BUILD_STAMP) \
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building gptfdisk-$(GPTFDISK_VERSION) ===="
 	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(GPTFDISK_DIR) \
-		$(GPTFDISK_PROGRAMS) CROSS_COMPILE=$(CROSSPREFIX)
+		$(GPTFDISK_PROGRAMS) \
+		CC=$(CROSSPREFIX)gcc CXX=$(CROSSPREFIX)g++ \
+		CXXFLAGS="$(ONIE_CXXFLAGS) -D_FILE_OFFSET_BITS=64 -I$(DEV_SYSROOT)/usr/include" \
+		LDFLAGS="-L$(DEV_SYSROOT)/usr/lib $(ONIE_LDFLAGS)" \
+		LDLIBS="-luuid -lpopt" 
 	$(Q) touch $@
 
 gptfdisk-install: $(GPTFDISK_INSTALL_STAMP)
