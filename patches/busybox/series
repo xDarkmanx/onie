@@ -78,3 +78,4 @@ lsof-signedness.patch
 mpstat-signedness.patch
 nmeter-signedness.patch
 pgrep-signedness.patch
+powertop-wextra.patch

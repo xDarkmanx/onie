@@ -1,0 +1,29 @@
+Subject: [PATCH] powertop: fix -Wextra warnings
+
+- read_cstate_counts: the readdir name length is checked to be
+  <= BIG_SYSNAME_LEN right before the sprintf; express that
+  bound as a %.*s precision so gcc can size the output
+- show_timerstats: n++ < (int)lines
+diff --git a/procps/powertop.c b/procps/powertop.c
+index 18ddaa3..4f53e84 100644
+--- a/procps/powertop.c
++++ b/procps/powertop.c
+@@ -178,7 +178,8 @@ static void read_cstate_counts(ullong *usage, ullong *duration)
+ 		if (len < 3 || len > BIG_SYSNAME_LEN)
+ 			continue;
+ 
+-		sprintf(buf, "%s/%s/power", "/proc/acpi/processor", d->d_name);
++		/* d_name length is checked above (<= BIG_SYSNAME_LEN): */
++		sprintf(buf, "%s/%.*s/power", "/proc/acpi/processor", BIG_SYSNAME_LEN, d->d_name);
+ 		fp = fopen_for_read(buf);
+ 		if (!fp)
+ 			continue;
+@@ -636,7 +637,7 @@ static void show_timerstats(void)
+ 		puts("\nTop causes for wakeups:");
+ 		for (i = 0; i < G.lines_cnt; i++) {
+ 			if ((G.lines[i].count > 0 /*|| G.lines[i].disk_count > 0*/)
+-			 && n++ < lines
++			 && n++ < (int)lines
+ 			) {
+ 				/* NB: upstream powertop prints "(wakeups/sec)",
+ 				 * we print just "(wakeup counts)".
