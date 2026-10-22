@@ -1,0 +1,16 @@
+Subject: [PATCH] pstree: fix -Wextra sign-compare
+
+bufindex is int, G.capacity grows from 0 by 0x100 - int domain.
+diff --git a/procps/pstree.c b/procps/pstree.c
+index 67b7111..d98ec4f 100644
+--- a/procps/pstree.c
++++ b/procps/pstree.c
+@@ -93,7 +93,7 @@ struct globals {
+  */
+ static void ensure_buffer_capacity(int bufindex)
+ {
+-	if (bufindex >= G.capacity) {
++	if (bufindex >= (int)G.capacity) {
+ 		G.capacity += 0x100;
+ 		G.width = xrealloc(G.width, G.capacity * sizeof(G.width[0]));
+ 		G.more = xrealloc(G.more, G.capacity * sizeof(G.more[0]));
