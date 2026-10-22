@@ -9,27 +9,31 @@
 # This is a makefile fragment that defines the build of zlib
 #
 
-ZLIB_VERSION		= 1.2.11
+ZLIB_VERSION		= 1.3.2
 ZLIB_TARBALL		= zlib-$(ZLIB_VERSION).tar.xz
 ZLIB_TARBALL_URLS	+= $(ONIE_MIRROR) http://zlib.net \
-			   http://softlayer-dal.dl.sourceforge.net/project/libpng/zlib/$(ZLIB_VERSION)
+			   https://zlib.net/fossils \
+			   https://github.com/madler/zlib/releases/download/v$(ZLIB_VERSION)
 ZLIB_BUILD_DIR		= $(USER_BUILDDIR)/zlib
 ZLIB_DIR		= $(ZLIB_BUILD_DIR)/zlib-$(ZLIB_VERSION)
 
 ZLIB_DOWNLOAD_STAMP	= $(DOWNLOADDIR)/zlib-download
 ZLIB_SOURCE_STAMP	= $(USER_STAMPDIR)/zlib-source
+ZLIB_PATCH_STAMP	= $(USER_STAMPDIR)/zlib-patch
 ZLIB_CONFIGURE_STAMP	= $(USER_STAMPDIR)/zlib-configure
 ZLIB_BUILD_STAMP	= $(USER_STAMPDIR)/zlib-build
 ZLIB_INSTALL_STAMP	= $(STAMPDIR)/zlib-install
 ZLIB_STAMP		= $(ZLIB_SOURCE_STAMP) \
+			  $(ZLIB_PATCH_STAMP) \
 			  $(ZLIB_CONFIGURE_STAMP) \
 			  $(ZLIB_BUILD_STAMP) \
 			  $(ZLIB_INSTALL_STAMP)
 
-PHONY += zlib zlib-download zlib-source zlib-configure \
+PHONY += zlib zlib-download zlib-source zlib-patch zlib-configure \
 	 zlib-build zlib-install zlib-clean zlib-download-clean
 
 ZLIBLIBS = libz.so libz.so.1 libz.so.$(ZLIB_VERSION)
+ZLIB_SRCPATCHDIR	= $(PATCHDIR)/zlib
 
 zlib: $(ZLIB_STAMP)
 
@@ -55,8 +59,15 @@ ZLIB_NEW_FILES = $(shell test -d $(ZLIB_DIR) && test -f $(ZLIB_BUILD_STAMP) && \
 	              find -L $(ZLIB_DIR) -newer $(ZLIB_BUILD_STAMP) -type f -print -quit)
 endif
 
+zlib-patch: $(ZLIB_PATCH_STAMP)
+$(ZLIB_PATCH_STAMP): $(ZLIB_SRCPATCHDIR)/* $(ZLIB_SOURCE_STAMP)
+	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
+	$(Q) echo "==== Patching zlib ===="
+	$(Q) $(SCRIPTDIR)/apply-patch-series $(ZLIB_SRCPATCHDIR)/series $(ZLIB_DIR)
+	$(Q) touch $@
+
 zlib-configure: $(ZLIB_CONFIGURE_STAMP)
-$(ZLIB_CONFIGURE_STAMP): $(ZLIB_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
+$(ZLIB_CONFIGURE_STAMP): $(ZLIB_PATCH_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Configure zlib-$(ZLIB_VERSION) ===="
 	$(Q) cd $(ZLIB_DIR) &&					\
