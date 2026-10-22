@@ -1,0 +1,17 @@
+Subject: [PATCH] acpid: fix -Wextra sign-compare
+
+evt_tab[].value is uint32_t; cast the __s32 input_event value
+(preserves the original promoted compare).
+diff --git a/util-linux/acpid.c b/util-linux/acpid.c
+index 00613f8..1d04eaa 100644
+--- a/util-linux/acpid.c
++++ b/util-linux/acpid.c
+@@ -171,7 +171,7 @@ static const char *find_action(struct input_event *ev, const char *buf)
+ 	// map event
+ 	for (i = 0; i < n_evt; i++) {
+ 		if (ev) {
+-			if (ev->type == evt_tab[i].n_type && ev->code == evt_tab[i].n_code && ev->value == evt_tab[i].value) {
++			if (ev->type == evt_tab[i].n_type && ev->code == evt_tab[i].n_code && (uint32_t)ev->value == evt_tab[i].value) {
+ 				action = evt_tab[i].desc;
+ 				break;
+ 			}
