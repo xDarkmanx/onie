@@ -82,7 +82,10 @@ else
 				*)  URL="$1" ;;
 			esac
 			echo "  Downloading $FILE from: $URL"
-			wget --no-verbose --no-check-certificate -O "${OUTDIR}/${FILE}" $URL
+			# curl (not wget): wget re-encodes the query string of signed
+			# redirect URLs (github release assets) breaking the signature
+			curl --silent --show-error --fail --location \
+				--output "${OUTDIR}/${FILE}" "$URL"
 			if [ $? -eq 0 ] ; then
 				# stop
 				download=yes
