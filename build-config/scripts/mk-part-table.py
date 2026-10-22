@@ -42,7 +42,7 @@ def chs(sector_z):
 #
 # See the partition table format here:
 # http://en.wikipedia.org/wiki/Master_boot_record#Sector_layout
-f = open(iso, 'r+')
+f = open(iso, 'r+b')
 f.seek(0x1BE)
 f.write(pack("<8BLL48xH", 0x80, s_H, s_S, s_C,
              fs_type, e_H, e_S, e_C, start, length, 0xaa55))
