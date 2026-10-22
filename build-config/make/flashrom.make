@@ -76,19 +76,22 @@ FLASHROM_MESON_OPTS = \
 	$(FLASHROM_MESON_EXTRA_OPTS)
 
 flashrom-build: $(FLASHROM_BUILD_STAMP)
-$(FLASHROM_BUILD_STAMP): $(FLASHROM_SOURCE_STAMP) \
+$(FLASHROM_BUILD_STAMP): $(FLASHROM_SOURCE_STAMP) $(PCIUTILS_BUILD_STAMP) \
 				| $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building flashrom-$(FLASHROM_VERSION) ===="
 	$(Q) cd $(FLASHROM_DIR) && PATH='$(CROSSBIN):$(PATH)'	\
+		PKG_CONFIG_PATH=$(DEV_SYSROOT)/usr/lib/pkgconfig	\
 		meson setup buildd --prefix=/usr $(FLASHROM_MESON_OPTS)
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	ninja -C $(FLASHROM_DIR)/buildd
+	$(Q) PATH='$(CROSSBIN):$(PATH)'	\
+		PKG_CONFIG_PATH=$(DEV_SYSROOT)/usr/lib/pkgconfig	\
+		ninja -C $(FLASHROM_DIR)/buildd
 	$(Q) PATH='$(CROSSBIN):$(PATH)'	ninja -C $(FLASHROM_DIR)/buildd install \
 		--destdir $(DEV_SYSROOT)
 	$(Q) touch $@
 
 flashrom-install: $(FLASHROM_INSTALL_STAMP)
-$(FLASHROM_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(FLASHROM_BUILD_STAMP)
+$(FLASHROM_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(FLASHROM_BUILD_STAMP) $(PCIUTILS_INSTALL_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing flashrom programs in $(SYSROOTDIR) ===="
 	$(Q) for file in $(FLASHROM_PROGRAMS); do \
