@@ -1,0 +1,17 @@
+Subject: [PATCH] script: fix -Wclobbered
+
+fname is assigned during option parsing and reopened/read after
+the xvfork() - mark it volatile like the other vfork fixes.
+diff --git a/util-linux/script.c b/util-linux/script.c
+index 9634353..c28d1bc 100644
+--- a/util-linux/script.c
++++ b/util-linux/script.c
+@@ -58,7 +58,7 @@ int script_main(int argc UNUSED_PARAM, char **argv)
+ 	struct winsize win;
+ 	FILE *timing_fp;
+ 	const char *str_t = NULL;
+-	const char *fname = "typescript";
++	const char *volatile fname = "typescript"; /* live across xvfork */
+ 	const char *shell;
+ 	char shell_opt[] = "-i";
+ 	char *shell_arg = NULL;
