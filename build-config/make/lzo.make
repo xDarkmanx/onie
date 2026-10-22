@@ -72,9 +72,9 @@ lzo-build: $(LZO_BUILD_STAMP)
 $(LZO_BUILD_STAMP): $(LZO_CONFIGURE_STAMP) $(LZO_NEW_FILES)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building lzo-$(LZO_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(LZO_DIR) DESTDIR=$(DEV_SYSROOT) \
+	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(LZO_DIR) DESTDIR=$(DEV_SYSROOT) noinst_PROGRAMS= \
 		CFLAGS="$(ONIE_CFLAGS)"
-	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(LZO_DIR) DESTDIR=$(DEV_SYSROOT) \
+	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(LZO_DIR) DESTDIR=$(DEV_SYSROOT) noinst_PROGRAMS= \
 		CFLAGS="$(ONIE_CFLAGS)" install
 	$(Q) touch $@
 
