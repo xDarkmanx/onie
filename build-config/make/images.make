@@ -204,6 +204,12 @@ $(SYSROOT_CHECK_STAMP): $(PACKAGES_INSTALL_STAMPS)
 			find $(DEV_SYSROOT)/lib -name $$file | xargs -i cp -av --remove-destination {} $(SYSROOTDIR)/lib/ || exit 1 ; \
 		fi; \
 	done
+	# Binaries built by the native (Debian) toolchain request the
+	# loader as /lib64/ld-linux-x86-64.so.2 (PT_INTERP), but the
+	# runtime libs are installed under /lib.  Provide the compat
+	# symlink so every dynamically linked executable in the
+	# initramfs can start.
+	$(Q) ln -snf lib $(SYSROOTDIR)/lib64
 	$(Q) for file in $(DEBUG_UTILS) ; do \
 		cp -av --remove-destination $$file $(SYSROOTDIR)/usr/bin || exit 1 ; \
 		chmod +w $(SYSROOTDIR)/usr/bin/$$(basename $$file) ; \
