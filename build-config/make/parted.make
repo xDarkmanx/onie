@@ -71,6 +71,7 @@ $(PARTED_CONFIGURE_STAMP): $(PARTED_PATCH_STAMP) $(E2FSPROGS_BUILD_STAMP) | \
 		$(PARTED_DIR)/configure				\
 		--prefix=/usr					\
 		--host=$(TARGET)				\
+		--disable-gcc-warnings				\
 		--disable-device-mapper				\
 		--disable-mtrace				\
 		--disable-selinux				\
