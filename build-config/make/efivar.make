@@ -11,9 +11,10 @@
 # This is a makefile fragment that defines the build of efivar
 #
 
-EFIVAR_VERSION			= 37
-EFIVAR_TARBALL			= efivar-$(EFIVAR_VERSION).tar.bz2
-EFIVAR_TARBALL_URLS		+= $(ONIE_MIRROR) https://github.com/rhboot/efivar/releases/download/${EFIVAR_VERSION}/${EFIVAR_TARBALL}
+EFIVAR_VERSION			= 39
+EFIVAR_TARBALL			= efivar-$(EFIVAR_VERSION).tar.gz
+EFIVAR_TARBALL_URLS		+= $(ONIE_MIRROR) \
+				   https://github.com/rhboot/efivar/archive/refs/tags/${EFIVAR_VERSION}.tar.gz
 EFIVAR_BUILD_DIR		= $(USER_BUILDDIR)/efivar
 EFIVAR_DIR			= $(EFIVAR_BUILD_DIR)/efivar-$(EFIVAR_VERSION)
 
