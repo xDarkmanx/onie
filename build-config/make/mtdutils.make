@@ -78,7 +78,7 @@ $(MTDUTILS_CONFIGURE_STAMP): $(UTILLINUX_BUILD_STAMP) \
 		--without-crypto				\
 		--disable-ubihealthd			\
 		CC=$(CROSSPREFIX)gcc				\
-		CFLAGS="$(ONIE_CFLAGS)"			\
+		CFLAGS="$(filter-out -Werror,$(ONIE_CFLAGS))"			\
 		LDFLAGS="$(ONIE_LDFLAGS)"			\
 		ZLIB_CFLAGS="-I$(DEV_SYSROOT)/usr/include"	\
 		ZLIB_LIBS="-L$(DEV_SYSROOT)/usr/lib -lz"	\
@@ -94,8 +94,8 @@ $(MTDUTILS_BUILD_STAMP): $(MTDUTILS_CONFIGURE_STAMP) $(MTDUTILS_NEW_FILES) | \
 			   $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building mtd-utils-$(MTDUTILS_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(MTDUTILS_DIR)
-	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(MTDUTILS_DIR) install
+	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(MTDUTILS_DIR) CFLAGS="$(ONIE_CFLAGS)"
+	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(MTDUTILS_DIR) CFLAGS="$(ONIE_CFLAGS)" install
 	$(Q) touch $@
 
 mtdutils-install: $(MTDUTILS_INSTALL_STAMP)

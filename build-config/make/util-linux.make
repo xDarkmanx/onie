@@ -94,7 +94,7 @@ $(UTILLINUX_CONFIGURE_STAMP): $(UTILLINUX_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STA
 		--prefix=/usr					\
 		--host=$(TARGET)				\
 		CC=$(CROSSPREFIX)gcc				\
-		CFLAGS="$(ONIE_CFLAGS)"				\
+		CFLAGS="$(filter-out -Werror,$(ONIE_CFLAGS))"				\
 		--disable-tls					\
 		--disable-all-programs				\
 		--without-python				\
@@ -106,8 +106,10 @@ util-linux-build: $(UTILLINUX_BUILD_STAMP)
 $(UTILLINUX_BUILD_STAMP): $(UTILLINUX_CONFIGURE_STAMP) $(UTILLINUX_NEW_FILES)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building util-linux-$(UTILLINUX_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(UTILLINUX_DIR) DESTDIR=$(DEV_SYSROOT) 
-	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(UTILLINUX_DIR) DESTDIR=$(DEV_SYSROOT) install
+	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(UTILLINUX_DIR) DESTDIR=$(DEV_SYSROOT) \
+		CFLAGS="$(ONIE_CFLAGS)"
+	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(UTILLINUX_DIR) DESTDIR=$(DEV_SYSROOT) \
+		CFLAGS="$(ONIE_CFLAGS)" install
 	$(Q) touch $@
 
 util-linux-install: $(UTILLINUX_INSTALL_STAMP)
