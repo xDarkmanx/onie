@@ -20,16 +20,18 @@ PARTED_DIR		= $(PARTED_BUILD_DIR)/parted-$(PARTED_VERSION)
 PARTED_SRCPATCHDIR	= $(PATCHDIR)/parted
 PARTED_DOWNLOAD_STAMP	= $(DOWNLOADDIR)/parted-download
 PARTED_SOURCE_STAMP	= $(USER_STAMPDIR)/parted-source
+PARTED_PATCH_STAMP	= $(USER_STAMPDIR)/parted-patch
 PARTED_CONFIGURE_STAMP	= $(USER_STAMPDIR)/parted-configure
 PARTED_BUILD_STAMP	= $(USER_STAMPDIR)/parted-build
 PARTED_INSTALL_STAMP	= $(STAMPDIR)/parted-install
 
 PARTED_STAMP		= $(PARTED_SOURCE_STAMP) \
+			  $(PARTED_PATCH_STAMP) \
 			  $(PARTED_CONFIGURE_STAMP) \
 			  $(PARTED_BUILD_STAMP) \
 			  $(PARTED_INSTALL_STAMP)
 
-PHONY += parted parted-download parted-source \
+PHONY += parted parted-download parted-source parted-patch \
 	 parted-configure parted-build parted-install parted-clean \
 	 parted-download-clean parted-configure-help
 
@@ -48,6 +50,12 @@ $(PARTED_DOWNLOAD_STAMP): $(PROJECT_STAMP)
 
 SOURCE += $(PARTED_SOURCE_STAMP)
 parted-source: $(PARTED_SOURCE_STAMP)
+$(PARTED_PATCH_STAMP): $(PARTED_SRCPATCHDIR)/* $(PARTED_SOURCE_STAMP)
+	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
+	$(Q) echo "==== Patching parted ===="
+	$(Q) $(SCRIPTDIR)/apply-patch-series $(PARTED_SRCPATCHDIR)/series $(PARTED_DIR)
+	$(Q) touch $@
+
 $(PARTED_SOURCE_STAMP): $(USER_TREE_STAMP) | $(PARTED_DOWNLOAD_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Extracting upstream parted ===="
@@ -55,7 +63,7 @@ $(PARTED_SOURCE_STAMP): $(USER_TREE_STAMP) | $(PARTED_DOWNLOAD_STAMP)
 	$(Q) touch $@
 
 parted-configure: $(PARTED_CONFIGURE_STAMP)
-$(PARTED_CONFIGURE_STAMP): $(PARTED_SOURCE_STAMP) $(E2FSPROGS_BUILD_STAMP) | \
+$(PARTED_CONFIGURE_STAMP): $(PARTED_PATCH_STAMP) $(E2FSPROGS_BUILD_STAMP) | \
 				     $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Configure parted-$(PARTED_VERSION) ===="
