@@ -1,0 +1,28 @@
+Subject: [PATCH] popthelp: unused translation_domain with -disable-nls
+
+D_(dom,str) degenerates to str without NLS; annotate the parameter
+as unused in the two affected helpers.
+diff --git a/src/popthelp.c b/src/popthelp.c
+index 6738f6a..a654b68 100644
+--- a/src/popthelp.c
++++ b/src/popthelp.c
+@@ -156,6 +156,9 @@ getArgDescrip(const struct poptOption * opt,
+ 		/* FIX: i18n macros disabled with lclint */
+ 		const char * translation_domain)
+ {
++#ifndef ENABLE_NLS
++    (void)translation_domain;
++#endif
+     if (!poptArgType(opt)) return NULL;
+ 
+     if (poptArgType(opt) == POPT_ARG_MAINCALL)
+@@ -208,6 +211,9 @@ singleOptionDefaultValue(size_t lineLength,
+ 		/* FIX: i18n macros disabled with lclint */
+ 		const char * translation_domain)
+ {
++#ifndef ENABLE_NLS
++    (void)translation_domain;
++#endif
+     const char * defstr = D_(translation_domain, "default");
+     char * le = malloc(4*lineLength + 1);
+     char * l = le;
