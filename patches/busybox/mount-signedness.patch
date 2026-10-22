@@ -1,0 +1,17 @@
+Subject: [PATCH] mount: fix -Wextra sign-compare
+
+~MS_RDONLY promotes to long (negative); compare in the
+unsigned long domain of mount_options[] flags.
+diff --git a/util-linux/mount.c b/util-linux/mount.c
+index 4e65b6b..ef9ac62 100644
+--- a/util-linux/mount.c
++++ b/util-linux/mount.c
+@@ -620,7 +620,7 @@ static unsigned long parse_mount_options(char *options, char **unrecognized, uin
+ 				/* If we see "-o rw" on command line, it's the same as -w:
+ 				 * "do not try to fall back to RO mounts"
+ 				 */
+-				if (fl == ~MS_RDONLY && opt)
++				if (fl == ~(unsigned long)MS_RDONLY && opt)
+ 					(*opt) |= OPT_w;
+ 				goto found;
+ 			}
