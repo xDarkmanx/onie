@@ -9,9 +9,9 @@
 # This is a makefile fragment that defines the build of popt
 #
 
-POPT_VERSION		= 1.16
+POPT_VERSION		= 1.19
 POPT_TARBALL		= popt-$(POPT_VERSION).tar.gz
-POPT_TARBALL_URLS	+= $(ONIE_MIRROR) http://rpm5.org/files/popt/
+POPT_TARBALL_URLS	+= $(ONIE_MIRROR) http://ftp.rpm.org/popt/releases/popt-1.x
 POPT_BUILD_DIR		= $(USER_BUILDDIR)/popt
 POPT_DIR		= $(POPT_BUILD_DIR)/popt-$(POPT_VERSION)
 
@@ -70,7 +70,7 @@ $(POPT_CONFIGURE_STAMP): $(POPT_PATCH_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 		--host=$(TARGET)				\
 		--disable-nls					\
 		CC=$(CROSSPREFIX)gcc				\
-		CFLAGS="$(ONIE_CFLAGS)"				\
+		CFLAGS="$(filter-out -Werror,$(ONIE_CFLAGS))"			\
 		LDFLAGS="$(ONIE_LDFLAGS)"
 	$(Q) touch $@
 
@@ -83,8 +83,9 @@ popt-build: $(POPT_BUILD_STAMP)
 $(POPT_BUILD_STAMP): $(POPT_CONFIGURE_STAMP) $(POPT_NEW_FILES)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building popt-$(POPT_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(POPT_DIR)
-	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(POPT_DIR) DESTDIR=$(DEV_SYSROOT) install
+	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(POPT_DIR) CFLAGS="$(ONIE_CFLAGS)"
+	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(POPT_DIR) DESTDIR=$(DEV_SYSROOT) \
+		CFLAGS="$(ONIE_CFLAGS)" install
 	$(Q) touch $@
 
 popt-install: $(POPT_INSTALL_STAMP)
