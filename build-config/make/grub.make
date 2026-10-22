@@ -179,7 +179,12 @@ $(GRUB_CONFIGURE_STAMP): $(GRUB_CONFIGURE_I386_STAMP) $(GRUB_CONFIGURE_UEFI_STAM
 $(GRUB_BUILD_I386_STAMP): $(GRUB_CONFIGURE_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building grub-i386-pc-$(GRUB_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(GRUB_I386_DIR)
+	# binutils >= 2.41 accepts --image-base for ELF and places the
+	# first section at base + ELF headers, shifting _start off
+	# 0x7C00/0x9000 (grub-mkimage: "kernel.img is miscompiled").
+	# Force the classic -Ttext linking of older binutils.
+	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(GRUB_I386_DIR) \
+		TARGET_IMG_BASE_LDOPT='-Wl,-Ttext'
 	$(Q) PATH='$(CROSSBIN):$(PATH)'			\
 		$(MAKE) -C $(GRUB_I386_DIR) install DESTDIR=$(GRUB_INSTALL_I386_DIR)
 	$(Q) touch $@
@@ -195,7 +200,8 @@ $(GRUB_BUILD_UEFI_STAMP): $(GRUB_CONFIGURE_STAMP)
 $(GRUB_BUILD_I386_COREBOOT_STAMP): $(GRUB_CONFIGURE_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building grub-i386-coreboot-$(GRUB_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(GRUB_I386_COREBOOT_DIR)
+	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(GRUB_I386_COREBOOT_DIR) \
+		TARGET_IMG_BASE_LDOPT='-Wl,-Ttext'
 	$(Q) PATH='$(CROSSBIN):$(PATH)'			\
 		$(MAKE) -C $(GRUB_I386_COREBOOT_DIR) install DESTDIR=$(GRUB_INSTALL_I386_COREBOOT_DIR)
 	$(Q) touch $@
