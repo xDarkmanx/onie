@@ -10,9 +10,9 @@
 # This is a makefile fragment that defines the build of lzo
 #
 
-LZO_VERSION		= 2.09
+LZO_VERSION		= 2.10
 LZO_TARBALL		= lzo-$(LZO_VERSION).tar.gz
-LZO_TARBALL_URLS	+= $(ONIE_MIRROR) http://www.oberhumer.com/opensource/lzo/download
+LZO_TARBALL_URLS	+= $(ONIE_MIRROR) https://www.oberhumer.com/opensource/lzo/download
 LZO_BUILD_DIR		= $(USER_BUILDDIR)/lzo
 LZO_DIR			= $(LZO_BUILD_DIR)/lzo-$(LZO_VERSION)
 
@@ -65,15 +65,17 @@ $(LZO_CONFIGURE_STAMP): $(LZO_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 		--prefix=/usr					\
 		--host=$(TARGET)				\
 		CC=$(CROSSPREFIX)gcc				\
-		CFLAGS="$(ONIE_CFLAGS)"
+		CFLAGS="$(filter-out -Werror,$(ONIE_CFLAGS))"
 	$(Q) touch $@
 
 lzo-build: $(LZO_BUILD_STAMP)
 $(LZO_BUILD_STAMP): $(LZO_CONFIGURE_STAMP) $(LZO_NEW_FILES)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building lzo-$(LZO_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(LZO_DIR) DESTDIR=$(DEV_SYSROOT)
-	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(LZO_DIR) DESTDIR=$(DEV_SYSROOT) install
+	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(LZO_DIR) DESTDIR=$(DEV_SYSROOT) \
+		CFLAGS="$(ONIE_CFLAGS)"
+	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(LZO_DIR) DESTDIR=$(DEV_SYSROOT) \
+		CFLAGS="$(ONIE_CFLAGS)" install
 	$(Q) touch $@
 
 lzo-install: $(LZO_INSTALL_STAMP)
