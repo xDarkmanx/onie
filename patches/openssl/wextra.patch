@@ -1,0 +1,241 @@
+Subject: [PATCH] fix -Werror build with -Wextra (gcc-14)
+
+-Wno-missing-field-initializers and -Wno-unused-parameter stay OFF in
+the build (see openssl.make): 13.5k warnings, structural openssl idioms.
+This patch fixes everything else:
+- apps/lib: (void) params in callback stubs (apps, engine, s_cb, tlssrp)
+- crypto/aes/aes_ige.c: (void)key2 in AES_bi_ige_encrypt
+- crypto/asn1/a_d2i_fp.c: (void)xnew in ASN1_d2i_bio
+- include/internal/refcount.h: (void)refcnt in empty CRYPTO_FREE_REF
+- test/{afalg,hmac,modes_internal,sslapitest}.c: nonstring attribute /
+  explicit byte arrays for exact-size string initializers
+--- a/apps/lib/apps.c	2026-08-25 14:56:39.000000000 +0300
++++ b/apps/lib/apps.c	2026-10-22 15:11:20.236165717 +0300
+@@ -87,6 +87,7 @@
+ #ifndef APP_INIT
+ int app_init(long mesgwin)
+ {
++    (void)mesgwin;
+     return 1;
+ }
+ #endif
+@@ -2491,6 +2492,7 @@
+ static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
+     const X509_NAME *nm)
+ {
++    (void)nm;
+     X509 *x;
+     STACK_OF(X509_CRL) *crls = NULL;
+     X509_CRL *crl;
+@@ -2575,6 +2577,7 @@
+ /* HTTP callback function that supports TLS connection also via HTTPS proxy */
+ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
+ {
++    (void)detail;
+     APP_HTTP_TLS_INFO *info = (APP_HTTP_TLS_INFO *)arg;
+     SSL_CTX *ssl_ctx = info->ssl_ctx;
+ 
+--- a/apps/lib/engine.c	2026-08-25 14:56:39.000000000 +0300
++++ b/apps/lib/engine.c	2026-10-22 15:11:20.236363287 +0300
+@@ -136,6 +136,7 @@
+ 
+ int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e)
+ {
++    (void)libctx;
+     const EVP_PKEY_ASN1_METHOD *ameth;
+     ENGINE *tmpeng = NULL;
+     int pkey_id = NID_undef;
+--- a/apps/lib/engine_loader.c	2026-08-25 14:56:39.000000000 +0300
++++ b/apps/lib/engine_loader.c	2026-10-22 15:11:20.236466090 +0300
+@@ -67,6 +67,9 @@
+     const UI_METHOD *ui_method,
+     void *ui_data)
+ {
++    (void)loader;
++    (void)ui_method;
++    (void)ui_data;
+     const char *p = uri, *q;
+     ENGINE *e = NULL;
+     char *keyid = NULL;
+@@ -152,6 +155,7 @@
+ 
+ static int engine_error(OSSL_STORE_LOADER_CTX *ctx)
+ {
++    (void)ctx;
+     return 0;
+ }
+ 
+--- a/apps/lib/http_server.c	2026-08-25 14:56:39.000000000 +0300
++++ b/apps/lib/http_server.c	2026-10-22 15:11:20.236575155 +0300
+@@ -49,6 +49,7 @@
+ 
+ void socket_timeout(int signum)
+ {
++    (void)signum;
+     if (acfd != (int)INVALID_SOCKET)
+         (void)shutdown(acfd, SHUT_RD);
+ }
+--- a/apps/lib/s_cb.c	2026-08-25 14:56:39.000000000 +0300
++++ b/apps/lib/s_cb.c	2026-10-22 15:11:20.236794476 +0300
+@@ -466,6 +466,8 @@
+ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
+     int argi, long argl, int ret, size_t *processed)
+ {
++    (void)argi;
++    (void)argl;
+     BIO *out;
+     BIO_MMSG_CB_ARGS *mmsgargs;
+     size_t i;
+@@ -654,6 +656,7 @@
+ void msg_cb(int write_p, int version, int content_type, const void *buf,
+     size_t len, SSL *ssl, void *arg)
+ {
++    (void)ssl;
+     BIO *bio = arg;
+     const char *str_write_p = write_p ? ">>>" : "<<<";
+     char tmpbuf[128];
+@@ -828,6 +831,7 @@
+ void tlsext_cb(SSL *s, int client_server, int type,
+     const unsigned char *data, int len, void *arg)
+ {
++    (void)s;
+     BIO *bio = arg;
+     const char *extname = lookup(type, tlsext_types, "unknown");
+ 
+@@ -1590,6 +1594,7 @@
+ 
+ static void keylog_callback(const SSL *ssl, const char *line)
+ {
++    (void)ssl;
+     if (bio_keylog == NULL) {
+         BIO_printf(bio_err, "Keylog callback is invoked without valid file!\n");
+         return;
+--- a/apps/lib/tlssrp_depr.c	2026-08-25 14:56:39.000000000 +0300
++++ b/apps/lib/tlssrp_depr.c	2026-10-22 15:11:45.372508901 +0300
+@@ -97,6 +97,7 @@
+ 
+ static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
+ {
++    (void)s;
+     SRP_ARG *srp_arg = (SRP_ARG *)arg;
+     char *pass = app_malloc(PWD_STRLEN + 1, "SRP password buffer");
+     PW_CB_DATA cb_tmp;
+@@ -134,6 +135,8 @@
+ 
+ static char *dummy_srp(SSL *ssl, void *arg)
+ {
++    (void)ssl;
++    (void)arg;
+     return "";
+ }
+ 
+--- a/crypto/asn1/a_d2i_fp.c	2026-08-25 14:56:39.000000000 +0300
++++ b/crypto/asn1/a_d2i_fp.c	2026-10-22 15:12:04.005345128 +0300
+@@ -37,6 +37,7 @@
+ 
+ void *ASN1_d2i_bio(void *(*xnew)(void), d2i_of_void *d2i, BIO *in, void **x)
+ {
++    (void)xnew;
+     BUF_MEM *b = NULL;
+     const unsigned char *p;
+     void *ret = NULL;
+--- a/crypto/aes/aes_ige.c	2026-08-25 14:56:39.000000000 +0300
++++ b/crypto/aes/aes_ige.c	2026-10-22 15:11:45.372657349 +0300
+@@ -182,6 +182,7 @@
+     const AES_KEY *key2, const unsigned char *ivec,
+     const int enc)
+ {
++    (void)key2;
+     size_t n;
+     size_t len = length;
+     unsigned char tmp[AES_BLOCK_SIZE];
+--- a/include/internal/refcount.h	2026-08-25 14:56:39.000000000 +0300
++++ b/include/internal/refcount.h	2026-10-22 15:12:04.005496021 +0300
+@@ -284,6 +284,7 @@
+ 
+ static ossl_unused ossl_inline void CRYPTO_FREE_REF(CRYPTO_REF_COUNT *refcnt)
+ {
++    (void)refcnt;
+ }
+ #endif /* CRYPTO_NEW_FREE_DEFINED */
+ #undef CRYPTO_NEW_FREE_DEFINED
+--- a/test/afalgtest.c	2026-08-25 14:56:39.000000000 +0300
++++ b/test/afalgtest.c	2026-10-22 15:15:33.114802717 +0300
+@@ -38,13 +38,13 @@
+                                        "\x06\xa9\x21\x40\x36\xb8\xa1\x5b\x51\x2e\x03\xd5\x34\x12\x00\x06";
+     static const unsigned char iv[] = "\x3d\xaf\xba\x42\x9d\x9e\xb4\x30\xb4\x22\xda\x80\x2c\x9f\xac\x41";
+     /* input = "Single block msg\n" 17 Bytes*/
+-    static const unsigned char in[BUFFER_SIZE] = "\x53\x69\x6e\x67\x6c\x65\x20\x62\x6c\x6f\x63\x6b\x20\x6d\x73\x67"
++    static const unsigned char in[BUFFER_SIZE] __attribute__((nonstring)) = "\x53\x69\x6e\x67\x6c\x65\x20\x62\x6c\x6f\x63\x6b\x20\x6d\x73\x67"
+                                                  "\x0a";
+-    static const unsigned char encresult_128[BUFFER_SIZE] = "\xe3\x53\x77\x9c\x10\x79\xae\xb8\x27\x08\x94\x2d\xbe\x77\x18\x1a"
++    static const unsigned char encresult_128[BUFFER_SIZE] __attribute__((nonstring)) = "\xe3\x53\x77\x9c\x10\x79\xae\xb8\x27\x08\x94\x2d\xbe\x77\x18\x1a"
+                                                             "\x2d";
+-    static const unsigned char encresult_192[BUFFER_SIZE] = "\xf7\xe4\x26\xd1\xd5\x4f\x8f\x39\xb1\x9e\xe0\xdf\x61\xb9\xc2\x55"
++    static const unsigned char encresult_192[BUFFER_SIZE] __attribute__((nonstring)) = "\xf7\xe4\x26\xd1\xd5\x4f\x8f\x39\xb1\x9e\xe0\xdf\x61\xb9\xc2\x55"
+                                                             "\xeb";
+-    static const unsigned char encresult_256[BUFFER_SIZE] = "\xa0\x76\x85\xfd\xc1\x65\x71\x9d\xc7\xe9\x13\x6e\xae\x55\x49\xb4"
++    static const unsigned char encresult_256[BUFFER_SIZE] __attribute__((nonstring)) = "\xa0\x76\x85\xfd\xc1\x65\x71\x9d\xc7\xe9\x13\x6e\xae\x55\x49\xb4"
+                                                             "\x13";
+ 
+ #ifdef OSSL_SANITIZE_MEMORY
+--- a/test/hmactest.c	2026-08-25 14:56:39.000000000 +0300
++++ b/test/hmactest.c	2026-10-22 15:15:54.993702843 +0300
+@@ -47,7 +47,7 @@
+         "e9139d1e6ee064ef8cf514fc7dc83e86",
+     },
+     {
+-        "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b",
++        {0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b},
+         16,
+         "Hi There",
+         8,
+@@ -61,7 +61,7 @@
+         "750c783e6ab0b503eaa86e310a5db738",
+     },
+     {
+-        "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa",
++        {0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa},
+         16,
+         { 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd,
+             0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd,
+--- a/test/modes_internal_test.c	2026-08-25 14:56:39.000000000 +0300
++++ b/test/modes_internal_test.c	2026-10-22 15:16:25.495863274 +0300
+@@ -36,11 +36,8 @@
+  ***/
+ 
+ /* cts128 test vectors from RFC 3962 */
+-static const unsigned char cts128_test_key[16] = "chicken teriyaki";
+-static const unsigned char cts128_test_input[64] = "I would like the"
+-                                                   " General Gau's C"
+-                                                   "hicken, please, "
+-                                                   "and wonton soup.";
++static const unsigned char cts128_test_key[16] = {'c','h','i','c','k','e','n',' ','t','e','r','i','y','a','k','i'};
++static const unsigned char cts128_test_input[64] = {73,32,119,111,117,108,100,32,108,105,107,101,32,116,104,101,32,71,101,110,101,114,97,108,32,71,97,117,39,115,32,67,104,105,99,107,101,110,44,32,112,108,101,97,115,101,44,32,97,110,100,32,119,111,110,116,111,110,32,115,111,117,112,46};
+ static const unsigned char cts128_test_iv[] = {
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+ };
+--- a/test/sslapitest.c	2026-08-25 14:56:39.000000000 +0300
++++ b/test/sslapitest.c	2026-10-22 15:16:55.467023488 +0300
+@@ -8717,8 +8717,8 @@
+     unsigned char iv[EVP_MAX_IV_LENGTH], EVP_CIPHER_CTX *ctx,
+     HMAC_CTX *hctx, int enc)
+ {
+-    const unsigned char tick_aes_key[16] = "0123456789abcdef";
+-    const unsigned char tick_hmac_key[16] = "0123456789abcdef";
++    const unsigned char tick_aes_key[16] __attribute__((nonstring)) = "0123456789abcdef";
++    const unsigned char tick_hmac_key[16] __attribute__((nonstring)) = "0123456789abcdef";
+     EVP_CIPHER *aes128cbc;
+     EVP_MD *sha256;
+     int ret;
+@@ -8759,8 +8759,8 @@
+     unsigned char iv[EVP_MAX_IV_LENGTH],
+     EVP_CIPHER_CTX *ctx, EVP_MAC_CTX *hctx, int enc)
+ {
+-    const unsigned char tick_aes_key[16] = "0123456789abcdef";
+-    unsigned char tick_hmac_key[16] = "0123456789abcdef";
++    const unsigned char tick_aes_key[16] __attribute__((nonstring)) = "0123456789abcdef";
++    unsigned char tick_hmac_key[16] __attribute__((nonstring)) = "0123456789abcdef";
+     OSSL_PARAM params[2];
+     EVP_CIPHER *aes128cbc;
+     int ret;
