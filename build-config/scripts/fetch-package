@@ -75,24 +75,27 @@ else
 		echo "  Getting ${FILE} from ${DOWNLOAD_CACHE_DIR} "
 	else
 		while [ $# -ge 1 ] ; do
-			# A trailing '/' marks a directory-style URL (the file name is
-			# appended); anything else is an exact URL (e.g. github archives).
+			# Try the argument both ways: as a directory prefix (file name
+			# appended) and as an exact URL (github archives, codeload).
 			case "$1" in
-				*/) URL="$1$FILE" ;;
-				*)  URL="$1" ;;
+				*/) CANDIDATES="$1$FILE" ;;
+				*)  CANDIDATES="$1/$FILE $1" ;;
 			esac
-			echo "  Downloading $FILE from: $URL"
-			# curl (not wget): wget re-encodes the query string of signed
-			# redirect URLs (github release assets) breaking the signature
-			curl --silent --show-error --fail --location \
-				--output "${OUTDIR}/${FILE}" "$URL"
-			if [ $? -eq 0 ] ; then
-				# stop
-				download=yes
-				break
-			else
-				rm -f "${OUTDIR}/${FILE}"
-			fi
+			for URL in $CANDIDATES ; do
+				echo "  Downloading $FILE from: $URL"
+				# curl (not wget): wget re-encodes the query string of signed
+				# redirect URLs (github release assets) breaking the signature
+				curl --silent --show-error --fail --location \
+					--output "${OUTDIR}/${FILE}" "$URL"
+				if [ $? -eq 0 ] ; then
+					# stop
+					download=yes
+					break
+				else
+					rm -f "${OUTDIR}/${FILE}"
+				fi
+			done
+			[ "$download" = "yes" ] && break
 			shift
 		done
 	fi
