@@ -86,3 +86,4 @@ sv-wextra.patch
 svlogd-signedness.patch
 ash-wextra.patch
 shell-common-signedness.patch
+logread-wextra.patch

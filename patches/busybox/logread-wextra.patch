@@ -1,0 +1,16 @@
+Subject: [PATCH] logread: fix -Wextra missing-field-initializers
+
+Add the explicit sem_flg = 0 initializer.
+diff --git a/sysklogd/logread.c b/sysklogd/logread.c
+index e6cfcf4..b59bd7a 100644
+--- a/sysklogd/logread.c
++++ b/sysklogd/logread.c
+@@ -61,7 +61,7 @@ struct shbuf_ds {
+ 
+ static const struct sembuf init_sem[3] = {
+ 	{0, -1, IPC_NOWAIT | SEM_UNDO},
+-	{1, 0}, {0, +1, SEM_UNDO}
++	{1, 0, 0}, {0, +1, SEM_UNDO}
+ };
+ 
+ struct globals {
