@@ -9,7 +9,7 @@
 # This is a makefile fragment that defines the build of ethtool
 #
 
-ETHTOOL_VERSION		= 3.14
+ETHTOOL_VERSION		= 7.0
 ETHTOOL_TARBALL		= ethtool-$(ETHTOOL_VERSION).tar.xz
 ETHTOOL_TARBALL_URLS	+= $(ONIE_MIRROR) https://www.kernel.org/pub/software/network/ethtool
 ETHTOOL_BUILD_DIR	= $(USER_BUILDDIR)/ethtool
@@ -57,7 +57,7 @@ $(ETHTOOL_CONFIGURE_STAMP): $(ETHTOOL_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 		$(ETHTOOL_DIR)/configure			\
 		--prefix=/usr					\
 		--host=$(TARGET)				\
-		CFLAGS="$(ONIE_CFLAGS)" 			\
+		CFLAGS="$(filter-out -Werror,$(ONIE_CFLAGS))"	\
 		LDFLAGS="$(ONIE_LDFLAGS)"
 	$(Q) touch $@
 
@@ -65,8 +65,12 @@ ethtool-build: $(ETHTOOL_BUILD_STAMP)
 $(ETHTOOL_BUILD_STAMP): $(ETHTOOL_CONFIGURE_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building ethtool-$(ETHTOOL_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(ETHTOOL_DIR) DESTDIR=$(DEV_SYSROOT)
-	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(ETHTOOL_DIR) DESTDIR=$(DEV_SYSROOT) install
+	$(Q) PATH='$(CROSSBIN):$(PATH)' \
+		CFLAGS="$(ONIE_CFLAGS)" \
+		$(MAKE) -C $(ETHTOOL_DIR) DESTDIR=$(DEV_SYSROOT)
+	$(Q) PATH='$(CROSSBIN):$(PATH)' \
+		CFLAGS="$(ONIE_CFLAGS)" \
+		$(MAKE) -C $(ETHTOOL_DIR) DESTDIR=$(DEV_SYSROOT) install
 	$(Q) touch $@
 
 ethtool-install: $(ETHTOOL_INSTALL_STAMP)
