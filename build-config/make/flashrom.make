@@ -9,11 +9,12 @@
 # This is a makefile fragment that defines the build of flashrom
 #
 
-FLASHROM_VERSION		= 0.9.8
-FLASHROM_TARBALL		= flashrom-$(FLASHROM_VERSION).tar.bz2
-FLASHROM_TARBALL_URLS		+= $(ONIE_MIRROR) http://download.flashrom.org/releases/
+FLASHROM_VERSION		= 1.7.0
+FLASHROM_TARBALL		= flashrom-v$(FLASHROM_VERSION).tar.xz
+FLASHROM_TARBALL_URLS		+= $(ONIE_MIRROR) \
+				   https://download.flashrom.org/releases/flashrom-v$(FLASHROM_VERSION).tar.xz
 FLASHROM_BUILD_DIR		= $(USER_BUILDDIR)/flashrom
-FLASHROM_DIR			= $(FLASHROM_BUILD_DIR)/flashrom-$(FLASHROM_VERSION)
+FLASHROM_DIR			= $(FLASHROM_BUILD_DIR)/flashrom-v$(FLASHROM_VERSION)
 
 FLASHROM_SRCPATCHDIR		= $(PATCHDIR)/flashrom
 FLASHROM_DOWNLOAD_STAMP		= $(DOWNLOADDIR)/flashrom-download
@@ -28,7 +29,7 @@ FLASHROM_STAMP			= $(FLASHROM_SOURCE_STAMP) \
 
 FLASHROM_PROGRAMS		= flashrom
 
-PHONY += flashrom flashrom-download flashrom-source flashrom-build \
+PHONY += flashrom flashrom-download flashrom-source flashrom-patch flashrom-build \
 	 flashrom-install flashrom-clean flashrom-download-clean
 
 flashrom: $(FLASHROM_STAMP)
@@ -50,43 +51,44 @@ $(FLASHROM_SOURCE_STAMP): $(USER_TREE_STAMP) $(FLASHROM_DOWNLOAD_STAMP)
 	$(Q) $(SCRIPTDIR)/extract-package $(FLASHROM_BUILD_DIR) $(DOWNLOADDIR)/$(FLASHROM_TARBALL)
 	$(Q) touch $@
 
-# Disable all flashrom methods, except for 'internal' by default.
-# Individual platforms can define FLASHROM_MAKE_CONFIG_PLATFORM to
-# enable support for specific flashing methods, for example:
+PATCH += $(FLASHROM_PATCH_STAMP)
+flashrom-patch: $(FLASHROM_PATCH_STAMP)
+$(FLASHROM_PATCH_STAMP): $(FLASHROM_SOURCE_STAMP) $(FLASHROM_SRCPATCHDIR)/series
+	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
+	$(Q) echo "==== Patching flashrom ===="
+	$(Q) $(SCRIPTDIR)/apply-patch-series $(FLASHROM_SRCPATCHDIR)/series $(FLASHROM_DIR)
+	$(Q) touch $@
+
+# flashrom 1.x builds with meson. Only the 'internal' programmers are
+# enabled by default, plus the Intel NIC EEPROM programmers, which
+# could be useful in manufacturing to program the MAC address for eth0.
+# Individual platforms can extend FLASHROM_MESON_EXTRA_OPTS, e.g.
 #
-#   FLASHROM_MAKE_CONFIG_PLATFORM = CONFIG_XYZ=yes
+#   FLASHROM_MESON_EXTRA_OPTS = -Dprogrammer=internal,nicintel,dummy
 #
-# See the Makefile in the flashrom source directory for the complete
-# list of CONFIG_XYZ variables.
-#
-# Note: Leaving the Intel NIC EEPROMs enabled, as that could be useful
-# in manufacturing to program the MAC address for eth0.
-FLASHROM_MAKE_CONFIG = \
-	CC=$(CROSSPREFIX)gcc CFLAGS="-Wall -Wshadow $(ONIE_CFLAGS)" \
-	LDFLAGS="$(ONIE_LDFLAGS)" \
-	PREFIX=/usr DESTDIR=$(DEV_SYSROOT) \
-	CONFIG_SERPROG=no CONFIG_RAYER_SPI=no CONFIG_PONY_SPI=no \
-	CONFIG_NIC3COM=no CONFIG_GFXNVIDIA=no CONFIG_SATASII=no \
-	CONFIG_ATAHPT=no CONFIG_ATAVIA=no CONFIG_FT2232_SPI=no \
-	CONFIG_USBBLASTER_SPI=no CONFIG_MSTARDDC_SPI=no CONFIG_PICKIT2_SPI=no \
-	CONFIG_DRKAISER=no CONFIG_NICREALTEK=no CONFIG_NICNATSEMI=no \
-	CONFIG_OGP_SPI=no CONFIG_BUSPIRATE_SPI=no CONFIG_DEDIPROG=no \
-	CONFIG_SATAMV=no CONFIG_IT8212=no CONFIG_PRINT_WIKI=no \
-	$(FLASHROM_MAKE_CONFIG_PLATFORM)
+FLASHROM_MESON_OPTS = \
+	-Dprogrammer=internal,nicintel,nicintel_eeprom,nicintel_spi \
+	-Dclassic_cli=enabled -Dtests=disabled -Ddocumentation=disabled \
+	-Dman-pages=disabled -Dich_descriptors_tool=disabled \
+	-Dbash_completion=disabled -Duse_git_version=disabled \
+	--buildtype plain \
+	-Dc_args='$(ONIE_CFLAGS)' -Dc_link_args='$(ONIE_LDFLAGS)' \
+	$(FLASHROM_MESON_EXTRA_OPTS)
 
 flashrom-build: $(FLASHROM_BUILD_STAMP)
-$(FLASHROM_BUILD_STAMP): $(FLASHROM_SOURCE_STAMP) $(PCIUTILS_BUILD_STAMP) \
+$(FLASHROM_BUILD_STAMP): $(FLASHROM_SOURCE_STAMP) \
 				| $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building flashrom-$(FLASHROM_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(FLASHROM_DIR) \
-		$(FLASHROM_MAKE_CONFIG) all
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(FLASHROM_DIR) \
-		$(FLASHROM_MAKE_CONFIG) install
+	$(Q) cd $(FLASHROM_DIR) && PATH='$(CROSSBIN):$(PATH)'	\
+		meson setup buildd --prefix=/usr $(FLASHROM_MESON_OPTS)
+	$(Q) PATH='$(CROSSBIN):$(PATH)'	ninja -C $(FLASHROM_DIR)/buildd
+	$(Q) PATH='$(CROSSBIN):$(PATH)'	ninja -C $(FLASHROM_DIR)/buildd install \
+		--destdir $(DEV_SYSROOT)
 	$(Q) touch $@
 
 flashrom-install: $(FLASHROM_INSTALL_STAMP)
-$(FLASHROM_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(FLASHROM_BUILD_STAMP) $(PCIUTILS_INSTALL_STAMP)
+$(FLASHROM_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(FLASHROM_BUILD_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing flashrom programs in $(SYSROOTDIR) ===="
 	$(Q) for file in $(FLASHROM_PROGRAMS); do \
