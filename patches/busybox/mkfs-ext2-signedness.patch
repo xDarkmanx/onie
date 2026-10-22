@@ -1,0 +1,16 @@
+Subject: [PATCH] mkfs_ext2: fix -Wextra sign-compare
+
+Match the existing (int32_t) cast on the other operand.
+diff --git a/util-linux/mkfs_ext2.c b/util-linux/mkfs_ext2.c
+index fcf374b..ff759c6 100644
+--- a/util-linux/mkfs_ext2.c
++++ b/util-linux/mkfs_ext2.c
+@@ -313,7 +313,7 @@ int mkfs_ext2_main(int argc UNUSED_PARAM, char **argv)
+ 		}
+ 	}
+ 
+-	if ((int32_t)bytes_per_inode < blocksize)
++	if ((int32_t)bytes_per_inode < (int32_t)blocksize)
+ 		bb_error_msg_and_die("-%c is bad", 'i');
+ 	// number of bits in one block, i.e. 8*blocksize
+ #define blocks_per_group (8 * blocksize)
