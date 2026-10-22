@@ -89,13 +89,13 @@ $(EFIVAR_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(EFIVAR_BUILD_STAMP) $(POPT_INST
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing efivar in $(SYSROOTDIR) ===="
 	$(Q) for file in $(EFIVAR_BINS); do \
-		cp -av $(DEV_SYSROOT)/usr/bin/$$file $(SYSROOTDIR)/usr/bin/ || exit 1 ; \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/bin/$$file $(SYSROOTDIR)/usr/bin/ || exit 1 ; \
 	     done
 	$(Q) for file in $(EFIVAR_LIBS); do \
 		if [ "$(ARCH)" == "arm64" ] || [ "$(ARCH)" == "x86_64" ]; then \
-		    cp -av $(DEV_SYSROOT)/usr/lib64/$$file $(SYSROOTDIR)/usr/lib/ || exit 1 ; \
+		    cp -av --remove-destination $(DEV_SYSROOT)/usr/lib64/$$file $(SYSROOTDIR)/usr/lib/ || exit 1 ; \
 		else \
-		    cp -av $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ || exit 1 ; \
+		    cp -av --remove-destination $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ || exit 1 ; \
 		fi \
 	     done
 	$(Q) touch $@

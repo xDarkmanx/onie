@@ -116,7 +116,7 @@ dropbear-install: $(DROPBEAR_INSTALL_STAMP)
 $(DROPBEAR_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(DROPBEAR_BUILD_STAMP) $(ZLIB_INSTALL_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing dropbear in $(SYSROOTDIR) ===="
-	$(Q) cp -av $(DEV_SYSROOT)/usr/bin/$(DROPBEAR_MULTI_BIN) $(SYSROOTDIR)/usr/bin
+	$(Q) cp -av --remove-destination $(DEV_SYSROOT)/usr/bin/$(DROPBEAR_MULTI_BIN) $(SYSROOTDIR)/usr/bin
 	$(Q) for file in $(DROPBEAR_BINS); do \
 		cd $(SYSROOTDIR)/$$(dirname $$file) && ln -svf $(DROPBEAR_MULTI_BIN) $$(basename $$file) ; \
 	     done

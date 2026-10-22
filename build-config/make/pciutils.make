@@ -80,7 +80,7 @@ $(PCIUTILS_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(PCIUTILS_BUILD_STAMP) $(ZLIB_
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing pciutils in $(SYSROOTDIR) ===="
 	$(Q) for file in $(PCIUTILS_LIBS); do \
-		cp -av $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ ; \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ ; \
 	     done
 	$(Q) touch $@
 

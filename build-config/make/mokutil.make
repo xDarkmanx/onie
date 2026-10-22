@@ -98,7 +98,7 @@ $(MOKUTIL_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(MOKUTIL_BUILD_STAMP) $(POPT_IN
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing mokutil in $(SYSROOTDIR) ===="
 	$(Q) for file in $(MOKUTIL_BINS); do \
-		cp -av $(DEV_SYSROOT)/usr/bin/$$file $(SYSROOTDIR)/usr/bin/ || exit 1 ; \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/bin/$$file $(SYSROOTDIR)/usr/bin/ || exit 1 ; \
 	     done
 	$(Q) touch $@
 

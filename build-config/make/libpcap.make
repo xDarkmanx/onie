@@ -92,9 +92,9 @@ $(LIBPCAP_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(LIBPCAP_BUILD_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing libpcap in $(SYSROOTDIR) ===="
 	$(Q) mkdir -p $(SYSROOTDIR)/usr/lib/
-	$(Q) cp -av $(DEV_SYSROOT)/usr/lib/libpcap.so $(SYSROOTDIR)/usr/lib/
-	$(Q) cp -av $(DEV_SYSROOT)/usr/lib/libpcap.so.1 $(SYSROOTDIR)/usr/lib/
-	$(Q) cp -av $(DEV_SYSROOT)/usr/lib/libpcap.so.$(LIBPCAP_VERSION) $(SYSROOTDIR)/usr/lib/
+	$(Q) cp -av --remove-destination $(DEV_SYSROOT)/usr/lib/libpcap.so $(SYSROOTDIR)/usr/lib/
+	$(Q) cp -av --remove-destination $(DEV_SYSROOT)/usr/lib/libpcap.so.1 $(SYSROOTDIR)/usr/lib/
+	$(Q) cp -av --remove-destination $(DEV_SYSROOT)/usr/lib/libpcap.so.$(LIBPCAP_VERSION) $(SYSROOTDIR)/usr/lib/
 	$(Q) touch $@
 
 USER_CLEAN += libpcap-clean

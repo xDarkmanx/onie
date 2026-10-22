@@ -81,7 +81,7 @@ $(GPTFDISK_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(GPTFDISK_BUILD_STAMP) $(POPT_
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing gptfdisk programs in $(SYSROOTDIR) ===="
 	$(Q) for file in $(GPTFDISK_PROGRAMS); do \
-		cp -av $(GPTFDISK_DIR)/$$file $(SYSROOTDIR)/usr/bin ; \
+		cp -av --remove-destination $(GPTFDISK_DIR)/$$file $(SYSROOTDIR)/usr/bin ; \
 	     done
 	$(Q) touch $@
 

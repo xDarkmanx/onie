@@ -99,7 +99,7 @@ $(TCPDUMP_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(TCPDUMP_BUILD_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing tcpdump in $(SYSROOTDIR) ===="
 	$(Q) mkdir -p $(SYSROOTDIR)/usr/bin/
-	$(Q) cp -av $(DEV_SYSROOT)/usr/bin/tcpdump $(SYSROOTDIR)/usr/bin/
+	$(Q) cp -av --remove-destination $(DEV_SYSROOT)/usr/bin/tcpdump $(SYSROOTDIR)/usr/bin/
 	$(Q) touch $@
 
 USER_CLEAN += tcpdump-clean

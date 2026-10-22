@@ -90,7 +90,7 @@ $(FLASHROM_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(FLASHROM_BUILD_STAMP) $(PCIUT
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing flashrom programs in $(SYSROOTDIR) ===="
 	$(Q) for file in $(FLASHROM_PROGRAMS); do \
-		cp -av $(DEV_SYSROOT)/usr/sbin/$$file $(SYSROOTDIR)/usr/sbin ; \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/sbin/$$file $(SYSROOTDIR)/usr/sbin ; \
 	     done
 	$(Q) touch $@
 

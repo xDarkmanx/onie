@@ -99,7 +99,7 @@ i2ctools-install: $(I2CTOOLS_INSTALL_STAMP)
 $(I2CTOOLS_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(I2CTOOLS_BUILD_STAMP) $(ZLIB_INSTALL_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing i2ctools in $(DEV_SYSROOT) ===="
-	$(Q) cp -av $(I2CTOOLS_DIR)/sys_eeprom/onie-syseeprom $(SYSROOTDIR)/usr/bin/onie-syseeprom
+	$(Q) cp -av --remove-destination $(I2CTOOLS_DIR)/sys_eeprom/onie-syseeprom $(SYSROOTDIR)/usr/bin/onie-syseeprom
 	$(Q) touch $@
 
 MACHINE_CLEAN += i2ctools-clean

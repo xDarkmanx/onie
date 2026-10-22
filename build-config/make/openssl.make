@@ -113,12 +113,12 @@ openssl-install: $(OPENSSL_INSTALL_STAMP)
 $(OPENSSL_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(OPENSSL_BUILD_STAMP) $(ZLIB_INSTALL_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing openssl in $(SYSROOTDIR) ===="
-	$(Q) cp -av $(DEV_SYSROOT)/usr/ssl $(SYSROOTDIR)/usr
+	$(Q) cp -av --remove-destination $(DEV_SYSROOT)/usr/ssl $(SYSROOTDIR)/usr
 	$(Q) for file in $(OPENSSL_LIBS) ; do \
-		cp -av $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ ; \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ ; \
 	     done
 	$(Q) for file in $(OPENSSL_BINS) ; do \
-		cp -av $(DEV_SYSROOT)/usr/bin/$$file $(SYSROOTDIR)/usr/bin/ ; \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/bin/$$file $(SYSROOTDIR)/usr/bin/ ; \
 	     done
 	$(Q) touch $@
 

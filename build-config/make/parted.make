@@ -104,7 +104,7 @@ $(PARTED_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(PARTED_BUILD_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing parted in $(SYSROOTDIR) ===="
 	$(Q) for f in $(PARTED_SBIN) ; do \
-		cp -a $(DEV_SYSROOT)/usr/sbin/$$f $(SYSROOTDIR)/usr/sbin ; \
+		cp -a --remove-destination $(DEV_SYSROOT)/usr/sbin/$$f $(SYSROOTDIR)/usr/sbin ; \
 	done
 	$(Q) touch $@
 

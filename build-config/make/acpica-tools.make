@@ -77,7 +77,7 @@ $(ACPICA_TOOLS_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(ACPICA_TOOLS_BUILD_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing acpica-tools in $(SYSROOTDIR) ===="
 	$(Q) for file in $(ACPIBINS) ; do \
-		cp -av $(DEV_SYSROOT)/usr/bin/$$file $(SYSROOTDIR)/usr/bin/ ; \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/bin/$$file $(SYSROOTDIR)/usr/bin/ ; \
 	done
 	$(Q) touch $@
 

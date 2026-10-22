@@ -88,7 +88,7 @@ $(LIBMNL_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(LIBMNL_BUILD_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing libmnl in $(SYSROOTDIR) ===="
 	$(Q) for file in $(LIBMNL_LIBS) ; do \
-		cp -av $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ ; \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ ; \
 	done
 	$(Q) touch $@
 

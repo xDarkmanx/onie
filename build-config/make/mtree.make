@@ -75,7 +75,7 @@ mtree-install: $(MTREE_INSTALL_STAMP)
 $(MTREE_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(MTREE_BUILD_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing mtree in $(SYSROOTDIR) ===="
-	$(Q) cp -av $(DEV_SYSROOT)/usr/bin/$(MTREE_BIN) $(SYSROOTDIR)/usr/bin
+	$(Q) cp -av --remove-destination $(DEV_SYSROOT)/usr/bin/$(MTREE_BIN) $(SYSROOTDIR)/usr/bin
 	$(Q) touch $@
 
 USER_CLEAN += mtree-clean

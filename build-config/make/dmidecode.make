@@ -77,7 +77,7 @@ $(DMIDECODE_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(DMIDECODE_BUILD_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing dmidecode programs in $(SYSROOTDIR) ===="
 	$(Q) for file in $(DMIDECODE_PROGRAMS); do \
-		cp -av $(DMIDECODE_DIR)/$$file $(SYSROOTDIR)/usr/bin ; \
+		cp -av --remove-destination $(DMIDECODE_DIR)/$$file $(SYSROOTDIR)/usr/bin ; \
 	     done
 	$(Q) touch $@
 

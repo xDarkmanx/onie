@@ -90,7 +90,7 @@ ethtool-install: $(ETHTOOL_INSTALL_STAMP)
 $(ETHTOOL_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(ETHTOOL_BUILD_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing ethtool in $(SYSROOTDIR) ===="
-	$(Q) cp -av $(DEV_SYSROOT)/usr/sbin/$(ETHTOOL_BIN) $(SYSROOTDIR)/usr/sbin
+	$(Q) cp -av --remove-destination $(DEV_SYSROOT)/usr/sbin/$(ETHTOOL_BIN) $(SYSROOTDIR)/usr/sbin
 	$(Q) touch $@
 
 USER_CLEAN += ethtool-clean

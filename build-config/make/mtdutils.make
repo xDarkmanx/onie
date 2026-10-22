@@ -114,13 +114,13 @@ $(MTDUTILS_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(MTDUTILS_BUILD_STAMP) $(UTILL
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing mtdutils in $(SYSROOTDIR) ===="
 	$(Q) for file in $(MTDBINS) ; do \
-		cp -av $(DEV_SYSROOT)/usr/sbin/$$file $(SYSROOTDIR)/usr/sbin/ ; \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/sbin/$$file $(SYSROOTDIR)/usr/sbin/ ; \
 	done
         #if UBI utils from busybox are not installed, use the mtdtools versions
 	$(Q) for file in $(UBIBINS) ; do \
 		if [ ! -f $(SYSROOTDIR)/usr/sbin/$$file ] ; \
 		then \
-			cp -av $(DEV_SYSROOT)/usr/sbin/$$file $(SYSROOTDIR)/usr/sbin/ ; \
+			cp -av --remove-destination $(DEV_SYSROOT)/usr/sbin/$$file $(SYSROOTDIR)/usr/sbin/ ; \
 		fi; \
 	done
 	$(Q) touch $@

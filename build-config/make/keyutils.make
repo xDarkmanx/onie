@@ -71,10 +71,10 @@ $(KEYUTILS_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(KEYUTILS_BUILD_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing keyutils in $(SYSROOTDIR) ===="
 	$(Q) for f in $(KEYUTILS_BIN) ; do \
-		cp -a $(DEV_SYSROOT)/bin/$$f $(SYSROOTDIR)/usr/bin ; \
+		cp -a --remove-destination $(DEV_SYSROOT)/bin/$$f $(SYSROOTDIR)/usr/bin ; \
 	done
 	$(Q) for f in $(KEYUTILS_LIB) ; do \
-		cp -a $(DEV_SYSROOT)/usr/lib/$$f $(SYSROOTDIR)/usr/lib ; \
+		cp -a --remove-destination $(DEV_SYSROOT)/usr/lib/$$f $(SYSROOTDIR)/usr/lib ; \
 	done
 	$(Q) touch $@
 

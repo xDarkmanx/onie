@@ -125,12 +125,12 @@ $(E2FSPROGS_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(E2FSPROGS_BUILD_STAMP) $(ZLI
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing e2fsprogs in $(SYSROOTDIR) ===="
 	$(Q) for file in $(E2FSPROGS_LIBS) ; do \
-		cp -av $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ ; \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ ; \
 	     done
-	$(Q) cp -av $(DEV_SYSROOT)/usr/sbin/{mke2fs,tune2fs} $(SYSROOTDIR)/usr/sbin/
-	$(Q) cp -av $(DEV_SYSROOT)/usr/bin/{chattr,lsattr} $(SYSROOTDIR)/usr/bin/
-	$(Q) cp -av $(DEV_SYSROOT)/usr/sbin/{e2fsck,fsck} $(SYSROOTDIR)/usr/sbin/
-	$(Q) cp -av $(DEV_SYSROOT)/usr/sbin/resize2fs $(SYSROOTDIR)/usr/sbin/
+	$(Q) cp -av --remove-destination $(DEV_SYSROOT)/usr/sbin/{mke2fs,tune2fs} $(SYSROOTDIR)/usr/sbin/
+	$(Q) cp -av --remove-destination $(DEV_SYSROOT)/usr/bin/{chattr,lsattr} $(SYSROOTDIR)/usr/bin/
+	$(Q) cp -av --remove-destination $(DEV_SYSROOT)/usr/sbin/{e2fsck,fsck} $(SYSROOTDIR)/usr/sbin/
+	$(Q) cp -av --remove-destination $(DEV_SYSROOT)/usr/sbin/resize2fs $(SYSROOTDIR)/usr/sbin/
 	$(Q) ln -sf mke2fs $(SYSROOTDIR)/usr/sbin/mkfs.ext2
 	$(Q) ln -sf mke2fs $(SYSROOTDIR)/usr/sbin/mkfs.ext3
 	$(Q) ln -sf mke2fs $(SYSROOTDIR)/usr/sbin/mkfs.ext4

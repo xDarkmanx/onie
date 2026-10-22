@@ -93,7 +93,7 @@ $(EFIBOOTMGR_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(EFIBOOTMGR_BUILD_STAMP) $(E
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing efibootmgr programs in $(SYSROOTDIR) ===="
 	$(Q) for file in $(EFIBOOTMGR_PROGRAMS); do \
-		cp -av $(DEV_SYSROOT)/usr/sbin/$$file $(SYSROOTDIR)/usr/sbin ; \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/sbin/$$file $(SYSROOTDIR)/usr/sbin ; \
 	     done
 	$(Q) touch $@
 

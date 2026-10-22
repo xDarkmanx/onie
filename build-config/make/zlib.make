@@ -96,7 +96,7 @@ $(ZLIB_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(ZLIB_BUILD_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing zlib in $(SYSROOTDIR) ===="
 	$(Q) for file in $(ZLIBLIBS) ; do \
-		cp -av $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ ; \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ ; \
 	done
 	$(Q) touch $@
 

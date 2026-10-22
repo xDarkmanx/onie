@@ -85,7 +85,7 @@ $(DOSFSTOOLS_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(DOSFSTOOLS_BUILD_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing dosfstools programs in $(SYSROOTDIR) ===="
 	$(Q) for file in $(DOSFSTOOLS_PROGRAMS); do \
-		cp -av $(DEV_SYSROOT)/usr/sbin/$$file $(SYSROOTDIR)/usr/sbin ; \
+		cp -av --remove-destination $(DEV_SYSROOT)/usr/sbin/$$file $(SYSROOTDIR)/usr/sbin ; \
 	     done
 	$(Q) touch $@
 

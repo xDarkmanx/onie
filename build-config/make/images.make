@@ -196,16 +196,16 @@ $(SYSROOT_CHECK_STAMP): $(PACKAGES_INSTALL_STAMPS)
 		    [ -r "$(DEV_SYSROOT)/lib64/$$file" ] || [ -r "$(DEV_SYSROOT)/lib/$$file" ] || { \
 			    echo "ERROR: Missing SYSROOT_LIB: $$file" ; \
 			    exit 1; } ; \
-			find $(DEV_SYSROOT)/lib64 $(DEV_SYSROOT)/lib -name $$file | xargs -i cp -av {} $(SYSROOTDIR)/lib/ || exit 1 ; \
+			find $(DEV_SYSROOT)/lib64 $(DEV_SYSROOT)/lib -name $$file | xargs -i cp -av --remove-destination {} $(SYSROOTDIR)/lib/ || exit 1 ; \
 		else \
 		    [ -r "$(DEV_SYSROOT)/lib/$$file" ] || { \
 			    echo "ERROR: Missing SYSROOT_LIB: $$file under $(DEV_SYSROOT)/lib" ; \
 			    exit 1; } ; \
-			find $(DEV_SYSROOT)/lib -name $$file | xargs -i cp -av {} $(SYSROOTDIR)/lib/ || exit 1 ; \
+			find $(DEV_SYSROOT)/lib -name $$file | xargs -i cp -av --remove-destination {} $(SYSROOTDIR)/lib/ || exit 1 ; \
 		fi; \
 	done
 	$(Q) for file in $(DEBUG_UTILS) ; do \
-		cp -av $$file $(SYSROOTDIR)/usr/bin || exit 1 ; \
+		cp -av --remove-destination $$file $(SYSROOTDIR)/usr/bin || exit 1 ; \
 		chmod +w $(SYSROOTDIR)/usr/bin/$$(basename $$file) ; \
 	done
 	$(Q) find $(SYSROOTDIR) -path */lib/grub/* -prune -o \( -type f -print0 \) | xargs -0 file | \
@@ -240,11 +240,11 @@ $(SYSROOT_COMPLETE_STAMP): $(SYSROOT_CHECK_STAMP)
 		cp $(MACHINEDIR)/rootconf/sysroot-init/* $(SYSROOTDIR)/etc/init.d ; \
 	     fi
 	$(Q) if [ -d $(MACHINEDIR)/rootconf/sysroot-rcS ] ; then \
-		cp -a $(MACHINEDIR)/rootconf/sysroot-rcS/* $(SYSROOTDIR)/etc/rcS.d ; \
+		cp -a --remove-destination $(MACHINEDIR)/rootconf/sysroot-rcS/* $(SYSROOTDIR)/etc/rcS.d ; \
 	     fi
 	$(Q) if [ -d $(MACHINEDIR)/rootconf/sysroot-rcK ] ; then \
-		cp -a $(MACHINEDIR)/rootconf/sysroot-rcK/* $(SYSROOTDIR)/etc/rc0.d ; \
-		cp -a $(MACHINEDIR)/rootconf/sysroot-rcK/* $(SYSROOTDIR)/etc/rc6.d ; \
+		cp -a --remove-destination $(MACHINEDIR)/rootconf/sysroot-rcK/* $(SYSROOTDIR)/etc/rc0.d ; \
+		cp -a --remove-destination $(MACHINEDIR)/rootconf/sysroot-rcK/* $(SYSROOTDIR)/etc/rc6.d ; \
 	     fi
 	$(Q) if [ -d $(MACHINEDIR)/rootconf/sysroot-etc ] ; then \
 		cp -ar $(MACHINEDIR)/rootconf/sysroot-etc/* $(SYSROOTDIR)/etc/ ; \
@@ -259,7 +259,7 @@ ifeq ($(SECURE_BOOT_EXT),yes)
 	$(Q) cp $(SYSROOTDIR)/bin/onie-console $(SYSROOTDIR)/bin/onie-console-secure
 # Apply machine specific ONIE password file
 	$(Q) if [ -e $(MACHINEDIR)/rootconf/sysroot-etc/passwd-secured ] ; then \
-                cp -a $(MACHINEDIR)/rootconf/sysroot-etc/passwd-secured $(SYSROOTDIR)/etc/passwd ; \
+                cp -a --remove-destination $(MACHINEDIR)/rootconf/sysroot-etc/passwd-secured $(SYSROOTDIR)/etc/passwd ; \
              fi
 endif
 	$(Q) cd $(SYSROOTDIR) && ln -fs sbin/init ./init
@@ -430,7 +430,7 @@ $(RECOVERY_INITRD_STAMP): $(IMAGE_UPDATER_STAMP)
 	$(Q) echo "==== Create $(MACHINE_PREFIX) ONIE Recovery initrd ===="
 	$(Q) rm -rf $(RECOVERY_DIR)
 	$(Q) mkdir -p $(RECOVERY_DIR)
-	$(Q) cp -a $(SYSROOTDIR) $(RECOVERY_SYSROOT)
+	$(Q) cp -a --remove-destination $(SYSROOTDIR) $(RECOVERY_SYSROOT)
 	$(Q) cp $(UPDATER_IMAGE) $(RECOVERY_SYSROOT)/lib/onie/onie-updater
 	$(Q) fakeroot -- $(SCRIPTDIR)/make-sysroot.sh $(RECOVERY_SYSROOT) $(RECOVERY_CPIO)
 	$(Q) xz --compress --force --check=crc32 --stdout -8 $(RECOVERY_CPIO) > $(RECOVERY_INITRD)

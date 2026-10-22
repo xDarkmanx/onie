@@ -98,7 +98,7 @@ $(KEXEC_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(KEXEC_BUILD_STAMP)  $(ZLIB_INSTA
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing kexec-tools in $(SYSROOTDIR) ===="
 	$(Q) for f in $(KEXEC_SBIN) ; do \
-		cp -a $(DEV_SYSROOT)/usr/sbin/$$f $(SYSROOTDIR)/usr/sbin ; \
+		cp -a --remove-destination $(DEV_SYSROOT)/usr/sbin/$$f $(SYSROOTDIR)/usr/sbin ; \
 	done
 	$(Q) touch $@
 
