@@ -32,7 +32,7 @@ PHONY += keyutils keyutils-download keyutils-source keyutils-patch \
 	 keyutils-download-clean
 
 KEYUTILS_BIN = keyctl
-KEYUTILS_LIB = libkeyutils.so libkeyutils.so.1 libkeyutils.so.1.6
+KEYUTILS_LIB = libkeyutils.so libkeyutils.so.1 libkeyutils.so.1.10
 
 keyutils: $(KEYUTILS_STAMP)
 
