@@ -123,8 +123,8 @@ GPT_ENABLE = yes
 # gptfdisk requires C++
 REQUIRE_CXX_LIBS = yes
 
-# GNU parted: no consumers in ONIE scripts (sgdisk covers partitioning)
-PARTED_ENABLE = no
+# Include the GNU parted partitioning tools (partprobe)
+PARTED_ENABLE = yes
 
 # Include ext3/4 file system tools
 EXT3_4_ENABLE = yes
