@@ -5,3 +5,5 @@
 build
 local.make
 onie-installer
+# machine signing keys (generated, never commit)
+encryption/machines/
