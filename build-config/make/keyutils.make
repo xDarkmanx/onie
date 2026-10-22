@@ -9,11 +9,13 @@
 # This is a makefile fragment that defines the build of keyutils
 #
 
-KEYUTILS_VERSION	= 1.5.10
-KEYUTILS_TARBALL	= keyutils-$(KEYUTILS_VERSION).tar.bz2
+KEYUTILS_VERSION	= 1.6.3
+KEYUTILS_TARBALL	= keyutils-$(KEYUTILS_VERSION).tar.gz
 KEYUTILS_TARBALL_URLS	+= $(ONIE_MIRROR) \
-			   https://people.redhat.com/~dhowells/keyutils
+			   https://git.kernel.org/pub/scm/linux/kernel/git/dhowells/keyutils.git/snapshot/keyutils-$(KEYUTILS_VERSION).tar.gz
 KEYUTILS_BUILD_DIR	= $(USER_BUILDDIR)/keyutils
+KEYUTILS_SRCPATCHDIR	= $(PATCHDIR)/keyutils
+KEYUTILS_PATCH_STAMP	= $(USER_STAMPDIR)/keyutils-patch
 KEYUTILS_DIR		= $(KEYUTILS_BUILD_DIR)/keyutils-$(KEYUTILS_VERSION)
 
 KEYUTILS_DOWNLOAD_STAMP	= $(DOWNLOADDIR)/keyutils-download
@@ -21,10 +23,11 @@ KEYUTILS_SOURCE_STAMP	= $(USER_STAMPDIR)/keyutils-source
 KEYUTILS_BUILD_STAMP	= $(USER_STAMPDIR)/keyutils-build
 KEYUTILS_INSTALL_STAMP	= $(STAMPDIR)/keyutils-install
 KEYUTILS_STAMP		= $(KEYUTILS_SOURCE_STAMP) \
+			  $(KEYUTILS_PATCH_STAMP) \
 			  $(KEYUTILS_BUILD_STAMP) \
 			  $(KEYUTILS_INSTALL_STAMP)
 
-PHONY += keyutils keyutils-download keyutils-source \
+PHONY += keyutils keyutils-download keyutils-source keyutils-patch \
 	 keyutils-build keyutils-install keyutils-clean \
 	 keyutils-download-clean
 
@@ -50,6 +53,14 @@ $(KEYUTILS_SOURCE_STAMP): $(USER_TREE_STAMP) | $(KEYUTILS_DOWNLOAD_STAMP)
 	$(Q) $(SCRIPTDIR)/extract-package $(KEYUTILS_BUILD_DIR) $(DOWNLOADDIR)/$(KEYUTILS_TARBALL)
 	$(Q) touch $@
 
+PATCH += $(KEYUTILS_PATCH_STAMP)
+keyutils-patch: $(KEYUTILS_PATCH_STAMP)
+$(KEYUTILS_PATCH_STAMP): $(KEYUTILS_SOURCE_STAMP) $(KEYUTILS_SRCPATCHDIR)/series
+	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
+	$(Q) echo "==== Patching keyutils ===="
+	$(Q) $(SCRIPTDIR)/apply-patch-series $(KEYUTILS_SRCPATCHDIR)/series $(KEYUTILS_DIR)
+	$(Q) touch $@
+
 KEYUTILS_BUILD_OPTS	= \
 	DESTDIR=$(DEV_SYSROOT)    \
 	CC=$(CROSSPREFIX)gcc      \
@@ -59,7 +70,7 @@ KEYUTILS_BUILD_OPTS	= \
 	USRLIBDIR=/usr/lib
 
 keyutils-build: $(KEYUTILS_BUILD_STAMP)
-$(KEYUTILS_BUILD_STAMP): $(KEYUTILS_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
+$(KEYUTILS_BUILD_STAMP): $(KEYUTILS_PATCH_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building keyutils-$(KEYUTILS_VERSION) ===="
 	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(KEYUTILS_DIR) $(KEYUTILS_BUILD_OPTS)

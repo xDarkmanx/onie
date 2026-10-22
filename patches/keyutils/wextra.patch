@@ -1,0 +1,211 @@
+Subject: [PATCH] fix -Wall -Wextra -Werror warnings
+
+Unused-parameter (void) casts, sign-compare casts, uid/gid -1
+compares via (uid_t)/(gid_t)-1, fcntl flags compare via (int),
+act_keyctl_supports: size_t len -> long len.
+diff --git a/key.dns_resolver.c b/key.dns_resolver.c
+index 7a7ec42..8c7b82e 100644
+--- a/key.dns_resolver.c
++++ b/key.dns_resolver.c
+@@ -164,7 +164,7 @@ void _nsError(int err, const char *domain)
+ 	else
+ 		syslog(LOG_INFO, "%s: %s", domain, hstrerror(err));
+ 
+-	if (err >= sizeof(ns_errno_map) / sizeof(ns_errno_map[0]))
++	if ((size_t)err >= sizeof(ns_errno_map) / sizeof(ns_errno_map[0]))
+ 		err = ECONNREFUSED;
+ 	else
+ 		err = ns_errno_map[err];
+diff --git a/keyctl.c b/keyctl.c
+index b1e100e..4f4765d 100644
+--- a/keyctl.c
++++ b/keyctl.c
+@@ -197,7 +197,7 @@ void do_command(int argc, char **argv,
+ 	for (cmd = commands; cmd->name; cmd++) {
+ 		if (!cmd->action)
+ 			continue;
+-		if (strlen(cmd->name) > n)
++		if (strlen(cmd->name) > (size_t)n)
+ 			continue;
+ 		if (memcmp(cmd->name, *argv, n) != 0)
+ 			continue;
+@@ -262,6 +262,8 @@ void format(void)
+  */
+ static void act_keyctl___version(int argc, char *argv[])
+ {
++	(void)argc;
++	(void)argv;
+ 	printf("keyctl from %s (Built %s)\n",
+ 	       keyutils_version_string, keyutils_build_string);
+ 	exit(0);
+@@ -287,9 +289,9 @@ static char *grab_stdin(size_t *_size)
+ 
+ 		n += tmp;
+ 
+-	} while (n < sizeof(input));
++	} while ((size_t)n < sizeof(input));
+ 
+-	if (n >= sizeof(input)) {
++	if ((size_t)n >= sizeof(input)) {
+ 		fprintf(stderr, "Too much data read on stdin\n");
+ 		exit(1);
+ 	}
+@@ -370,7 +372,7 @@ static void grab_creds(void)
+ 	mygid = getegid();
+ 	myngroups = getgroups(0, NULL);
+ 
+-	if (myuid == -1 || mygid == -1 || myngroups == -1)
++	if (myuid == (uid_t)-1 || mygid == (gid_t)-1 || myngroups == -1)
+ 		error("Unable to get UID/GID/#Groups\n");
+ 
+ 	mygroups = calloc(myngroups, sizeof(gid_t));
+@@ -402,7 +404,7 @@ static void calc_perms(char *pretty, key_perm_t perm, uid_t uid, gid_t gid)
+ 		goto write_mask;
+ 	}
+ 
+-	if (gid != -1) {
++	if (gid != (gid_t)-1) {
+ 		if (gid == mygid) {
+ 			perms |= (perm & KEY_GRP_ALL) >> 8;
+ 			goto write_mask;
+@@ -788,6 +790,8 @@ static void act_keyctl_link(int argc, char *argv[])
+ static int act_keyctl_unlink_func(key_serial_t parent, key_serial_t key,
+ 				  char *desc, int desc_len, void *data)
+ {
++	(void)desc;
++	(void)desc_len;
+ 	key_serial_t *target = data;
+ 
+ 	if (key == *target)
+@@ -1560,6 +1564,8 @@ static void act_keyctl_reject(int argc, char *argv[])
+ static int act_keyctl_reap_func(key_serial_t parent, key_serial_t key,
+ 				char *desc, int desc_len, void *data)
+ {
++	(void)desc;
++	(void)data;
+ 	if (desc_len < 0 && errno != EACCES) {
+ 		if (verbose)
+ 			printf("Reap %d", key);
+@@ -1663,10 +1669,10 @@ static int act_keyctl_purge_literal_func(key_serial_t parent, key_serial_t key,
+ 	desc++;
+ 
+ 	if (purge->prefix_match) {
+-		if (raw_len - (desc - raw) < purge->desc_len)
++		if ((size_t)(raw_len - (desc - raw)) < purge->desc_len)
+ 			return 0;
+ 	} else {
+-		if (raw_len - (desc - raw) != purge->desc_len)
++		if ((size_t)(raw_len - (desc - raw)) != purge->desc_len)
+ 			return 0;
+ 	}
+ 
+@@ -1689,6 +1695,8 @@ static int act_keyctl_purge_literal_func(key_serial_t parent, key_serial_t key,
+ static int act_keyctl_purge_search_func(key_serial_t parent, key_serial_t keyring,
+ 					char *raw, int raw_len, void *data)
+ {
++	(void)parent;
++	(void)raw_len;
+ 	const struct purge_data *purge = data;
+ 	key_serial_t key;
+ 	int kcount = 0;
+@@ -2301,7 +2309,7 @@ static void act_keyctl_supports(int argc, char *argv[])
+ {
+ 	const struct capability_def *p;
+ 	unsigned char caps[256];
+-	size_t len;
++	long len;
+ 	int i;
+ 
+ 	if (argc < 1 || argc > 2)
+diff --git a/keyctl_testing.c b/keyctl_testing.c
+index 3161467..190e40f 100644
+--- a/keyctl_testing.c
++++ b/keyctl_testing.c
+@@ -78,6 +78,8 @@ void act_keyctl_test(int argc, char *argv[])
+  */
+ static void act_keyctl_test_limits(int argc, char *argv[])
+ {
++	(void)argc;
++	(void)argv;
+ 	key_serial_t key;
+ 	char buf[8192];
+ 	int i, nr_fail = 0;
+@@ -87,7 +89,7 @@ static void act_keyctl_test_limits(int argc, char *argv[])
+ 
+ 	setvbuf(stdout, NULL, _IONBF, 0);
+ 
+-	for (i = 0; i < sizeof(buf); i++) {
++	for (i = 0; (size_t)i < sizeof(buf); i++) {
+ 		if (i % 32 == 0) {
+ 			if (i != 0)
+ 				putchar('\n');
+@@ -163,6 +165,8 @@ static void act_keyctl_test_limits(int argc, char *argv[])
+  */
+ static void act_keyctl_test_limits2(int argc, char *argv[])
+ {
++	(void)argc;
++	(void)argv;
+ 	key_serial_t key;
+ 	char buf[1030 * 1024];
+ 	int i, nr_fail = 0;
+@@ -173,7 +177,7 @@ static void act_keyctl_test_limits2(int argc, char *argv[])
+ 	setvbuf(stdout, NULL, _IONBF, 0);
+ 	memset(buf, 'a', sizeof(buf));
+ 
+-	for (i = 0; i < sizeof(buf); i++) {
++	for (i = 0; (size_t)i < sizeof(buf); i++) {
+ 		if (i % 2048 == 0) {
+ 			if (i != 0)
+ 				putchar('\n');
+diff --git a/keyctl_watch.c b/keyctl_watch.c
+index a70a19a..d779f7c 100644
+--- a/keyctl_watch.c
++++ b/keyctl_watch.c
+@@ -54,6 +54,7 @@ static inline bool after_eq(unsigned int a, unsigned int b)
+ 
+ static void consumer_term(int sig)
+ {
++	(void)sig;
+ 	consumer_stop = 1;
+ }
+ 
+@@ -156,7 +157,7 @@ int consumer(FILE *log, FILE *gc, int fd)
+ 			exit(0);
+ 		}
+ 
+-		if (buf_len > sizeof(buffer)) {
++		if ((size_t)buf_len > sizeof(buffer)) {
+ 			fprintf(stderr, "Read buffer overrun: %zd\n", buf_len);
+ 			exit(4);
+ 		}
+@@ -431,7 +432,7 @@ static FILE *open_logfile(const char *logfile)
+ 
+ 	lfd = fileno(log);
+ 	flags = fcntl(lfd, F_GETFD);
+-	if (flags == -1)
++	if ((int)flags == -1)
+ 		error("F_GETFD");
+ 	if (fcntl(lfd, F_SETFD, flags | FD_CLOEXEC) == -1)
+ 		error("F_SETFD");
+@@ -498,7 +499,7 @@ void act_keyctl_watch_session(int argc, char *argv[])
+ 
+ 	/* We want the fd to be inherited across a fork. */
+ 	flags = fcntl(wfd, F_GETFD);
+-	if (flags == -1)
++	if ((int)flags == -1)
+ 		error("F_GETFD");
+ 	if (fcntl(wfd, F_SETFD, flags & ~FD_CLOEXEC) == -1)
+ 		error("F_SETFD");
+diff --git a/keyutils.c b/keyutils.c
+index 48b779e..99ad696 100644
+--- a/keyutils.c
++++ b/keyutils.c
+@@ -672,7 +672,7 @@ key_serial_t find_key_by_type_and_desc(const char *type, const char *desc,
+ 				if (errno == ENOMEM)
+ 					break;
+ 			}
+-			if (n >= sizeof(rdesc) - 1)
++			if ((size_t)n >= sizeof(rdesc) - 1)
+ 				continue;
+ 			rdesc[n] = '\0';
+ 
