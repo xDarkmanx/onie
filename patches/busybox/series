@@ -91,3 +91,4 @@ acpid-signedness.patch
 cal-signedness.patch
 fdisk-wextra.patch
 mkfs-ext2-signedness.patch
+mkfs-vfat-fallthrough.patch

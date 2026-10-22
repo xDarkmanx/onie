@@ -1,0 +1,16 @@
+Subject: [PATCH] mkfs_vfat: fix -Wextra implicit-fallthrough
+
+not_floppy skips the geometry table only; floppies still need
+the 0xf0 media byte from the next cases - mark the fall.
+diff --git a/util-linux/mkfs_vfat.c b/util-linux/mkfs_vfat.c
+index 8213719..7821fe5 100644
+--- a/util-linux/mkfs_vfat.c
++++ b/util-linux/mkfs_vfat.c
+@@ -380,6 +380,7 @@ int mkfs_vfat_main(int argc UNUSED_PARAM, char **argv)
+ 			default:	// anything else
+ 				if (not_floppy)
+ 					goto set_cluster_size;
++				/* fall through */
+ 			case 2*1440:	// 3.5", 2, 18, 80 - 1440K
+ 			case 2*2880:	// 3.5", 2, 36, 80 - 2880K
+ 				media_byte = 0xf0;
