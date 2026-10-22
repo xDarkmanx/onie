@@ -143,7 +143,7 @@ I2CTOOLS_ENABLE ?= yes
 DMIDECODE_ENABLE = yes
 
 # Include lvm2 tools
-LVM2_ENABLE = yes
+LVM2_ENABLE = no
 
 # Include ethtool by default
 ETHTOOL_ENABLE ?= yes
