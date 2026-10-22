@@ -88,8 +88,6 @@ $(E2FSPROGS_CONFIGURE_STAMP): $(ZLIB_BUILD_STAMP) $(LZO_BUILD_STAMP) \
 		--disable-tls					\
 		--disable-defrag				\
 		--enable-symlink-build				\
-		--disable-libuuid				\
-        --disable-libblkid \
 		CC=$(CROSSPREFIX)gcc				\
 		CFLAGS="$(filter-out -Werror,$(ONIE_CFLAGS))"		\
 		CPPFLAGS="-I$(DEV_SYSROOT)/usr/include"		\
