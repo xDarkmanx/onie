@@ -92,7 +92,7 @@ $(MTDUTILS_CONFIGURE_STAMP): $(MTDUTILS_PATCH_STAMP) $(UTILLINUX_BUILD_STAMP) \
 		LDFLAGS="$(ONIE_LDFLAGS)"			\
 		ZLIB_CFLAGS="-I$(DEV_SYSROOT)/usr/include"	\
 		ZLIB_LIBS="-L$(DEV_SYSROOT)/usr/lib -lz"	\
-		UUID_CFLAGS="-I$(DEV_SYSROOT)/usr/include"	\
+		UUID_CFLAGS="-I$(DEV_SYSROOT)/usr/include/uuid"	\
 		UUID_LIBS="-L$(DEV_SYSROOT)/usr/lib -luuid"	\
 		LZO_CFLAGS="-I$(DEV_SYSROOT)/usr/include"	\
 		LZO_LIBS="-L$(DEV_SYSROOT)/usr/lib -llzo2"	\
