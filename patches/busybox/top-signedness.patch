@@ -1,0 +1,16 @@
+Subject: [PATCH] top: fix -Wextra sign-compare
+
+i is int; num_cpus is a small CPU count - cast the bound.
+diff --git a/procps/top.c b/procps/top.c
+index ff77542..29d27e3 100644
+--- a/procps/top.c
++++ b/procps/top.c
+@@ -345,7 +345,7 @@ static void get_jiffy_counts(void)
+ 		cpu_jif = tmp;
+ 
+ 		/* Get the new samples */
+-		for (i = 0; i < num_cpus; i++)
++		for (i = 0; i < (int)num_cpus; i++)
+ 			read_cpu_jiffy(fp, &cpu_jif[i]);
+ 	}
+ #endif
