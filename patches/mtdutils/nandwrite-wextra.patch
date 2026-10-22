@@ -1,0 +1,33 @@
+Subject: [PATCH] nandwrite: fix -Wextra errors
+
+- cnt: loop provably runs once but gcc cannot see it; init to 0
+  (EOF semantics) for the STDIN recheck.
+- free(filebuf) moved after the writebuf < filebuf + filebuf_len
+  check: pointer arithmetic on freed pointer is UB.
+diff --git a/nand-utils/nandwrite.c b/nand-utils/nandwrite.c
+index cd53a17..4d2fd94 100644
+--- a/nand-utils/nandwrite.c
++++ b/nand-utils/nandwrite.c
+@@ -528,7 +528,7 @@ int main(int argc, char * const argv[])
+ 				size_t readlen = mtd.oob_size;
+ 				size_t alreadyread = (filebuf + filebuf_len) - oobbuf;
+ 				size_t tinycnt = alreadyread;
+-				ssize_t cnt;
++				ssize_t cnt = 0;
+ 
+ 				while (tinycnt < readlen) {
+ 					cnt = read(ifd, oobbuf + tinycnt, readlen - tinycnt);
+@@ -614,12 +614,12 @@ closeall:
+ 	if (ifd > 0 && ifd != STDIN_FILENO)
+ 		close(ifd);
+ 	libmtd_close(mtd_desc);
+-	free(filebuf);
+ 	close(fd);
+ 
+ 	if (failed || (ifd != STDIN_FILENO && imglen > 0)
+ 		   || (writebuf < filebuf + filebuf_len))
+ 		sys_errmsg_die("Data was only partially written due to error");
++	free(filebuf);
+ 
+ 	if (all_ffs_cnt) {
+ 		fprintf(stderr, "Written %zu blocks containing only 0xff bytes\n", all_ffs_cnt);
