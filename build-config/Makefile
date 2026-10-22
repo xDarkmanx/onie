@@ -376,6 +376,7 @@ include make/compiler.make
 include make/busybox.make
 include make/zlib.make
 include make/lzo.make
+include make/libmnl.make
 include make/util-linux.make
 ifeq ($(MTDUTILS_ENABLE),yes)
   include make/mtdutils.make

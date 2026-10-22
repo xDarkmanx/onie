@@ -50,7 +50,8 @@ $(ETHTOOL_SOURCE_STAMP): $(USER_TREE_STAMP) | $(ETHTOOL_DOWNLOAD_STAMP)
 	$(Q) touch $@
 
 ethtool-configure: $(ETHTOOL_CONFIGURE_STAMP)
-$(ETHTOOL_CONFIGURE_STAMP): $(ETHTOOL_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
+$(ETHTOOL_CONFIGURE_STAMP): $(ETHTOOL_SOURCE_STAMP) $(LIBMNL_BUILD_STAMP) | \
+			     $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Configure ethtool-$(ETHTOOL_VERSION) ===="
 	$(Q) cd $(ETHTOOL_DIR) && PATH='$(CROSSBIN):$(PATH)'	\
@@ -58,6 +59,8 @@ $(ETHTOOL_CONFIGURE_STAMP): $(ETHTOOL_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 		--prefix=/usr					\
 		--host=$(TARGET)				\
 		CFLAGS="$(filter-out -Werror,$(ONIE_CFLAGS))"	\
+		MNL_CFLAGS="-I$(DEV_SYSROOT)/usr/include" \
+		MNL_LIBS="-L$(DEV_SYSROOT)/usr/lib -lmnl" \
 		LDFLAGS="$(ONIE_LDFLAGS)"
 	$(Q) touch $@
 
