@@ -1,0 +1,41 @@
+Subject: [PATCH] sv: fix -Wextra warnings
+
+- try-restart/check/force-stop match-then-fall-through chains:
+  add the missing /* fall through */ markers
+- diff (int) vs waitsec (unsigned seconds): cast the bound
+diff --git a/runit/sv.c b/runit/sv.c
+index 5c249ff..1b7e629 100644
+--- a/runit/sv.c
++++ b/runit/sv.c
+@@ -557,12 +557,14 @@ static int sv(char **argv)
+ 			acts = "tc";
+ 			break;
+ 		}
++		/* fall through */
+ 	case 'c':
+ 		if (str_equal(action, "check")) {
+ 			act = NULL;
+ 			acts = "C";
+ 			break;
+ 		}
++		/* fall through */
+ 	case 'u': case 'd': case 'o': case 'p': case 'h':
+ 	case 'a': case 'i': case 'k': case 'q': case '1': case '2':
+ 		action[1] = '\0';
+@@ -618,6 +620,7 @@ static int sv(char **argv)
+ 			kll = 1;
+ 			break;
+ 		}
++		/* fall through */
+ 	default:
+ 		bb_show_usage();
+ 	}
+@@ -666,7 +669,7 @@ static int sv(char **argv)
+ 			if (cbk(acts) != 0)
+ 				goto nullify_service;
+ 			want_exit = 0;
+-			if (diff >= waitsec) {
++			if (diff >= (int)waitsec) {
+ 				printf(kll ? "kill: " : "timeout: ");
+ 				if (svstatus_get() > 0) {
+ 					svstatus_print(x);

@@ -82,3 +82,4 @@ powertop-wextra.patch
 pstree-signedness.patch
 top-signedness.patch
 chpst-signedness.patch
+sv-wextra.patch
