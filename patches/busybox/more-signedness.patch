@@ -1,0 +1,22 @@
+Subject: [PATCH] more: fix -Wextra sign-compare
+
+len/lines only count up; compare in the unsigned terminal-dim domain
+(original promoted semantics).
+diff --git a/util-linux/more.c b/util-linux/more.c
+index a830dcb..28130db 100644
+--- a/util-linux/more.c
++++ b/util-linux/more.c
+@@ -195,11 +195,11 @@ int more_main(int argc UNUSED_PARAM, char **argv)
+ 			 * see if any characters have been hit in the _input_ stream. This
+ 			 * allows the user to quit while in the middle of a file.
+ 			 */
+-			wrap = (++len > G.terminal_width);
++			wrap = ((unsigned)++len > G.terminal_width);
+ 			if (c == '\n' || wrap) {
+ 				/* Then outputting this character
+ 				 * will move us to a new line. */
+-				if (++lines >= G.terminal_height || input == '\n')
++				if ((unsigned)++lines >= G.terminal_height || input == '\n')
+ 					please_display_more_prompt = 1;
+ 				len = 0;
+ 			}
