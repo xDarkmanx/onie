@@ -1,0 +1,14 @@
+Subject: [PATCH] mkfs.fat.c: cast strrchr result
+
+program_name is const char*; p is a marker only.
+--- a/src/mkfs.fat.c	2021-01-31 15:49:12.000000000 +0300
++++ b/src/mkfs.fat.c	2026-10-22 17:00:31.587060440 +0300
+@@ -1493,7 +1493,7 @@
+     if (argc && *argv) {	/* What's the program name? */
+ 	char *p;
+ 	program_name = *argv;
+-	if ((p = strrchr(program_name, '/')))
++	if ((p = (char *) strrchr(program_name, '/')))
+ 	    program_name = p + 1;
+     }
+ 

@@ -9,9 +9,10 @@
 # This is a makefile fragment that defines the build of dosfstools
 #
 
-DOSFSTOOLS_VERSION		= 3.0.26
-DOSFSTOOLS_TARBALL		= dosfstools-$(DOSFSTOOLS_VERSION).tar.xz
-DOSFSTOOLS_TARBALL_URLS		+= $(ONIE_MIRROR) http://daniel-baumann.ch/files/software/dosfstools
+DOSFSTOOLS_VERSION		= 4.2
+DOSFSTOOLS_TARBALL		= dosfstools-$(DOSFSTOOLS_VERSION).tar.gz
+DOSFSTOOLS_TARBALL_URLS		+= $(ONIE_MIRROR) \
+				   https://github.com/dosfstools/dosfstools/releases/download/v$(DOSFSTOOLS_VERSION)
 DOSFSTOOLS_BUILD_DIR		= $(USER_BUILDDIR)/dosfstools
 DOSFSTOOLS_DIR			= $(DOSFSTOOLS_BUILD_DIR)/dosfstools-$(DOSFSTOOLS_VERSION)
 
@@ -19,10 +20,12 @@ DOSFSTOOLS_SRCPATCHDIR		= $(PATCHDIR)/dosfstools
 DOSFSTOOLS_DOWNLOAD_STAMP		= $(DOWNLOADDIR)/dosfstools-download
 DOSFSTOOLS_SOURCE_STAMP		= $(USER_STAMPDIR)/dosfstools-source
 DOSFSTOOLS_PATCH_STAMP		= $(USER_STAMPDIR)/dosfstools-patch
+DOSFSTOOLS_CONFIGURE_STAMP	= $(USER_STAMPDIR)/dosfstools-configure
 DOSFSTOOLS_BUILD_STAMP		= $(USER_STAMPDIR)/dosfstools-build
 DOSFSTOOLS_INSTALL_STAMP	= $(STAMPDIR)/dosfstools-install
 DOSFSTOOLS_STAMP		= $(DOSFSTOOLS_SOURCE_STAMP) \
 				  $(DOSFSTOOLS_PATCH_STAMP) \
+			  $(DOSFSTOOLS_CONFIGURE_STAMP) \
 				  $(DOSFSTOOLS_BUILD_STAMP) \
 				  $(DOSFSTOOLS_INSTALL_STAMP)
 
@@ -30,7 +33,7 @@ DOSFSTOOLS_PROGRAMS	= fsck.fat dosfsck fsck.msdos fsck.vfat \
 				mkfs.fat mkdosfs mkfs.msdos mkfs.vfat \
 				fatlabel dosfslabel
 
-PHONY += dosfstools dosfstools-download dosfstools-source dosfstools-patch \
+PHONY += dosfstools dosfstools-download dosfstools-source dosfstools-patch dosfstools-configure \
 	dosfstools-build dosfstools-install dosfstools-clean dosfstools-download-clean
 
 dosfstools: $(DOSFSTOOLS_STAMP)
@@ -71,7 +74,17 @@ DOSFSTOOLS_MAKE_VARS = \
 	DESTDIR=$(DEV_SYSROOT) PREFIX=/usr
 
 dosfstools-build: $(DOSFSTOOLS_BUILD_STAMP)
-$(DOSFSTOOLS_BUILD_STAMP): $(DOSFSTOOLS_PATCH_STAMP) $(DOSFSTOOLS_NEW_FILES) \
+$(DOSFSTOOLS_CONFIGURE_STAMP): $(DOSFSTOOLS_PATCH_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
+	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
+	$(Q) echo "====  Configure dosfstools-$(DOSFSTOOLS_VERSION) ===="
+	$(Q) cd $(DOSFSTOOLS_DIR) && PATH='$(CROSSBIN):$(PATH)'	\
+		./configure --prefix=/usr --disable-nls --host=$(TARGET)	\
+		CC=$(CROSSPREFIX)gcc				\
+		CFLAGS="$(filter-out -Werror,$(ONIE_CFLAGS))"	\
+		LDFLAGS="$(ONIE_LDFLAGS)"
+	$(Q) touch $@
+
+$(DOSFSTOOLS_BUILD_STAMP): $(DOSFSTOOLS_CONFIGURE_STAMP) $(DOSFSTOOLS_NEW_FILES) \
 				| $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building dosfstools-$(DOSFSTOOLS_VERSION) ===="
