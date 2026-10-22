@@ -16,13 +16,16 @@ DROPBEAR_TARBALL_URLS		+= $(ONIE_MIRROR) https://matt.ucc.asn.au/dropbear/releas
 DROPBEAR_BUILD_DIR		= $(USER_BUILDDIR)/dropbear
 DROPBEAR_DIR			= $(DROPBEAR_BUILD_DIR)/dropbear-$(DROPBEAR_VERSION)
 DROPBEAR_CONFIG_H		= conf/dropbear.config.h
+DROPBEAR_SRCPATCHDIR		= $(PATCHDIR)/dropbear
 
 DROPBEAR_DOWNLOAD_STAMP		= $(DOWNLOADDIR)/dropbear-download
 DROPBEAR_SOURCE_STAMP		= $(USER_STAMPDIR)/dropbear-source
+DROPBEAR_PATCH_STAMP		= $(USER_STAMPDIR)/dropbear-patch
 DROPBEAR_CONFIGURE_STAMP	= $(USER_STAMPDIR)/dropbear-configure
 DROPBEAR_BUILD_STAMP		= $(USER_STAMPDIR)/dropbear-build
 DROPBEAR_INSTALL_STAMP		= $(STAMPDIR)/dropbear-install
 DROPBEAR_STAMP			= $(DROPBEAR_SOURCE_STAMP) \
+				  $(DROPBEAR_PATCH_STAMP) \
 				  $(DROPBEAR_CONFIGURE_STAMP) \
 				  $(DROPBEAR_BUILD_STAMP) \
 				  $(DROPBEAR_INSTALL_STAMP)
@@ -36,7 +39,7 @@ DROPBEAR_BINS			= usr/sbin/dropbear		\
 				  usr/bin/scp			\
 				  usr/bin/ssh
 
-PHONY += dropbear dropbear-download dropbear-source dropbear-configure \
+PHONY += dropbear dropbear-download dropbear-source dropbear-patch dropbear-configure \
 	dropbear-build dropbear-install dropbear-clean dropbear-download-clean
 
 dropbear: $(DROPBEAR_STAMP)
@@ -63,8 +66,15 @@ DROPBEAR_NEW_FILES = $(shell test -d $(DROPBEAR_DIR) && test -f $(DROPBEAR_BUILD
 	              find -L $(DROPBEAR_DIR) -newer $(DROPBEAR_BUILD_STAMP) -type f -print -quit)
 endif
 
+dropbear-patch: $(DROPBEAR_PATCH_STAMP)
+$(DROPBEAR_PATCH_STAMP): $(DROPBEAR_SRCPATCHDIR)/* $(DROPBEAR_SOURCE_STAMP)
+	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
+	$(Q) echo "==== Patching dropbear ===="
+	$(Q) $(SCRIPTDIR)/apply-patch-series $(DROPBEAR_SRCPATCHDIR)/series $(DROPBEAR_DIR)
+	$(Q) touch $@
+
 dropbear-configure: $(DROPBEAR_CONFIGURE_STAMP)
-$(DROPBEAR_CONFIGURE_STAMP): $(DROPBEAR_SOURCE_STAMP) $(ZLIB_BUILD_STAMP) \
+$(DROPBEAR_CONFIGURE_STAMP): $(DROPBEAR_PATCH_STAMP) $(ZLIB_BUILD_STAMP) \
 			     | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Configure dropbear-$(DROPBEAR_VERSION) ===="
