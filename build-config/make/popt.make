@@ -32,7 +32,7 @@ PHONY += popt popt-download popt-source popt-patch \
 	 popt-configure popt-build popt-install popt-clean \
 	 popt-download-clean
 
-POPT_LIBS = libpopt.so libpopt.so.0 libpopt.so.0.0.0
+POPT_LIBS = libpopt.so libpopt.so.0 libpopt.so.0.0.2
 
 popt: $(POPT_STAMP)
 
