@@ -1,0 +1,16 @@
+Subject: [PATCH] shell_common: fix -Wextra sign-compare
+
+bufpos is a small buffer index; compare in the int domain.
+diff --git a/shell/shell_common.c b/shell/shell_common.c
+index 13163ac..d05072f 100644
+--- a/shell/shell_common.c
++++ b/shell/shell_common.c
+@@ -290,7 +290,7 @@ shell_builtin_read(struct builtin_read_params *params)
+ 				continue;
+ 			}
+ 			/* Are there $IFS chars? */
+-			if (strcspn(buffer, ifs) >= ++bufpos) {
++			if ((int)strcspn(buffer, ifs) >= ++bufpos) {
+ 				/* No: last var takes one field, not more */
+ 				/* So, drop trailing IFS delims */
+ 				buffer[bufpos] = '\0';
