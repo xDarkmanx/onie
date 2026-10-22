@@ -2,8 +2,9 @@ Subject: [PATCH] fix -Wall -Wextra -Werror warnings
 
 Unused-parameter (void) casts in xen/zlib/zstd stubs, sign-compare
 casts, warn_unused_result checks (ftruncate/fgets/read),
-fallthrough comments in getopt switches, drop dead counter i.
-Purgatory not touched (freestanding, -fno-builtin).
+fallthrough comments in getopt switches, drop dead counter i,
+sign-compare casts in util_lib/elf_info.c. Purgatory not
+touched (freestanding, -fno-builtin).
 diff --git a/kexec/arch/i386/crashdump-x86.c b/kexec/arch/i386/crashdump-x86.c
 index 0716762..02e7175 100644
 --- a/kexec/arch/i386/crashdump-x86.c
@@ -351,3 +352,61 @@ index eaa76b9..7936bc3 100644
  		dbgprintf("short file\n");
  		return NULL;
  	}
+diff --git a/util_lib/elf_info.c b/util_lib/elf_info.c
+index b005245..ee6ad72 100644
+--- a/util_lib/elf_info.c
++++ b/util_lib/elf_info.c
+@@ -738,7 +738,7 @@ static void dump_dmesg_legacy(int fd, void (*handler)(char*, unsigned int))
+ 	 * To collect full dmesg including the part before `dmesg -c` is useful
+ 	 * for later debugging. Use same logic as what crash utility is using.
+ 	 */
+-	logged_chars = log_end < log_buf_len ? log_end : log_buf_len;
++	logged_chars = log_end < (unsigned)log_buf_len ? log_end : (unsigned)log_buf_len;
+ 
+ 	if (handler)
+ 		handler(buf + (log_buf_len - logged_chars), logged_chars);
+@@ -835,7 +835,7 @@ static void dump_dmesg_structured(int fd, void (*handler)(char*, unsigned int))
+ 		uint16_t loglen;
+ 
+ 		ret = pread(fd, buf, log_sz, log_buf_offset + current_idx);
+-		if (ret != log_sz) {
++		if ((uint64_t)ret != log_sz) {
+ 			fprintf(stderr, "Failed to read log of size %" PRId64 " bytes:"
+ 				" %s\n", log_sz, strerror(errno));
+ 			exit(65);
+@@ -1127,7 +1127,7 @@ static void dump_dmesg_lockless(int fd, void (*handler)(char*, unsigned int))
+ 		exit(64);
+ 	}
+ 	ret = pread(fd, m.prb, printk_ringbuffer_sz, vaddr_to_offset(kaddr));
+-	if (ret != printk_ringbuffer_sz) {
++	if ((size_t)ret != printk_ringbuffer_sz) {
+ 		fprintf(stderr, "Failed to read prb of size %zu bytes: %s\n",
+ 			printk_ringbuffer_sz, strerror(errno));
+ 		exit(65);
+@@ -1146,7 +1146,7 @@ static void dump_dmesg_lockless(int fd, void (*handler)(char*, unsigned int))
+ 	}
+ 	ret = pread(fd, m.descs, prb_desc_sz * m.desc_ring_count,
+ 		    vaddr_to_offset(kaddr));
+-	if (ret != prb_desc_sz * m.desc_ring_count) {
++	if ((size_t)ret != prb_desc_sz * m.desc_ring_count) {
+ 		fprintf(stderr,
+ 			"Failed to read descs of size %lu bytes: %s\n",
+ 			prb_desc_sz * m.desc_ring_count, strerror(errno));
+@@ -1163,7 +1163,7 @@ static void dump_dmesg_lockless(int fd, void (*handler)(char*, unsigned int))
+ 	}
+ 	ret = pread(fd, m.infos, printk_info_sz * m.desc_ring_count,
+ 		    vaddr_to_offset(kaddr));
+-	if (ret != printk_info_sz * m.desc_ring_count) {
++	if ((size_t)ret != printk_info_sz * m.desc_ring_count) {
+ 		fprintf(stderr,
+ 			"Failed to read infos of size %lu bytes: %s\n",
+ 			printk_info_sz * m.desc_ring_count, strerror(errno));
+@@ -1184,7 +1184,7 @@ static void dump_dmesg_lockless(int fd, void (*handler)(char*, unsigned int))
+ 	}
+ 	ret = pread(fd, m.text_data, m.text_data_ring_size,
+ 		    vaddr_to_offset(kaddr));
+-	if (ret != m.text_data_ring_size) {
++	if ((size_t)ret != m.text_data_ring_size) {
+ 		fprintf(stderr,
+ 			"Failed to read text_data of size %lu bytes: %s\n",
+ 			m.text_data_ring_size, strerror(errno));
