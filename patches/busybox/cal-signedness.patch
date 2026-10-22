@@ -1,0 +1,18 @@
+Subject: [PATCH] cal: fix -Wextra sign-compare
+
+day is read from the int day-array through an unsigned pointer,
+with -1 (SPACE) sentinels - compare against (unsigned)SPACE to
+keep the exact promoted semantics.
+diff --git a/util-linux/cal.c b/util-linux/cal.c
+index 522ab34..067a93d 100644
+--- a/util-linux/cal.c
++++ b/util-linux/cal.c
+@@ -347,7 +347,7 @@ static char *build_row(char *p, unsigned *dp)
+ 	col = 0;
+ 	do {
+ 		day = *dp++;
+-		if (day != SPACE) {
++		if (day != (unsigned)SPACE) {
+ 			if (julian) {
+ 				++p;
+ 				if (day >= 100) {

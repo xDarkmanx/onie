@@ -88,3 +88,4 @@ ash-wextra.patch
 shell-common-signedness.patch
 logread-wextra.patch
 acpid-signedness.patch
+cal-signedness.patch
