@@ -1,0 +1,17 @@
+Subject: [PATCH] libblkid/btrfs: initialize wp
+
+sb_write_pointer() sets *wp_ret on the -ENOENT path too, but gcc
+cannot prove it; initialize wp to silence -Wmaybe-uninitialized.
+diff --git a/libblkid/src/superblocks/btrfs.c b/libblkid/src/superblocks/btrfs.c
+index 11434b2..2a1eb05 100644
+--- a/libblkid/src/superblocks/btrfs.c
++++ b/libblkid/src/superblocks/btrfs.c
+@@ -175,7 +175,7 @@ static int sb_log_offset(blkid_probe pr, uint64_t *bytenr_ret)
+ 	struct blk_zone *zones;
+ 	int ret;
+ 	int i;
+-	uint64_t wp;
++	uint64_t wp = 0;
+ 
+ 
+ 	zone_size_sector = pr->zone_size >> SECTOR_SHIFT;

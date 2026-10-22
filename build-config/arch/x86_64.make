@@ -130,7 +130,7 @@ PARTED_ENABLE = yes
 EXT3_4_ENABLE = yes
 
 # Include btrfs file system tools
-BTRFS_PROGS_ENABLE = yes
+BTRFS_PROGS_ENABLE = no
 
 # Include GRUB tools
 GRUB_ENABLE = yes

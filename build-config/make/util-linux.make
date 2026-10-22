@@ -27,18 +27,21 @@ UTILLINUX_DIR			= $(UTILLINUX_BUILD_DIR)/util-linux-$(UTILLINUX_VERSION)
 
 UTILLINUX_DOWNLOAD_STAMP	= $(DOWNLOADDIR)/$(UTILLINUX_FLAVOR)-download
 UTILLINUX_SOURCE_STAMP		= $(USER_STAMPDIR)/$(UTILLINUX_FLAVOR)-source
+UTILLINUX_PATCH_STAMP		= $(USER_STAMPDIR)/$(UTILLINUX_FLAVOR)-patch
 UTILLINUX_CONFIGURE_STAMP	= $(USER_STAMPDIR)/$(UTILLINUX_FLAVOR)-configure
 UTILLINUX_BUILD_STAMP		= $(USER_STAMPDIR)/$(UTILLINUX_FLAVOR)-build
 UTILLINUX_INSTALL_STAMP		= $(STAMPDIR)/$(UTILLINUX_FLAVOR)-install
 UTILLINUX_STAMP			= $(UTILLINUX_SOURCE_STAMP) \
+					$(UTILLINUX_PATCH_STAMP) \
 					$(UTILLINUX_CONFIGURE_STAMP) \
 					$(UTILLINUX_BUILD_STAMP) \
 					$(UTILLINUX_INSTALL_STAMP)
 
-PHONY += util-linux util-linux-download util-linux-source util-linux-configure \
+PHONY += util-linux util-linux-download util-linux-source util-linux-patch util-linux-configure \
 	util-linux-build util-linux-install util-linux-clean util-linux-download-clean \
 	util-linux-configure-help 
 
+UTILLINUX_SRCPATCHDIR		= $(PATCHDIR)/util-linux
 UTILLINUX_CONFIG	= --enable-libuuid
 UTILLINUX_LIBS		= \
 	libuuid.so.1    libuuid.so.1.4.0
@@ -84,8 +87,15 @@ util-linux-configure-help: $(UTILLINUX_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) cd $(UTILLINUX_DIR) && PATH='$(CROSSBIN):$(PATH)'	\
 		$(UTILLINUX_DIR)/configure --help
 
+util-linux-patch: $(UTILLINUX_PATCH_STAMP)
+$(UTILLINUX_PATCH_STAMP): $(UTILLINUX_SRCPATCHDIR)/* $(UTILLINUX_SOURCE_STAMP)
+	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
+	$(Q) echo "==== Patching util-linux ===="
+	$(Q) $(SCRIPTDIR)/apply-patch-series $(UTILLINUX_SRCPATCHDIR)/series $(UTILLINUX_DIR)
+	$(Q) touch $@
+
 util-linux-configure: $(UTILLINUX_CONFIGURE_STAMP)
-$(UTILLINUX_CONFIGURE_STAMP): $(UTILLINUX_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
+$(UTILLINUX_CONFIGURE_STAMP): $(UTILLINUX_PATCH_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Configure util-linux-$(UTILLINUX_VERSION) ===="
 	$(Q) cd $(UTILLINUX_DIR) && PATH='$(CROSSBIN):$(PATH)'	\
