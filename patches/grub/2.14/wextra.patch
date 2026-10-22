@@ -1,0 +1,80 @@
+Subject: [PATCH] fix -Werror=discarded-qualifiers (gcc-14+)
+
+- util/probe.c: const char *ptr (marker only)
+- util/resolve.c: const base/ext/dir in module name/path helpers
+- osdep/linux/ofpath.c: cast strstr on const sysfs_path (ed is
+  reassigned from writable copy)
+
+Note: the 2.04 series (99 Debian-style patches) is not carried
+over: fixes are upstream in 2.06+ and distro features do not
+apply to ONIE.
+--- a/util/probe.c	2022-06-07 13:54:31.000000000 +0300
++++ b/util/probe.c	2026-10-22 16:16:12.888384961 +0300
+@@ -70,7 +70,7 @@
+ grub_util_guess_bios_drive (const char *orig_path)
+ {
+   char *canon;
+-  char *ptr;
++  const char *ptr;
+   canon = grub_canonicalize_file_name (orig_path);
+   if (!canon)
+     return NULL;
+@@ -99,7 +99,7 @@
+ grub_util_guess_efi_drive (const char *orig_path)
+ {
+   char *canon;
+-  char *ptr;
++  const char *ptr;
+   canon = grub_canonicalize_file_name (orig_path);
+   if (!canon)
+     return NULL;
+@@ -128,7 +128,7 @@
+ grub_util_guess_baremetal_drive (const char *orig_path)
+ {
+   char *canon;
+-  char *ptr;
++  const char *ptr;
+   canon = grub_canonicalize_file_name (orig_path);
+   if (!canon)
+     return NULL;
+--- a/util/resolve.c	2022-02-08 18:03:48.000000000 +0300
++++ b/util/resolve.c	2026-10-22 16:16:12.865224159 +0300
+@@ -138,12 +138,12 @@
+ static char *
+ get_module_name (const char *str)
+ {
+-  char *base;
+-  char *ext;
++  const char *base;
++  const char *ext;
+ 
+   base = strrchr (str, '/');
+   if (! base)
+-    base = (char *) str;
++    base = str;
+   else
+     base++;
+ 
+@@ -164,9 +164,9 @@
+ static char *
+ get_module_path (const char *prefix, const char *str)
+ {
+-  char *dir;
++  const char *dir;
++  const char *ext;
+   char *base;
+-  char *ext;
+   char *ret;
+ 
+   ext = strrchr (str, '.');
+--- a/grub-core/osdep/linux/ofpath.c	2025-11-20 19:37:21.000000000 +0300
++++ b/grub-core/osdep/linux/ofpath.c	2026-10-22 16:16:50.206616778 +0300
+@@ -488,7 +488,7 @@
+ static void
+ check_sas (const char *sysfs_path, int *tgt, unsigned long int *sas_address)
+ {
+-  char *ed = strstr (sysfs_path, "end_device");
++  char *ed = (char *) strstr (sysfs_path, "end_device");
+   char *p, *q, *path;
+   char phy[21];
+   int fd;

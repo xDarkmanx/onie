@@ -13,9 +13,9 @@
 # This is a makefile fragment that defines the build of grub
 #
 
-GRUB_VERSION		= 2.04
+GRUB_VERSION		= 2.14
 GRUB_TARBALL		= grub-$(GRUB_VERSION).tar.xz
-GRUB_TARBALL_URLS	+= $(ONIE_MIRROR) http://git.savannah.gnu.org/cgit/grub.git/snapshot/ ftp://alpha.gnu.org/gnu/grub/
+GRUB_TARBALL_URLS	+= $(ONIE_MIRROR) https://ftp.gnu.org/gnu/grub/
 GRUB_BUILD_DIR		= $(USER_BUILDDIR)/grub
 GRUB_DIR		= $(GRUB_BUILD_DIR)/grub-$(GRUB_VERSION)
 GRUB_I386_DIR		= $(GRUB_BUILD_DIR)/grub-i386-pc
@@ -91,7 +91,7 @@ GRUB_TIMEOUT	?= 5
 # GRUB configuration options common to i386-pc and $(ARCH)-efi
 GRUB_COMMON_CONFIG = 			\
 		--prefix=/usr		\
-		--enable-device-mapper	\
+		--disable-device-mapper	\
 		--disable-nls		\
 		--disable-efiemu	\
 		--disable-grub-mkfont	\
@@ -128,10 +128,9 @@ $(GRUB_PATCH_STAMP): $(GRUB_SOURCE_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Patching grub-$(GRUB_VERSION) ===="
 	$(Q) $(SCRIPTDIR)/apply-patch-series $(GRUB_SRCPATCHDIR)/series $(GRUB_DIR)
-	$(Q) cd $(GRUB_DIR) && ./autogen.sh
 	$(Q) touch $@
 
-$(GRUB_CONFIGURE_I386_STAMP): $(GRUB_PATCH_STAMP) $(LVM2_BUILD_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
+$(GRUB_CONFIGURE_I386_STAMP): $(GRUB_PATCH_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Configure grub-i386-pc-$(GRUB_VERSION) ===="
 	$(Q) mkdir -p $(GRUB_I386_DIR)
@@ -142,11 +141,10 @@ $(GRUB_CONFIGURE_I386_STAMP): $(GRUB_PATCH_STAMP) $(LVM2_BUILD_STAMP) | $(DEV_SY
 		--with-platform=pc				\
 		CC=$(CROSSPREFIX)gcc				\
 		CPPFLAGS="$(ONIE_CPPFLAGS)"			\
-		CFLAGS="$(ONIE_CFLAGS)"				\
 		LDFLAGS="$(ONIE_LDFLAGS)"
 	$(Q) touch $@
 
-$(GRUB_CONFIGURE_UEFI_STAMP): $(GRUB_PATCH_STAMP) $(LVM2_BUILD_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
+$(GRUB_CONFIGURE_UEFI_STAMP): $(GRUB_PATCH_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Configure grub-$(ARCH)-efi-$(GRUB_VERSION) ===="
 	$(Q) mkdir -p $(GRUB_UEFI_DIR)
@@ -157,11 +155,10 @@ $(GRUB_CONFIGURE_UEFI_STAMP): $(GRUB_PATCH_STAMP) $(LVM2_BUILD_STAMP) | $(DEV_SY
 		--with-platform=efi				\
 		CC=$(CROSSPREFIX)gcc				\
 		CPPFLAGS="$(ONIE_CPPFLAGS)"			\
-		CFLAGS="$(ONIE_CFLAGS)"				\
 		LDFLAGS="$(ONIE_LDFLAGS)"
 	$(Q) touch $@
 
-$(GRUB_CONFIGURE_I386_COREBOOT_STAMP): $(GRUB_PATCH_STAMP) $(LVM2_BUILD_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
+$(GRUB_CONFIGURE_I386_COREBOOT_STAMP): $(GRUB_PATCH_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Configure grub-i386-coreboot-$(GRUB_VERSION) ===="
 	$(Q) mkdir -p $(GRUB_I386_COREBOOT_DIR)
@@ -172,7 +169,6 @@ $(GRUB_CONFIGURE_I386_COREBOOT_STAMP): $(GRUB_PATCH_STAMP) $(LVM2_BUILD_STAMP) |
 		--with-platform=coreboot				\
 		CC=$(CROSSPREFIX)gcc				\
 		CPPFLAGS="$(ONIE_CPPFLAGS)"			\
-		CFLAGS="$(ONIE_CFLAGS)"				\
 		LDFLAGS="$(ONIE_LDFLAGS)"
 	$(Q) touch $@
 
