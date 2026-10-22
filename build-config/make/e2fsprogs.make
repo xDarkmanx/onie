@@ -9,7 +9,7 @@
 # This is a makefile fragment that defines the build of e2fsprogs
 #
 
-E2FSPROGS_VERSION		= 1.46.3
+E2FSPROGS_VERSION		= 1.47.4
 E2FSPROGS_TARBALL		= e2fsprogs-$(E2FSPROGS_VERSION).tar.xz
 E2FSPROGS_TARBALL_URLS		+= $(ONIE_MIRROR) \
 				   https://www.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v$(E2FSPROGS_VERSION)
@@ -91,7 +91,7 @@ $(E2FSPROGS_CONFIGURE_STAMP): $(ZLIB_BUILD_STAMP) $(LZO_BUILD_STAMP) \
 		--disable-libuuid				\
         --disable-libblkid \
 		CC=$(CROSSPREFIX)gcc				\
-		CFLAGS="$(ONIE_CFLAGS)"				\
+		CFLAGS="$(filter-out -Werror,$(ONIE_CFLAGS))"		\
 		LDFLAGS="$(ONIE_LDFLAGS)"			\
 		$(ONIE_PKG_CONFIG)
 	$(Q) touch $@
@@ -106,7 +106,8 @@ e2fsprogs-build: $(E2FSPROGS_BUILD_STAMP)
 $(E2FSPROGS_BUILD_STAMP): $(E2FSPROGS_NEW_FILES) $(E2FSPROGS_CONFIGURE_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building e2fsprogs-$(E2FSPROGS_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(E2FSPROGS_DIR) DESTDIR=$(DEV_SYSROOT)
+	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(E2FSPROGS_DIR) DESTDIR=$(DEV_SYSROOT) \
+		CFLAGS="$(ONIE_CFLAGS)"
 	$(Q) for dir in $(E2FSPROGS_LIB_DIRS) ; do \
 		PATH='$(CROSSBIN):$(PATH)' \
 			$(MAKE) -C $(E2FSPROGS_DIR)/lib/$$dir DESTDIR=$(DEV_SYSROOT) install ; \

@@ -1,0 +1,124 @@
+Subject: [PATCH] fix -Wextra -Werror build (gcc-14)
+
+- profile.c: const char *end (marker only, never written)
+- problem.c: key[9] -> key[11] ("0x" + 8 hex digits + NUL for full
+  unsigned code range)
+- create_inode.c: cast strrchr() on const name/dest (in-place truncation
+  is intended, callers pass mutable strings); (void)flags when verity
+  support compiled out
+- badblocks.c test_nd: granularity/recover_block static like num_saved
+  (clobbered by longjmp)
+- e4crypt.c: const unsigned char *h, *l (hexchars is const)
+- mk_hugefiles.c: dir = EXT2_ROOT_INO (gcc maybe-uninitialized false
+  positive: create_directory always sets it)
+--- e2-pristine/e2fsprogs-1.47.4/lib/support/profile.c	2026-03-06 20:17:36.000000000 +0300
++++ e2-test/e2fsprogs-1.47.4/lib/support/profile.c	2026-10-22 13:19:28.878142438 +0300
+@@ -394,8 +394,8 @@
+ 	struct parse_state	state;
+ 	prf_file_t		prf;
+ 	errcode_t		retval;
+-	const char		*in;
+-	char			*line, *p, *end;
++	const char		*in, *end;
++	char			*line, *p;
+ 	int			line_size, len;
+ 
+ 	if (!def_string || !profile || profile->magic != PROF_MAGIC_PROFILE)
+--- e2-pristine/e2fsprogs-1.47.4/e2fsck/problem.c	2026-03-06 20:17:36.000000000 +0300
++++ e2-test/e2fsprogs-1.47.4/e2fsck/problem.c	2026-10-22 13:20:13.844570740 +0300
+@@ -2528,7 +2528,7 @@
+ 		return 0;
+ 	}
+ 	if (!(ptr->flags & PR_CONFIG)) {
+-		char	key[9], *new_desc = NULL;
++		char	key[11], *new_desc = NULL;
+ 
+ 		sprintf(key, "0x%06x", code);
+ 
+--- e2-pristine/e2fsprogs-1.47.4/misc/create_inode.c	2026-03-06 20:17:36.000000000 +0300
++++ e2-test/e2fsprogs-1.47.4/misc/create_inode.c	2026-10-22 13:21:16.758394367 +0300
+@@ -346,7 +346,7 @@
+ 	ext2_ino_t		parent_ino;
+ 	errcode_t		retval;
+ 
+-	cp = strrchr(name, '/');
++	cp = (char *) strrchr(name, '/');
+ 	if (cp) {
+ 		*cp = 0;
+ 		retval = ext2fs_namei(fs, root, cwd, name, &parent_ino);
+@@ -383,7 +383,7 @@
+ 	errcode_t		retval;
+ 
+ 
+-	cp = strrchr(name, '/');
++	cp = (char *) strrchr(name, '/');
+ 	if (cp) {
+ 		*cp = 0;
+ 		retval = ext2fs_namei(fs, root, cwd, name, &parent_ino);
+@@ -708,6 +708,9 @@
+ static errcode_t copy_file(ext2_filsys fs, int fd, struct stat *statbuf,
+ 			   unsigned long flags, ext2_ino_t ino)
+ {
++#if !defined(HAVE_LINUX_FSVERITY_H) || !defined(HAVE_FS_IOC_READ_VERITY_METADATA)
++	(void)flags;
++#endif
+ 	ext2_file_t e2_file;
+ 	char *buf = NULL, *zerobuf = NULL;
+ 	errcode_t err, close_err;
+@@ -789,7 +792,7 @@
+ 		goto out;
+ 	}
+ 
+-	cp = strrchr(dest, '/');
++	cp = (char *) strrchr(dest, '/');
+ 	if (cp) {
+ 		*cp = 0;
+ 		retval = ext2fs_namei(fs, root, cwd, dest, &parent_ino);
+--- e2-pristine/e2fsprogs-1.47.4/misc/badblocks.c	2026-03-06 20:17:36.000000000 +0300
++++ e2-test/e2fsprogs-1.47.4/misc/badblocks.c	2026-10-22 13:23:22.210664468 +0300
+@@ -757,8 +757,12 @@
+ 	errcode_t errcode;
+ 	unsigned long buf_used;
+ 	static unsigned int bb_count;
+-	unsigned int granularity = blocks_at_once;
+-	blk_t recover_block = ~0U;
++	/* static to prevent being clobbered by the longjmp */
++	static unsigned int granularity;
++	static blk_t recover_block;
++
++	granularity = blocks_at_once;
++	recover_block = ~0U;
+ 
+ 	bb_count = 0;
+ 	errcode = ext2fs_badblocks_list_iterate_begin(bb_list,&bb_iter);
+--- e2-pristine/e2fsprogs-1.47.4/misc/e4crypt.c	2026-03-06 20:17:36.000000000 +0300
++++ e2-test/e2fsprogs-1.47.4/misc/e4crypt.c	2026-10-22 13:23:34.123716941 +0300
+@@ -144,7 +144,7 @@
+ 		    size_t bytes_size)
+ {
+ 	size_t x;
+-	unsigned char *h, *l;
++	const unsigned char *h, *l;
+ 
+ 	if (hex_size % 2)
+ 		return -EINVAL;
+@@ -301,7 +301,7 @@
+ 		cp += 2;
+ 		goto salt_from_filename;
+ 	} else if (strncmp(cp, "0x", 2) == 0) {
+-		unsigned char *h, *l;
++		const unsigned char *h, *l;
+ 
+ 		cp += 2;
+ 		if (strlen(cp) & 1)
+--- e2-pristine/e2fsprogs-1.47.4/misc/mk_hugefiles.c	2026-03-06 20:17:36.000000000 +0300
++++ e2-test/e2fsprogs-1.47.4/misc/mk_hugefiles.c	2026-10-22 13:23:22.210945776 +0300
+@@ -359,7 +359,7 @@
+ errcode_t mk_hugefiles(ext2_filsys fs, const char *device_name)
+ {
+ 	unsigned long	i;
+-	ext2_ino_t	dir;
++	ext2_ino_t	dir = EXT2_ROOT_INO;
+ 	errcode_t	retval;
+ 	blk64_t		fs_blocks, part_offset = 0;
+ 	unsigned long	align;
