@@ -22,9 +22,19 @@ if git rev-parse --verify refs/stacks/main >/dev/null 2>&1 || \
    git config --get branch.main.stgit.stack >/dev/null 2>&1 || \
    test -d "$(git rev-parse --git-path patches)/main" ; then
     # Already an stgit-managed source tree (patch stage re-run after
-    # series/patches changed): tolerate re-init and re-import; stg
-    # skips patches that are already applied.
+    # series/patches changed): tolerate re-init. Skip the import
+    # entirely when every patch in the series is already in the
+    # stack (stg import errors on duplicate patch names).
     stg init || true
+    missing=0
+    while IFS= read -r line; do
+        case "$line" in ''|'#'*) continue ;; esac
+        p="${line%%[[:space:]]*}"
+        stg series --all | awk '{print $NF}' | grep -Fxq "$p" || missing=1
+    done < "$SERIES"
+    if [ "$missing" -eq 0 ]; then
+        exit 0
+    fi
     stg import -s "$SERIES"
     exit $?
 fi
