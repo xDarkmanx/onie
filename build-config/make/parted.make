@@ -10,14 +10,10 @@
 # This is a makefile fragment that defines the build of parted
 #
 
-ifeq ($(ONIE_ARCH),armv8a)
-  PARTED_VERSION		= 3.4
-else
-  PARTED_VERSION		= 3.1
-endif
+PARTED_VERSION		= 3.7
 
 PARTED_TARBALL		= parted-$(PARTED_VERSION).tar.xz
-PARTED_TARBALL_URLS	+= $(ONIE_MIRROR) http://ftp.gnu.org/gnu/parted/
+PARTED_TARBALL_URLS	+= $(ONIE_MIRROR) https://ftp.gnu.org/gnu/parted/
 PARTED_BUILD_DIR	= $(USER_BUILDDIR)/parted
 PARTED_DIR		= $(PARTED_BUILD_DIR)/parted-$(PARTED_VERSION)
 
@@ -37,7 +33,7 @@ PHONY += parted parted-download parted-source \
 	 parted-configure parted-build parted-install parted-clean \
 	 parted-download-clean parted-configure-help
 
-PARTED_SBIN = parted partprobe
+PARTED_SBIN = partprobe
 
 parted: $(PARTED_STAMP)
 
@@ -59,14 +55,15 @@ $(PARTED_SOURCE_STAMP): $(USER_TREE_STAMP) | $(PARTED_DOWNLOAD_STAMP)
 	$(Q) touch $@
 
 parted-configure: $(PARTED_CONFIGURE_STAMP)
-$(PARTED_CONFIGURE_STAMP): $(PARTED_SOURCE_STAMP) $(E2FSPROGS_BUILD_STAMP) $(LVM2_BUILD_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
+$(PARTED_CONFIGURE_STAMP): $(PARTED_SOURCE_STAMP) $(E2FSPROGS_BUILD_STAMP) | \
+				     $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Configure parted-$(PARTED_VERSION) ===="
 	$(Q) cd $(PARTED_DIR) && PATH='$(CROSSBIN):$(PATH)'	\
 		$(PARTED_DIR)/configure				\
 		--prefix=/usr					\
 		--host=$(TARGET)				\
-		--enable-device-mapper				\
+		--disable-device-mapper				\
 		--disable-mtrace				\
 		--disable-selinux				\
 		--disable-nls					\
@@ -74,9 +71,9 @@ $(PARTED_CONFIGURE_STAMP): $(PARTED_SOURCE_STAMP) $(E2FSPROGS_BUILD_STAMP) $(LVM
 		--disable-dynamic-loading			\
 		--without-readline				\
 		CC=$(CROSSPREFIX)gcc				\
-		CPPFLAGS="$(ONIE_CPPFLAGS)"			\
-		CFLAGS="$(ONIE_CFLAGS)"				\
-		LDFLAGS="$(ONIE_LDFLAGS)"
+		CPPFLAGS="$(ONIE_CPPFLAGS) -I$(DEV_SYSROOT)/usr/include"	\
+		CFLAGS="$(filter-out -Werror,$(ONIE_CFLAGS))"		\
+		LDFLAGS="-L$(DEV_SYSROOT)/usr/lib $(ONIE_LDFLAGS)"
 	$(Q) touch $@
 
 # Print configure options for debug
@@ -88,9 +85,9 @@ parted-build: $(PARTED_BUILD_STAMP)
 $(PARTED_BUILD_STAMP): $(PARTED_CONFIGURE_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building parted-$(PARTED_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(PARTED_DIR)
+	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(PARTED_DIR) CFLAGS="$(ONIE_CFLAGS)"
 	$(Q) PATH='$(CROSSBIN):$(PATH)'			\
-		$(MAKE) -C $(PARTED_DIR) install DESTDIR=$(DEV_SYSROOT)
+		$(MAKE) -C $(PARTED_DIR) install DESTDIR=$(DEV_SYSROOT) CFLAGS="$(ONIE_CFLAGS)"
 	$(Q) touch $@
 
 parted-install: $(PARTED_INSTALL_STAMP)

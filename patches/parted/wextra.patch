@@ -1,0 +1,952 @@
+Subject: [PATCH] fix -Wextra -Werror build (gcc-14)
+
+- labels/{aix,loop}.c: (void) unused params in ops stubs
+- pt-limit.c (shipped gperf output): complete {""} filler initializers
+- dos.c: explicit alt_type_id 0; sector_size size_t casts
+- {gpt,pt-tools,mac,rdb,udf,table,atari,strlist}.c, arch/linux.c,
+  parted/{ui,parted,strlist}.c: sign-compare / pointer-sign casts
+  (PedSector vs uint64_t, snprintf vs size_t, iconv (size_t)-1,
+  unsigned char id[] vs const char*)
+--- a/libparted/arch/linux.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/arch/linux.c	2026-10-22 14:45:27.543676890 +0300
+@@ -1757,6 +1757,7 @@
+ static int
+ linux_refresh_open (PedDevice* dev)
+ {
++        (void)dev;
+         return 1;
+ }
+ 
+@@ -2082,7 +2083,7 @@
+         diobuf_start = diobuf;
+         while (1) {
+                 ssize_t status = write (arch_specific->fd, diobuf, write_length);
+-                if (status == write_length) break;
++                if (status == (ssize_t) write_length) break;
+                 if (status > 0) {
+                         write_length -= status;
+                         diobuf = (char *) diobuf + status;
+@@ -2712,7 +2713,7 @@
+         char        path[128];
+         int r = snprintf(path, sizeof(path), "/sys/block/%s/%s",
+ 			 last_component(dev->path), entry);
+-        if (r < 0 || r >= sizeof(path))
++        if (r < 0 || r >= (int) sizeof(path))
+                 return false;
+ 
+         FILE *fp = fopen(path, "r");
+@@ -2742,7 +2743,7 @@
+                 last_component(part->disk->dev->path),
+                 last_component(part_name), entry);
+         free(part_name);
+-        if (r < 0 || r >= sizeof(path))
++        if (r < 0 || r >= (int) sizeof(path))
+                 return false;
+ 
+         FILE *fp = fopen(path, "r");
+@@ -3109,12 +3110,12 @@
+         /* lpn = largest partition number.
+          * for remove pass, use greater of device or label limit */
+         if (ped_disk_get_max_supported_partition_count(disk, &lpn))
+-                lpn = PED_MAX(lpn, part_range);
++                lpn = PED_MAX(lpn, (int) part_range);
+         else
+                 lpn = part_range;
+         /* for add pass, use lesser of device or label limit */
+         if (ped_disk_get_max_supported_partition_count(disk, &lpn2))
+-                lpn2 = PED_MIN(lpn2, part_range);
++                lpn2 = PED_MIN(lpn2, (int) part_range);
+         else
+                 lpn2 = part_range;
+         /* Its not possible to support largest_partnum < 0.
+@@ -3140,8 +3141,8 @@
+                         /* get start and length of existing partition */
+                         if (get_partition_start_and_length(part,
+                                                            &start, &length)
+-                            && start == part->geom.start
+-                            && (length == part->geom.length
++                            && start == (unsigned long long) part->geom.start
++                            && (length == (unsigned long long) part->geom.length
+                                 || (resize_partition && part->num < lpn2)))
+                         {
+                                 /* partition is unchanged, or will be resized so nothing to do */
+@@ -3178,15 +3179,15 @@
+                 /* get start and length of existing partition */
+                 if (get_partition_start_and_length(part,
+                                                    &start, &length)
+-                    && start == part->geom.start)
++                    && start == (unsigned long long) part->geom.start)
+                 {
+-                        if (length == part->geom.length) {
++                        if (length == (unsigned long long) part->geom.length) {
+                                 ok[i - 1] = 1;
+                                 /* partition is unchanged, so nothing to do */
+                                 continue;
+                         }
+                         if (resize_partition
+-                            && start == part->geom.start)
++                            && start == (unsigned long long) part->geom.start)
+                         {
+                                 /* try to resize */
+                                 if (resize_partition (disk, part)) {
+--- a/libparted/fs/amiga/apfs.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/fs/amiga/apfs.c	2026-10-22 14:39:23.840576538 +0300
+@@ -35,6 +35,7 @@
+ 
+ static int
+ _apfs_probe_root (uint32_t *block, uint32_t blocksize, uint32_t kind) {
++	(void)blocksize;
+ 	if (PED_BE32_TO_CPU (block[0]) != kind) return 0;
+ 	return 1;
+ }
+--- a/libparted/fs/r/fat/bootsector.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/fs/r/fat/bootsector.c	2026-10-22 14:43:13.620570435 +0300
+@@ -279,7 +279,7 @@
+ 	memset (bs, 0, 512);
+ 	memcpy (bs->boot_jump, FAT_BOOT_JUMP, 3);
+ 	PED_ASSERT (sizeof(FAT_BOOT_CODE) < sizeof(bs->u.fat32.boot_code));
+-	strcpy (bs->u.fat32.boot_code, FAT_BOOT_CODE);
++	strcpy ((char *) bs->u.fat32.boot_code, FAT_BOOT_CODE);
+ 	return 1;
+ }
+ 
+--- a/libparted/fs/r/fat/fat.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/fs/r/fat/fat.c	2026-10-22 14:39:23.839377059 +0300
+@@ -213,6 +213,7 @@
+ PedFileSystem*
+ fat_create (PedGeometry* geom, FatType fat_type, PedTimer* timer)
+ {
++	(void)timer;
+ 	PedFileSystem*		fs;
+ 	FatSpecific*		fs_info;
+ 	FatCluster		table_size;
+@@ -428,6 +429,7 @@
+ int
+ fat_check (PedFileSystem* fs, PedTimer* timer)
+ {
++	(void)timer;
+ 	FatSpecific*	fs_info = FAT_SPECIFIC (fs);
+ 	PedSector	cluster_sectors;
+ 	FatCluster	cluster_count;
+--- a/libparted/fs/r/fat/table.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/fs/r/fat/table.c	2026-10-22 14:39:23.839600528 +0300
+@@ -201,6 +201,7 @@
+ static int
+ _test_code_available (const FatTable* ft, FatCluster code)
+ {
++	(void)ft;
+ 	return code == 0;
+ }
+ 
+--- a/libparted/fs/r/hfs/journal.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/fs/r/hfs/journal.c	2026-10-22 14:39:23.839817915 +0300
+@@ -105,6 +105,7 @@
+ 		  PedSector read_sect, unsigned int nb_sect,
+ 		  void* buf)
+ {
++	(void)jh;
+ 	int r;
+ 
+ 	while (nb_sect--) {
+--- a/libparted/fs/r/hfs/reloc.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/fs/r/hfs/reloc.c	2026-10-22 14:39:23.840063446 +0300
+@@ -319,6 +319,7 @@
+ hfs_cache_from_mdb(HfsCPrivateCache* cache, PedFileSystem* fs,
+ 		   PedTimer* timer)
+ {
++	(void)timer;
+ 	HfsPrivateFSData* 	priv_data = (HfsPrivateFSData*)
+ 						fs->type_specific;
+ 	HfsExtDescriptor*	extent;
+@@ -363,6 +364,7 @@
+ hfs_cache_from_catalog(HfsCPrivateCache* cache, PedFileSystem* fs,
+ 		   PedTimer* timer)
+ {
++	(void)timer;
+ 	HfsPrivateFSData* 	priv_data = (HfsPrivateFSData*)
+ 						fs->type_specific;
+ 	uint8_t			node[PED_SECTOR_SIZE_DEFAULT];
+@@ -461,6 +463,7 @@
+ hfs_cache_from_extent(HfsCPrivateCache* cache, PedFileSystem* fs,
+ 		   PedTimer* timer)
+ {
++	(void)timer;
+ 	HfsPrivateFSData* 	priv_data = (HfsPrivateFSData*)
+ 						fs->type_specific;
+ 	uint8_t			node[PED_SECTOR_SIZE_DEFAULT];
+--- a/libparted/fs/r/hfs/reloc_plus.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/fs/r/hfs/reloc_plus.c	2026-10-22 14:39:23.840382645 +0300
+@@ -382,6 +382,7 @@
+ hfsplus_cache_from_vh(HfsCPrivateCache* cache, PedFileSystem* fs,
+ 		      PedTimer* timer)
+ {
++	(void)timer;
+ 	HfsPPrivateFSData* 	priv_data = (HfsPPrivateFSData*)
+ 						fs->type_specific;
+ 	HfsPExtDescriptor*	extent;
+@@ -474,6 +475,7 @@
+ hfsplus_cache_from_catalog(HfsCPrivateCache* cache, PedFileSystem* fs,
+ 			   PedTimer* timer)
+ {
++	(void)timer;
+ 	HfsPPrivateFSData* 	priv_data = (HfsPPrivateFSData*)
+ 						fs->type_specific;
+ 	uint8_t			node_1[PED_SECTOR_SIZE_DEFAULT];
+@@ -602,6 +604,7 @@
+ hfsplus_cache_from_extent(HfsCPrivateCache* cache, PedFileSystem* fs,
+ 			  PedTimer* timer)
+ {
++	(void)timer;
+ 	HfsPPrivateFSData* 	priv_data = (HfsPPrivateFSData*)
+ 						fs->type_specific;
+ 	uint8_t			node_1[PED_SECTOR_SIZE_DEFAULT];
+@@ -718,6 +721,7 @@
+ hfsplus_cache_from_attributes(HfsCPrivateCache* cache, PedFileSystem* fs,
+ 			      PedTimer* timer)
+ {
++	(void)timer;
+ 	HfsPPrivateFSData* 	priv_data = (HfsPPrivateFSData*)
+ 						fs->type_specific;
+ 	uint8_t			node_1[PED_SECTOR_SIZE_DEFAULT];
+--- a/libparted/fs/udf/udf.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/fs/udf/udf.c	2026-10-22 14:43:13.620167669 +0300
+@@ -98,7 +98,7 @@
+ 		return 0;
+ 
+ 	/* Check that location stored in AVDP matches */
+-	if (((unsigned long)tag[12] | ((unsigned long)tag[13] << 8) | ((unsigned long)tag[14] << 16) | ((unsigned long)tag[15] << 24)) != block)
++	if (((unsigned long)tag[12] | ((unsigned long)tag[13] << 8) | ((unsigned long)tag[14] << 16) | ((unsigned long)tag[15] << 24)) != (unsigned long) block)
+ 		return 0;
+ 
+ 	return 1;
+--- a/libparted/labels/aix.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/labels/aix.c	2026-10-22 14:40:52.881457085 +0300
+@@ -98,6 +98,7 @@
+ static int
+ aix_write (const PedDisk* disk)
+ {
++	(void)disk;
+         ped_exception_throw (PED_EXCEPTION_NO_FEATURE,
+                              PED_EXCEPTION_CANCEL,
+                              _("Support for writing AIX disk labels is "
+@@ -111,6 +112,11 @@
+ 		   const PedFileSystemType* fs_type,
+ 		   PedSector start, PedSector end)
+ {
++	(void)disk;
++	(void)part_type;
++	(void)fs_type;
++	(void)start;
++	(void)end;
+         ped_exception_throw (PED_EXCEPTION_NO_FEATURE,
+                              PED_EXCEPTION_CANCEL,
+                              _("Support for adding partitions to AIX disk "
+@@ -121,6 +127,7 @@
+ static PedPartition*
+ aix_partition_duplicate (const PedPartition* part)
+ {
++	(void)part;
+         ped_exception_throw (PED_EXCEPTION_NO_FEATURE,
+                              PED_EXCEPTION_CANCEL,
+                              _("Support for duplicating partitions in AIX "
+@@ -139,6 +146,8 @@
+ static int
+ aix_partition_set_system (PedPartition* part, const PedFileSystemType* fs_type)
+ {
++	(void)part;
++	(void)fs_type;
+         ped_exception_throw (PED_EXCEPTION_NO_FEATURE,
+                              PED_EXCEPTION_CANCEL,
+                              _("Support for setting system type of partitions "
+@@ -149,6 +158,9 @@
+ static int
+ aix_partition_set_flag (PedPartition* part, PedPartitionFlag flag, int state)
+ {
++	(void)part;
++	(void)flag;
++	(void)state;
+         ped_exception_throw (PED_EXCEPTION_NO_FEATURE,
+                              PED_EXCEPTION_CANCEL,
+                              _("Support for setting flags "
+@@ -159,6 +171,8 @@
+ static int _GL_ATTRIBUTE_CONST
+ aix_partition_get_flag (const PedPartition* part, PedPartitionFlag flag)
+ {
++	(void)part;
++	(void)flag;
+         return 0;
+ }
+ 
+@@ -167,6 +181,8 @@
+ aix_partition_is_flag_available (const PedPartition* part,
+ 				 PedPartitionFlag flag)
+ {
++	(void)part;
++	(void)flag;
+         return 0;
+ }
+ 
+@@ -174,12 +190,14 @@
+ static int
+ aix_get_max_primary_partition_count (const PedDisk* disk)
+ {
++	(void)disk;
+ 	return 4;
+ }
+ 
+ static bool
+ aix_get_max_supported_partition_count (const PedDisk* disk, int *max_n)
+ {
++	(void)disk;
+ 	*max_n = MAX_TOTAL_PART;
+ 	return true;
+ }
+@@ -187,6 +205,7 @@
+ static int _GL_ATTRIBUTE_PURE
+ aix_partition_align (PedPartition* part, const PedConstraint* constraint)
+ {
++	(void)constraint;
+         PED_ASSERT (part != NULL);
+ 
+         return 1;
+@@ -195,12 +214,14 @@
+ static int _GL_ATTRIBUTE_PURE
+ aix_partition_enumerate (PedPartition* part)
+ {
++	(void)part;
+ 	return 1;
+ }
+ 
+ static int _GL_ATTRIBUTE_PURE
+ aix_alloc_metadata (PedDisk* disk)
+ {
++	(void)disk;
+ 	return 1;
+ }
+ 
+--- a/libparted/labels/atari.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/labels/atari.c	2026-10-22 14:44:10.139076750 +0300
+@@ -258,7 +258,7 @@
+ 	memcpy (part->empty, SIGNATURE_EMPTY_TABLE, SIGNATURE_EMPTY_SIZE);
+ }
+ 
+-#define atr_part_known(part, pid_list) (atr_pid_known ((part)->id, pid_list))
++#define atr_part_known(part, pid_list) (atr_pid_known ((const char *) (part)->id, pid_list))
+ 
+ #define atr_part_valid(part, sz) (atr_part_used(part)\
+ 				  && atr_part_correct((part), (sz)))
+@@ -552,7 +552,7 @@
+ 		part->fs_type = ped_file_system_probe (&part->geom);
+ 	else
+ 		part->fs_type = NULL;
+-	atr_part_sysraw (part, rawpart->id, rawpart->flag);
++	atr_part_sysraw (part, (const char *) rawpart->id, rawpart->flag);
+ 
+ 	const_exact = ped_constraint_exact (&part->geom);
+ 	added = ped_disk_add_partition (disk, part, const_exact);
+@@ -1391,6 +1391,7 @@
+ atari_partition_is_flag_available (const PedPartition* part,
+ 				   PedPartitionFlag flag)
+ {
++	(void)part;
+ 	if (flag == PED_PARTITION_BOOT)
+ 		return 1;
+ 
+--- a/libparted/labels/bsd.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/labels/bsd.c	2026-10-22 14:39:23.836441813 +0300
+@@ -515,6 +515,7 @@
+ bsd_partition_is_flag_available (const PedPartition* part,
+ 				 PedPartitionFlag flag)
+ {
++	(void)part;
+ 	switch (flag) {
+ 		case PED_PARTITION_BOOT:
+ 		case PED_PARTITION_RAID:
+@@ -530,12 +531,14 @@
+ static int
+ bsd_get_max_primary_partition_count (const PedDisk* disk)
+ {
++	(void)disk;
+ 	return BSD_MAXPARTITIONS;
+ }
+ 
+ static bool
+ bsd_get_max_supported_partition_count(const PedDisk* disk, int *max_n)
+ {
++	(void)disk;
+ 	*max_n = BSD_MAXPARTITIONS;
+ 	return true;
+ }
+--- a/libparted/labels/dos.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/labels/dos.c	2026-10-22 14:43:13.620428508 +0300
+@@ -92,16 +92,16 @@
+ 
+ static const struct flag_id_mapping_t flag_id_mapping[] =
+ {
+-    { PED_PARTITION_BLS_BOOT,           PARTITION_BLS_BOOT },
++    { PED_PARTITION_BLS_BOOT,           PARTITION_BLS_BOOT, 0 },
+     { PED_PARTITION_DIAG,               PARTITION_COMPAQ_DIAG, PARTITION_DELL_DIAG },
+-    { PED_PARTITION_ESP,                PARTITION_ESP },
+-    { PED_PARTITION_IRST,               PARTITION_IRST },
++    { PED_PARTITION_ESP,                PARTITION_ESP, 0 },
++    { PED_PARTITION_IRST,               PARTITION_IRST, 0 },
+     { PED_PARTITION_LVM,                PARTITION_LINUX_LVM, PARTITION_LINUX_LVM_OLD },
+-    { PED_PARTITION_MSFT_RESERVED,      PARTITION_MSFT_RECOVERY },
+-    { PED_PARTITION_PALO,               PARTITION_PALO },
+-    { PED_PARTITION_PREP,               PARTITION_PREP },
+-    { PED_PARTITION_RAID,               PARTITION_LINUX_RAID },
+-    { PED_PARTITION_SWAP,               PARTITION_LINUX_SWAP },
++    { PED_PARTITION_MSFT_RESERVED,      PARTITION_MSFT_RECOVERY, 0 },
++    { PED_PARTITION_PALO,               PARTITION_PALO, 0 },
++    { PED_PARTITION_PREP,               PARTITION_PREP, 0 },
++    { PED_PARTITION_RAID,               PARTITION_LINUX_RAID, 0 },
++    { PED_PARTITION_SWAP,               PARTITION_LINUX_SWAP, 0 },
+ };
+ 
+ static const unsigned char skip_set_system_types[] =
+@@ -450,7 +450,7 @@
+ 
+ 	PED_ASSERT (dev != NULL);
+ 
+-        if (dev->sector_size < sizeof *part_table)
++        if ((size_t) dev->sector_size < sizeof *part_table)
+                 return 0;
+ 
+ 	void *label;
+@@ -604,6 +604,7 @@
+ static int
+ msdos_disk_is_flag_available (const PedDisk *disk, PedDiskFlag flag)
+ {
++        (void)disk;
+         switch (flag) {
+         case PED_DISK_CYLINDER_ALIGNMENT:
+                return 1;
+@@ -635,6 +636,7 @@
+ chs_to_sector (const PedDevice* dev, const PedCHSGeometry *bios_geom,
+ 	       const RawCHS* chs)
+ {
++	(void)dev;
+ 	PedSector	c;		/* not measured in sectors, but need */
+ 	PedSector	h;		/* lots of bits */
+ 	PedSector	s;
+@@ -2536,12 +2538,14 @@
+ static int
+ msdos_get_max_primary_partition_count (const PedDisk* disk)
+ {
++	(void)disk;
+ 	return DOS_N_PRI_PARTITIONS;
+ }
+ 
+ static bool
+ msdos_get_max_supported_partition_count(const PedDisk* disk, int *max_n)
+ {
++	(void)disk;
+ 	*max_n = MAX_TOTAL_PART;
+ 	return true;
+ }
+--- a/libparted/labels/dvh.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/labels/dvh.c	2026-10-22 14:39:23.837347742 +0300
+@@ -686,6 +686,7 @@
+ dvh_partition_is_flag_available (const PedPartition* part,
+ 				  PedPartitionFlag flag)
+ {
++	(void)part;
+ 	switch (flag) {
+ 	case PED_PARTITION_ROOT:
+ 	case PED_PARTITION_SWAP:
+@@ -818,12 +819,14 @@
+ static int
+ dvh_get_max_primary_partition_count (const PedDisk* disk)
+ {
++	(void)disk;
+ 	return NPARTAB;
+ }
+ 
+ static bool
+ dvh_get_max_supported_partition_count (const PedDisk* disk, int *max_n)
+ {
++	(void)disk;
+ 	*max_n = NPARTAB;
+ 	return true;
+ }
+--- a/libparted/labels/gpt.c	2026-03-24 23:48:15.000000000 +0300
++++ b/libparted/labels/gpt.c	2026-10-22 14:43:13.619526587 +0300
+@@ -374,6 +374,7 @@
+ static inline uint32_t
+ pth_get_size_static (const PedDevice *dev)
+ {
++  (void)dev;
+   return sizeof (GuidPartitionTableHeader_t) - sizeof (uint8_t *);
+ }
+ 
+@@ -717,7 +718,7 @@
+             && pe_size <= (UINT32_MAX >> 4)))
+     return 0;
+ 
+-  if (PED_LE64_TO_CPU (gpt->MyLBA) != my_lba)
++  if (PED_LE64_TO_CPU (gpt->MyLBA) != (uint64_t) my_lba)
+     return 0;
+ 
+   PedSector alt_lba = PED_LE64_TO_CPU (gpt->AlternateLBA);
+@@ -926,7 +927,7 @@
+   gpt_disk_data->AlternateLBA =
+     (valid_primary
+      ? PED_LE64_TO_CPU (pri->AlternateLBA)
+-     : dev->length - 1);
++     : (uint64_t) (dev->length - 1));
+ 
+   void *s_bak;
+   if (!ptt_read_sector (dev, gpt_disk_data->AlternateLBA ,&s_bak))
+@@ -1569,6 +1570,7 @@
+ static int
+ gpt_disk_is_flag_available(const PedDisk *disk, PedDiskFlag flag)
+ {
++  (void)disk;
+   switch (flag)
+     {
+     case PED_DISK_GPT_PMBR_BOOT:
+@@ -1681,6 +1683,7 @@
+ gpt_partition_is_flag_available (const PedPartition *part,
+                                  PedPartitionFlag flag)
+ {
++  (void)part;
+   if (gpt_find_flag_uuid_mapping (flag))
+     return 1;
+ 
+@@ -1712,7 +1715,7 @@
+   char *outbuff = (char *)&gpt_part_data->name;
+   size_t inbuffsize = strlen (inbuff) + 1;
+   size_t outbuffsize = 72;
+-  if (iconv (conv, &inbuff, &inbuffsize, &outbuff, &outbuffsize) == -1)
++  if (iconv (conv, &inbuff, &inbuffsize, &outbuff, &outbuffsize) == (size_t) -1)
+     goto err;
+   iconv_close (conv);
+   return;
+@@ -1737,7 +1740,7 @@
+       char *outbuff = buffer;
+       size_t inbuffsize = 72;
+       size_t outbuffsize = sizeof(buffer);
+-      if (iconv (conv, &inbuff, &inbuffsize, &outbuff, &outbuffsize) == -1)
++      if (iconv (conv, &inbuff, &inbuffsize, &outbuff, &outbuffsize) == (size_t) -1)
+         goto err;
+       iconv_close (conv);
+       *outbuff = 0;
+--- a/libparted/labels/loop.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/labels/loop.c	2026-10-22 14:40:52.881610122 +0300
+@@ -222,12 +222,17 @@
+ static int
+ loop_partition_set_flag (PedPartition* part, PedPartitionFlag flag, int state)
+ {
++	(void)part;
++	(void)flag;
++	(void)state;
+ 	return 0;
+ }
+ 
+ static int
+ loop_partition_get_flag (const PedPartition* part, PedPartitionFlag flag)
+ {
++	(void)part;
++	(void)flag;
+ 	return 0;
+ }
+ 
+@@ -254,12 +259,15 @@
+ loop_partition_is_flag_available (const PedPartition* part,
+ 	       			  PedPartitionFlag flag)
+ {
++	(void)part;
++	(void)flag;
+ 	return 0;
+ }
+ 
+ static int
+ loop_partition_enumerate (PedPartition* part)
+ {
++	(void)part;
+ 	part->num = 1;
+ 	return 1;
+ }
+@@ -267,18 +275,21 @@
+ static int
+ loop_alloc_metadata (PedDisk* disk)
+ {
++	(void)disk;
+ 	return 1;
+ }
+ 
+ static int
+ loop_get_max_primary_partition_count (const PedDisk* disk)
+ {
++	(void)disk;
+ 	return 1;
+ }
+ 
+ static bool
+ loop_get_max_supported_partition_count (const PedDisk* disk, int *max_n)
+ {
++	(void)disk;
+ 	*max_n = 1;
+ 	return true;
+ }
+--- a/libparted/labels/mac.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/labels/mac.c	2026-10-22 14:43:13.619877986 +0300
+@@ -203,7 +203,7 @@
+ {
+ 	PED_ASSERT (dev != NULL);
+ 
+-        if (dev->sector_size < sizeof (MacRawDisk))
++        if ((size_t) dev->sector_size < sizeof (MacRawDisk))
+                 return 0;
+ 
+ 	void *label;
+@@ -1314,6 +1314,7 @@
+ mac_partition_is_flag_available (
+ 	const PedPartition* part, PedPartitionFlag flag)
+ {
++	(void)part;
+ 	switch (flag) {
+ 	case PED_PARTITION_BOOT:
+ 	case PED_PARTITION_ROOT:
+@@ -1372,6 +1373,7 @@
+ static PedAlignment*
+ mac_get_partition_alignment(const PedDisk *disk)
+ {
++        (void)disk;
+         return ped_alignment_new(0, 1);
+ }
+ 
+@@ -1560,6 +1562,7 @@
+ static bool
+ mac_get_max_supported_partition_count (const PedDisk* disk, int *max_n)
+ {
++	(void)disk;
+ 	*max_n = 65536;
+ 	return true;
+ }
+--- a/libparted/labels/pc98.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/labels/pc98.c	2026-10-22 14:39:23.838557692 +0300
+@@ -611,6 +611,7 @@
+ pc98_partition_is_flag_available (
+ 	const PedPartition* part, PedPartitionFlag flag)
+ {
++	(void)part;
+ 	switch (flag) {
+ 	case PED_PARTITION_HIDDEN:
+ 	case PED_PARTITION_BOOT:
+@@ -767,12 +768,14 @@
+ static int
+ pc98_get_max_primary_partition_count (const PedDisk* disk)
+ {
++	(void)disk;
+ 	return MAX_PART_COUNT;
+ }
+ 
+ static bool
+ pc98_get_max_supported_partition_count (const PedDisk* disk, int *max_n)
+ {
++	(void)disk;
+ 	*max_n = MAX_PART_COUNT;
+ 	return true;
+ }
+--- a/libparted/labels/pt-limit.c	2026-04-09 01:06:19.000000000 +0300
++++ b/libparted/labels/pt-limit.c	2026-10-22 14:38:37.694681363 +0300
+@@ -110,37 +110,37 @@
+ {
+   static const struct partition_limit wordlist[] =
+     {
+-      {""}, {""}, {""}, {""}, {""},
++      {"",0,0}, {"",0,0}, {"",0,0}, {"",0,0}, {"",0,0},
+ #line 10 "pt-limit.gperf"
+       {"gpt",UINT64_MAX,UINT64_MAX},
+-      {""}, {""}, {""}, {""},
++      {"",0,0}, {"",0,0}, {"",0,0}, {"",0,0},
+ #line 28 "pt-limit.gperf"
+       {"atari",INT32_MAX,INT32_MAX},
+-      {""}, {""}, {""}, {""},
++      {"",0,0}, {"",0,0}, {"",0,0}, {"",0,0},
+ #line 27 "pt-limit.gperf"
+       {"amiga",UINT32_MAX,UINT32_MAX},
+-      {""}, {""}, {""}, {""},
++      {"",0,0}, {"",0,0}, {"",0,0}, {"",0,0},
+ #line 8 "pt-limit.gperf"
+       {"dasd",UINT32_MAX,UINT32_MAX},
+-      {""}, {""}, {""}, {""},
++      {"",0,0}, {"",0,0}, {"",0,0}, {"",0,0},
+ #line 12 "pt-limit.gperf"
+       {"msdos",UINT32_MAX,UINT32_MAX},
+-      {""}, {""}, {""}, {""},
++      {"",0,0}, {"",0,0}, {"",0,0}, {"",0,0},
+ #line 18 "pt-limit.gperf"
+       {"sun",128ULL*UINT32_MAX,UINT32_MAX},
+-      {""}, {""}, {""}, {""},
++      {"",0,0}, {"",0,0}, {"",0,0}, {"",0,0},
+ #line 23 "pt-limit.gperf"
+       {"loop",UINT64_MAX,UINT64_MAX},
+-      {""}, {""}, {""}, {""},
++      {"",0,0}, {"",0,0}, {"",0,0}, {"",0,0},
+ #line 9 "pt-limit.gperf"
+       {"dvh",UINT32_MAX,UINT32_MAX},
+-      {""}, {""}, {""}, {""},
++      {"",0,0}, {"",0,0}, {"",0,0}, {"",0,0},
+ #line 11 "pt-limit.gperf"
+       {"mac",UINT32_MAX,UINT32_MAX},
+-      {""}, {""}, {""}, {""},
++      {"",0,0}, {"",0,0}, {"",0,0}, {"",0,0},
+ #line 20 "pt-limit.gperf"
+       {"bsd",UINT32_MAX,UINT32_MAX},
+-      {""}, {""}, {""}, {""},
++      {"",0,0}, {"",0,0}, {"",0,0}, {"",0,0},
+ #line 24 "pt-limit.gperf"
+       {"pc98",UINT32_MAX,UINT32_MAX}
+     };
+--- a/libparted/labels/pt-tools.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/labels/pt-tools.c	2026-10-22 14:43:13.619717615 +0300
+@@ -40,7 +40,7 @@
+ int
+ ptt_write_sector (PedDisk const *disk, void const *buf, size_t buflen)
+ {
+-  PED_ASSERT (buflen <= disk->dev->sector_size);
++  PED_ASSERT (buflen <= (size_t) disk->dev->sector_size);
+   /* Allocate a big enough buffer for ped_device_write.  */
+   char *s0 = ped_malloc (disk->dev->sector_size);
+   if (s0 == NULL)
+@@ -88,7 +88,7 @@
+ int
+ ptt_clear_sectors (PedDevice *dev, PedSector start, PedSector n)
+ {
+-  PED_ASSERT (dev->sector_size <= sizeof zero);
++  PED_ASSERT ((size_t) dev->sector_size <= sizeof zero);
+   PedSector n_z_sectors = sizeof zero / dev->sector_size;
+   PedSector n_full = n / n_z_sectors;
+   PedSector i;
+@@ -128,7 +128,7 @@
+     return 1;
+ 
+   /* If the length in sectors exceeds the limit, you lose.  */
+-  if (part->geom.length > pt_lim->max_length)
++  if ((uint64_t) part->geom.length > pt_lim->max_length)
+     {
+       ped_exception_throw (PED_EXCEPTION_ERROR, PED_EXCEPTION_CANCEL,
+ 			   _("partition length of %jd sectors exceeds"
+@@ -141,7 +141,7 @@
+     }
+ 
+   /* If the starting sector exceeds the limit, you lose.  */
+-  if (part->geom.start > pt_lim->max_start_sector) {
++  if ((uint64_t) part->geom.start > pt_lim->max_start_sector) {
+     ped_exception_throw (
+ 			 PED_EXCEPTION_ERROR, PED_EXCEPTION_CANCEL,
+ 			 _("starting sector number, %jd exceeds"
+--- a/libparted/labels/rdb.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/labels/rdb.c	2026-10-22 14:43:13.620047273 +0300
+@@ -366,7 +366,7 @@
+ 
+         /* Upon failed assertion this does leak.  That's fine, because
+            if the assertion fails, you have bigger problems than this leak. */
+-        PED_ASSERT(sizeof(*rdb) <= disk->dev->sector_size);
++        PED_ASSERT(sizeof(*rdb) <= (size_t) disk->dev->sector_size);
+ 
+ 	memset(rdb, 0, disk->dev->sector_size);
+ 
+@@ -975,6 +975,7 @@
+ amiga_partition_is_flag_available (const PedPartition* part,
+ 				 PedPartitionFlag flag)
+ {
++	(void)part;
+ 	switch (flag) {
+ 	case PED_PARTITION_BOOT:
+ 	case PED_PARTITION_HIDDEN:
+@@ -1116,12 +1117,14 @@
+ static int
+ amiga_get_max_primary_partition_count (const PedDisk* disk)
+ {
++	(void)disk;
+ 	return AMIGA_MAX_PARTITIONS;
+ }
+ 
+ static bool
+ amiga_get_max_supported_partition_count (const PedDisk* disk, int *max_n)
+ {
++	(void)disk;
+ 	*max_n = AMIGA_MAX_PARTITIONS;
+ 	return true;
+ }
+--- a/libparted/labels/sun.c	2026-03-25 02:30:48.000000000 +0300
++++ b/libparted/labels/sun.c	2026-10-22 14:39:23.839118373 +0300
+@@ -681,6 +681,7 @@
+ sun_partition_is_flag_available (const PedPartition* part,
+ 				 PedPartitionFlag flag)
+ {
++	(void)part;
+ 	switch (flag) {
+ 		case PED_PARTITION_BOOT:
+ 		case PED_PARTITION_ROOT:
+@@ -696,6 +697,7 @@
+ static bool
+ sun_get_max_supported_partition_count (const PedDisk* disk, int *max_n)
+ {
++	(void)disk;
+ 	*max_n = SUN_DISK_MAXPARTITIONS;
+ 	return true;
+ }
+@@ -703,6 +705,7 @@
+ static int
+ sun_get_max_primary_partition_count (const PedDisk* disk)
+ {
++	(void)disk;
+ 	return SUN_DISK_MAXPARTITIONS;
+ }
+ 
+--- a/parted/parted.c	2026-03-25 02:30:48.000000000 +0300
++++ b/parted/parted.c	2026-10-22 14:43:13.621056797 +0300
+@@ -515,6 +515,8 @@
+ int
+ do_help (PedDevice** dev, PedDisk** diskp)
+ {
++        (void)dev;
++        (void)diskp;
+         if (command_line_get_word_count ()) {
+                 char*   word = command_line_pop_word ();
+                 if (word) {
+@@ -600,7 +602,7 @@
+ 
+     char const *p = str + strlen(str) - 3;
+     PedUnit unit = ped_unit_get_by_name(p);
+-    if (unit == -1) {
++    if (unit == (PedUnit) -1) {
+         return false;
+     }
+     return _is_unit_IEC(unit);
+@@ -1069,6 +1071,7 @@
+ static int
+ partition_print (PedPartition* part)
+ {
++        (void)part;
+         return 1;
+ }
+ 
+@@ -1846,6 +1849,8 @@
+ static int
+ do_resize (PedDevice **dev, PedDisk** diskp)
+ {
++        (void)dev;
++        (void)diskp;
+         ped_exception_throw (
+                 PED_EXCEPTION_ERROR,
+                 PED_EXCEPTION_CANCEL,
+@@ -2164,6 +2169,8 @@
+ static int
+ do_unit (PedDevice** dev, PedDisk** diskp)
+ {
++        (void)dev;
++        (void)diskp;
+         PedUnit unit = ped_unit_get_default ();
+         if (!command_line_get_unit (_("Unit?"), &unit))
+                 return 0;
+@@ -2174,6 +2181,8 @@
+ static int
+ do_version (PedDevice** dev, PedDisk** diskp)
+ {
++    (void)dev;
++    (void)diskp;
+     printf ("\n%s\n%s",
+             prog_name,
+             _(copyright_msg));
+--- a/parted/strlist.c	2026-03-25 02:30:48.000000000 +0300
++++ b/parted/strlist.c	2026-10-22 14:45:19.198151494 +0300
+@@ -60,7 +60,7 @@
+ #ifdef ENABLE_NLS
+ 	return wcschr (str, ch);
+ #else
+-	return strchr (str, ch);
++	return (wchar_t *) strchr ((const char *) str, ch);
+ #endif
+ }
+ 
+--- a/parted/table.c	2026-03-25 02:30:48.000000000 +0300
++++ b/parted/table.c	2026-10-22 14:43:58.462670952 +0300
+@@ -175,22 +175,22 @@
+         assert(t);
+         assert(s != NULL);
+ 
+-        for (i = 0; i < ncols; ++i)
+-                len += t->widths[i] + wcslen(DELIMITER);
++        for (i = 0; i < (size_t) ncols; ++i)
++                len += (size_t) t->widths[i] + wcslen(DELIMITER);
+ 
+         len += wcslen(COLSUFFIX);
+ 
+         newsize = (wcslen(*s) + len + 1) * sizeof(wchar_t);
+         *s = xrealloc (*s, newsize);
+ 
+-        for (i = 0; i < ncols; ++i)
++        for (i = 0; i < (size_t) ncols; ++i)
+         {
+                 wcscat (*s, row[i]);
+-                if (ncols <= i + 1)
++                if ((size_t) ncols <= i + 1)
+                         break;
+ 
+                 int j;
+-                int nspaces = max(t->widths[i] - wcswidth(row[i], MAX_WIDTH),
++                int nspaces = max((int) (t->widths[i] - wcswidth(row[i], MAX_WIDTH)),
+                                   0);
+                 wchar_t* pad = xmalloc ((nspaces + 1) * sizeof(*pad));
+ 
+@@ -200,7 +200,7 @@
+                 pad[nspaces] = L_('\0');
+ 
+                 wcscat (*s, pad);
+-                if (i + 1 < ncols)
++                if (i + 1 < (size_t) ncols)
+                         wcscat (*s, DELIMITER);
+ 
+                 free (pad);
+--- a/parted/ui.c	2026-03-25 02:30:48.000000000 +0300
++++ b/parted/ui.c	2026-10-22 14:43:13.620746355 +0300
+@@ -331,6 +331,8 @@
+ static void
+ sa_sigint_handler (int signum, siginfo_t* info, void *ucontext)
+ {
++        (void)signum;
++        (void)ucontext;
+         if (info)
+                 sigaction (SIGINT, &sig_int, NULL);
+ 
+@@ -342,6 +344,8 @@
+ static void
+ sa_sigsegv_handler (int signum, siginfo_t* info, void* ucontext)
+ {
++        (void)signum;
++        (void)ucontext;
+         fprintf (stderr, bug_msg, VERSION);
+         _dump_history ();
+ 
+@@ -377,6 +381,8 @@
+ static void
+ sa_sigfpe_handler (int signum, siginfo_t* info, void* ucontext)
+ {
++        (void)signum;
++        (void)ucontext;
+         fprintf (stderr, bug_msg, VERSION);
+         _dump_history ();
+ 
+@@ -441,6 +447,8 @@
+ static void
+ sa_sigill_handler (int signum, siginfo_t* info, void* ucontext)
+ {
++        (void)signum;
++        (void)ucontext;
+         fprintf (stderr, bug_msg, VERSION);
+         _dump_history ();
+ 
+@@ -735,7 +743,7 @@
+                         line++;
+ 
+                 i = 0;
+-                for (; *line && i < sizeof (this_word) - 1; line++) {
++                for (; *line && i < (int) (sizeof (this_word) - 1); line++) {
+                         if (*line == ' ' && !quoted) {
+                                 if (multi_word)
+                                         break;
