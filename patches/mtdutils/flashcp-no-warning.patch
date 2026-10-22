@@ -1,0 +1,16 @@
+Subject: [PATCH] flashcp: drop #warning TODO marker
+
+Upstream reminder about smaller erase regions; #warning is fatal
+under -Werror=cpp. No code change.
+diff --git a/misc-utils/flashcp.c b/misc-utils/flashcp.c
+index 6065a8c..6bd226c 100644
+--- a/misc-utils/flashcp.c
++++ b/misc-utils/flashcp.c
+@@ -338,7 +338,6 @@ int main (int argc,char *argv[])
+ 	 * erase enough blocks so that we can write the file *
+ 	 *****************************************************/
+ 
+-#warning "Check for smaller erase regions"
+ 
+ 	erase.start = 0;
+ 
