@@ -9,9 +9,10 @@
 # This is a makefile fragment that defines the build of gnu-efi
 #
 
-GNU_EFI_VERSION			= 3.0.12
-GNU_EFI_TARBALL			= gnu-efi-$(GNU_EFI_VERSION).tar.bz2
-GNU_EFI_TARBALL_URLS		+= $(ONIE_MIRROR) https://downloads.sourceforge.net/project/gnu-efi
+GNU_EFI_VERSION			= 4.0.4
+GNU_EFI_TARBALL			= gnu-efi-$(GNU_EFI_VERSION).tar.gz
+GNU_EFI_TARBALL_URLS		+= $(ONIE_MIRROR) \
+				   https://github.com/ncroxon/gnu-efi/archive/$(GNU_EFI_VERSION).tar.gz
 GNU_EFI_BUILD_DIR		= $(USER_BUILDDIR)/gnu-efi
 GNU_EFI_DIR			= $(GNU_EFI_BUILD_DIR)/gnu-efi-$(GNU_EFI_VERSION)
 
@@ -71,9 +72,6 @@ $(GNU_EFI_BUILD_STAMP): $(GNU_EFI_PATCH_STAMP) $(GNU_EFI_NEW_FILES) \
 	$(Q) echo "====  Building gnu-efi-$(GNU_EFI_VERSION) ===="
 	$(Q) PATH='$(CROSSBIN):$(PATH)'	\
 		$(MAKE) -j1 -C $(GNU_EFI_DIR) \
-			CROSS_COMPILE=$(CROSSPREFIX)
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	\
-		$(MAKE) -j1 -C $(GNU_EFI_DIR)/apps \
 			CROSS_COMPILE=$(CROSSPREFIX)
 	$(Q) touch $@
 

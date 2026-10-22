@@ -1,2 +1,2 @@
-# This series applies on GIT commit 57632e2e12d41deed491f5d1e90353b6e335c7ce
-update-makefile-patch
+# 4.0.4: no patches needed - ONIE fixes are upstream
+# (arch paths in apps/Makefile, USER_CFLAGS from env)
