@@ -1,0 +1,18 @@
+Subject: [PATCH] widen b64t to 65 chars
+
+b64t[64] initialized from a 65-char literal; [65] holds the
+NUL and silences -Wunterminated-string-initialization. Index
+use (i & 0x3f) is unaffected.
+diff --git a/src/password-crypt.c b/src/password-crypt.c
+index db69b88..05399c6 100644
+--- a/src/password-crypt.c
++++ b/src/password-crypt.c
+@@ -46,7 +46,7 @@
+ #define SHA256_DEFAULT_ROUNDS 5000
+ #define SHA512_DEFAULT_ROUNDS 5000
+ 
+-static const char b64t[64] =
++static const char b64t[65] =
+ "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+ 
+ static const char md5_prefix[] = "$1$";

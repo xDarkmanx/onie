@@ -10,9 +10,10 @@
 # This is a makefile fragment that defines the build of mokutil
 #
 
-MOKUTIL_VERSION			= 0.4.0
+MOKUTIL_VERSION			= 0.7.2
 MOKUTIL_TARBALL			= $(MOKUTIL_VERSION).tar.gz
-MOKUTIL_TARBALL_URLS		+= $(ONIE_MIRROR) https://github.com/lcp/mokutil/archive
+MOKUTIL_TARBALL_URLS		+= $(ONIE_MIRROR) \
+				   https://github.com/lcp/mokutil/archive/refs/tags/$(MOKUTIL_VERSION).tar.gz
 MOKUTIL_BUILD_DIR		= $(USER_BUILDDIR)/mokutil
 MOKUTIL_DIR			= $(MOKUTIL_BUILD_DIR)/mokutil-$(MOKUTIL_VERSION)
 
@@ -61,7 +62,7 @@ $(MOKUTIL_PATCH_STAMP): $(EFIVAR_BUILD_STAMP) $(OPENSSL_BUILD_STAMP) $(MOKUTIL_S
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Patching mokutil ===="
 	$(Q) $(SCRIPTDIR)/apply-patch-series $(MOKUTIL_SRCPATCHDIR)/series $(MOKUTIL_DIR)
-	$(Q) cd $(MOKUTIL_DIR) && ./autogen.sh
+	$(Q) cd $(MOKUTIL_DIR) && NOCONFIGURE=1 ./autogen.sh
 	$(Q) touch $@
 
 ifndef MAKE_CLEAN
