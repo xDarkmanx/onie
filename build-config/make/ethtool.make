@@ -17,17 +17,19 @@ ETHTOOL_DIR		= $(ETHTOOL_BUILD_DIR)/ethtool-$(ETHTOOL_VERSION)
 
 ETHTOOL_DOWNLOAD_STAMP	= $(DOWNLOADDIR)/ethtool-download
 ETHTOOL_SOURCE_STAMP	= $(USER_STAMPDIR)/ethtool-source
+ETHTOOL_PATCH_STAMP	= $(USER_STAMPDIR)/ethtool-patch
 ETHTOOL_CONFIGURE_STAMP	= $(USER_STAMPDIR)/ethtool-configure
 ETHTOOL_BUILD_STAMP	= $(USER_STAMPDIR)/ethtool-build
 ETHTOOL_INSTALL_STAMP	= $(STAMPDIR)/ethtool-install
 ETHTOOL_STAMP		= $(ETHTOOL_SOURCE_STAMP) \
+			  $(ETHTOOL_PATCH_STAMP) \
 			  $(ETHTOOL_CONFIGURE_STAMP) \
 			  $(ETHTOOL_BUILD_STAMP) \
 			  $(ETHTOOL_INSTALL_STAMP)
 
 ETHTOOL_BIN		= ethtool
 
-PHONY += ethtool ethtool-download ethtool-source ethtool-configure \
+PHONY += ethtool ethtool-download ethtool-source ethtool-patch ethtool-configure \
 	ethtool-build ethtool-install ethtool-clean ethtool-download-clean
 
 ethtool: $(ETHTOOL_STAMP)
@@ -49,8 +51,16 @@ $(ETHTOOL_SOURCE_STAMP): $(USER_TREE_STAMP) | $(ETHTOOL_DOWNLOAD_STAMP)
 	$(Q) $(SCRIPTDIR)/extract-package $(ETHTOOL_BUILD_DIR) $(DOWNLOADDIR)/$(ETHTOOL_TARBALL)
 	$(Q) touch $@
 
+ethtool-patch: $(ETHTOOL_PATCH_STAMP)
+$(ETHTOOL_PATCH_STAMP): $(ETHTOOL_SRCPATCHDIR)/* $(ETHTOOL_SOURCE_STAMP)
+	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
+	$(Q) echo "==== Patching ethtool ===="
+	$(Q) $(SCRIPTDIR)/apply-patch-series $(ETHTOOL_SRCPATCHDIR)/series $(ETHTOOL_DIR)
+	$(Q) touch $@
+
 ethtool-configure: $(ETHTOOL_CONFIGURE_STAMP)
-$(ETHTOOL_CONFIGURE_STAMP): $(ETHTOOL_SOURCE_STAMP) $(LIBMNL_BUILD_STAMP) | \
+ETHTOOL_SRCPATCHDIR	= $(PATCHDIR)/ethtool
+$(ETHTOOL_CONFIGURE_STAMP): $(ETHTOOL_PATCH_STAMP) $(LIBMNL_SOURCE_STAMP) $(LIBMNL_BUILD_STAMP) | \
 			     $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Configure ethtool-$(ETHTOOL_VERSION) ===="
@@ -69,11 +79,11 @@ $(ETHTOOL_BUILD_STAMP): $(ETHTOOL_CONFIGURE_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building ethtool-$(ETHTOOL_VERSION) ===="
 	$(Q) PATH='$(CROSSBIN):$(PATH)' \
-		CFLAGS="$(ONIE_CFLAGS)" \
-		$(MAKE) -C $(ETHTOOL_DIR) DESTDIR=$(DEV_SYSROOT)
+		$(MAKE) -C $(ETHTOOL_DIR) DESTDIR=$(DEV_SYSROOT) \
+		CFLAGS="$(ONIE_CFLAGS)"
 	$(Q) PATH='$(CROSSBIN):$(PATH)' \
-		CFLAGS="$(ONIE_CFLAGS)" \
-		$(MAKE) -C $(ETHTOOL_DIR) DESTDIR=$(DEV_SYSROOT) install
+		$(MAKE) -C $(ETHTOOL_DIR) DESTDIR=$(DEV_SYSROOT) \
+		CFLAGS="$(ONIE_CFLAGS)" install
 	$(Q) touch $@
 
 ethtool-install: $(ETHTOOL_INSTALL_STAMP)

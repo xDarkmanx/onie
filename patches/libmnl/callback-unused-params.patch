@@ -1,0 +1,33 @@
+Subject: [PATCH] callback: mark unused callback params
+
+mnl_cb_noop/stop ignore both args, mnl_cb_error ignores data;
+annotate with (void) for -Wextra.
+diff --git a/src/callback.c b/src/callback.c
+index f5349c3..c81bd40 100644
+--- a/src/callback.c
++++ b/src/callback.c
+@@ -13,12 +13,15 @@
+ 
+ static int mnl_cb_noop(const struct nlmsghdr *nlh, void *data)
+ {
++	(void)nlh;
++	(void)data;
+ 	return MNL_CB_OK;
+ }
+ 
+ static int mnl_cb_error(const struct nlmsghdr *nlh, void *data)
+ {
+ 	const struct nlmsgerr *err = mnl_nlmsg_get_payload(nlh);
++	(void)data;
+ 
+ 	if (nlh->nlmsg_len < mnl_nlmsg_size(sizeof(struct nlmsgerr))) {
+ 		errno = EBADMSG; 
+@@ -35,6 +38,8 @@ static int mnl_cb_error(const struct nlmsghdr *nlh, void *data)
+ 
+ static int mnl_cb_stop(const struct nlmsghdr *nlh, void *data)
+ {
++	(void)nlh;
++	(void)data;
+ 	return MNL_CB_STOP;
+ }
+ 

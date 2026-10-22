@@ -16,17 +16,20 @@ LIBMNL_DIR		= $(LIBMNL_BUILD_DIR)/libmnl-$(LIBMNL_VERSION)
 
 LIBMNL_DOWNLOAD_STAMP	= $(DOWNLOADDIR)/libmnl-download
 LIBMNL_SOURCE_STAMP	= $(USER_STAMPDIR)/libmnl-source
+LIBMNL_PATCH_STAMP	= $(USER_STAMPDIR)/libmnl-patch
 LIBMNL_CONFIGURE_STAMP	= $(USER_STAMPDIR)/libmnl-configure
 LIBMNL_BUILD_STAMP	= $(USER_STAMPDIR)/libmnl-build
 LIBMNL_INSTALL_STAMP	= $(STAMPDIR)/libmnl-install
 LIBMNL_STAMP		= $(LIBMNL_SOURCE_STAMP) \
+			  $(LIBMNL_PATCH_STAMP) \
 			  $(LIBMNL_CONFIGURE_STAMP) \
 			  $(LIBMNL_BUILD_STAMP) \
 			  $(LIBMNL_INSTALL_STAMP)
 
+LIBMNL_SRCPATCHDIR	= $(PATCHDIR)/libmnl
 LIBMNL_LIBS = libmnl.so.0 libmnl.so.0.2.0
 
-PHONY += libmnl libmnl-download libmnl-source libmnl-configure \
+PHONY += libmnl libmnl-download libmnl-source libmnl-patch libmnl-configure \
 	libmnl-build libmnl-install libmnl-clean libmnl-download-clean
 
 libmnl: $(LIBMNL_STAMP)
@@ -48,8 +51,15 @@ $(LIBMNL_SOURCE_STAMP): $(USER_TREE_STAMP) | $(LIBMNL_DOWNLOAD_STAMP)
 	$(Q) $(SCRIPTDIR)/extract-package $(LIBMNL_BUILD_DIR) $(DOWNLOADDIR)/$(LIBMNL_TARBALL)
 	$(Q) touch $@
 
+libmnl-patch: $(LIBMNL_PATCH_STAMP)
+$(LIBMNL_PATCH_STAMP): $(LIBMNL_SRCPATCHDIR)/* $(LIBMNL_SOURCE_STAMP)
+	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
+	$(Q) echo "==== Patching libmnl ===="
+	$(Q) $(SCRIPTDIR)/apply-patch-series $(LIBMNL_SRCPATCHDIR)/series $(LIBMNL_DIR)
+	$(Q) touch $@
+
 libmnl-configure: $(LIBMNL_CONFIGURE_STAMP)
-$(LIBMNL_CONFIGURE_STAMP): $(LIBMNL_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
+$(LIBMNL_CONFIGURE_STAMP): $(LIBMNL_PATCH_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Configure libmnl-$(LIBMNL_VERSION) ===="
 	$(Q) cd $(LIBMNL_DIR) && PATH='$(CROSSBIN):$(PATH)'	\
@@ -66,11 +76,11 @@ $(LIBMNL_BUILD_STAMP): $(LIBMNL_CONFIGURE_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building libmnl-$(LIBMNL_VERSION) ===="
 	$(Q) PATH='$(CROSSBIN):$(PATH)' \
-		CFLAGS="$(ONIE_CFLAGS)" \
-		$(MAKE) -C $(LIBMNL_DIR) DESTDIR=$(DEV_SYSROOT)
+		$(MAKE) -C $(LIBMNL_DIR) DESTDIR=$(DEV_SYSROOT) \
+		CFLAGS="$(ONIE_CFLAGS)"
 	$(Q) PATH='$(CROSSBIN):$(PATH)' \
-		CFLAGS="$(ONIE_CFLAGS)" \
-		$(MAKE) -C $(LIBMNL_DIR) DESTDIR=$(DEV_SYSROOT) install
+		$(MAKE) -C $(LIBMNL_DIR) DESTDIR=$(DEV_SYSROOT) \
+		CFLAGS="$(ONIE_CFLAGS)" install
 	$(Q) touch $@
 
 libmnl-install: $(LIBMNL_INSTALL_STAMP)
