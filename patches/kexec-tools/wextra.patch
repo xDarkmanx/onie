@@ -4,14 +4,11 @@ Unused-parameter (void) casts in xen/zlib/zstd stubs, sign-compare
 casts, warn_unused_result checks (ftruncate/fgets/read),
 fallthrough comments in getopt switches, drop dead counter i.
 Purgatory not touched (freestanding, -fno-builtin).
-Только в kexec-test/kexec-tools-2.0.32/kexec: add_buffer.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: add_buffer.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: add_segment.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: add_segment.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -394,6 +394,9 @@
+diff --git a/kexec/arch/i386/crashdump-x86.c b/kexec/arch/i386/crashdump-x86.c
+index 0716762..02e7175 100644
+--- a/kexec/arch/i386/crashdump-x86.c
++++ b/kexec/arch/i386/crashdump-x86.c
+@@ -394,6 +394,9 @@ err:
  static int get_crash_memory_ranges_xen(struct memory_range **range,
  					int *ranges, unsigned long lowmem_limit)
  {
@@ -21,12 +18,11 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  	return 0;
  }
  #endif /* HAVE_LIBXENCTRL */
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: crashdump-x86.d
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: crashdump-x86.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -103,6 +103,7 @@
+diff --git a/kexec/arch/i386/kexec-beoboot-x86.c b/kexec/arch/i386/kexec-beoboot-x86.c
+index d949ab8..f60be98 100644
+--- a/kexec/arch/i386/kexec-beoboot-x86.c
++++ b/kexec/arch/i386/kexec-beoboot-x86.c
+@@ -103,6 +103,7 @@ int beoboot_load(int argc, char **argv, const char *buf, off_t UNUSED(len),
  			if (opt < OPT_ARCH_MAX) {
  				break;
  			}
@@ -34,12 +30,11 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		case OPT_REAL_MODE:
  			real_mode_entry = 1;
  			break;
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-beoboot-x86.d
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-beoboot-x86.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -219,9 +219,9 @@
+diff --git a/kexec/arch/i386/kexec-bzImage.c b/kexec/arch/i386/kexec-bzImage.c
+index 81ca2df..ff52854 100644
+--- a/kexec/arch/i386/kexec-bzImage.c
++++ b/kexec/arch/i386/kexec-bzImage.c
+@@ -219,9 +219,9 @@ int do_bzImage_load(struct kexec_info *info,
  			kern16_size_needed = setup_header.heap_end_ptr;
  		else
  			kern16_size_needed = kern16_size + 8192; /* bss */
@@ -51,7 +46,7 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  			die("kern16_size_needed is more then 64k\n");
  		heap_size = 0xfffc - kern16_size_needed; /* less 64k */
  		heap_size = _ALIGN_DOWN(heap_size, 0x200);
-@@ -428,6 +428,7 @@
+@@ -428,6 +428,7 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
  			if (opt < OPT_ARCH_MAX) {
  				break;
  			}
@@ -59,12 +54,11 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		case OPT_APPEND:
  			append = optarg;
  			break;
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-bzImage.d
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-bzImage.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -161,6 +161,7 @@
+diff --git a/kexec/arch/i386/kexec-elf-x86.c b/kexec/arch/i386/kexec-elf-x86.c
+index 8eba242..2282633 100644
+--- a/kexec/arch/i386/kexec-elf-x86.c
++++ b/kexec/arch/i386/kexec-elf-x86.c
+@@ -161,6 +161,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
  			if (opt < OPT_ARCH_MAX) {
  				break;
  			}
@@ -72,12 +66,11 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		case OPT_APPEND:
  			append = optarg;
  			break;
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-elf-x86.d
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-elf-x86.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -84,11 +84,11 @@
+diff --git a/kexec/arch/i386/kexec-mb2-x86.c b/kexec/arch/i386/kexec-mb2-x86.c
+index 0d2e93b..c96a1bc 100644
+--- a/kexec/arch/i386/kexec-mb2-x86.c
++++ b/kexec/arch/i386/kexec-mb2-x86.c
+@@ -84,11 +84,11 @@ int multiboot2_x86_probe(const char *buf, off_t buf_len)
  
  	/* Now look for a multiboot header. */
  	len = MULTIBOOT_SEARCH;
@@ -91,7 +84,7 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		/* Short file */
  		return -1;
  	}
-@@ -377,6 +377,7 @@
+@@ -377,6 +377,7 @@ out:
  static uint64_t multiboot2_mbi_add_module(void *mbi_buf, uint64_t mbi_ptr, uint32_t mod_start,
  					  uint32_t mod_end, char *mod_clp)
  {
@@ -99,7 +92,7 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  	struct multiboot_tag_module *tag = (struct multiboot_tag_module *) (uintptr_t) mbi_ptr;
  
  	tag->type = MULTIBOOT_TAG_TYPE_MODULE;
-@@ -392,6 +393,7 @@
+@@ -392,6 +393,7 @@ static uint64_t multiboot2_mbi_add_module(void *mbi_buf, uint64_t mbi_ptr, uint3
  
  static uint64_t multiboot2_mbi_end(void *mbi_buf, uint64_t mbi_ptr)
  {
@@ -107,7 +100,7 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  	struct multiboot_tag *tag = (struct multiboot_tag *) (uintptr_t) mbi_ptr;
  
  	tag->type = MULTIBOOT_TAG_TYPE_END;
-@@ -459,6 +461,7 @@
+@@ -459,6 +461,7 @@ int multiboot2_x86_load(int argc, char **argv, const char *buf, off_t len,
  			if (opt < OPT_ARCH_MAX) {
  				break;
  			}
@@ -115,7 +108,7 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		case OPT_CL:
  			append = optarg;
  			break;
-@@ -559,8 +562,6 @@
+@@ -559,8 +562,6 @@ int multiboot2_x86_load(int argc, char **argv, const char *buf, off_t len,
  	if (modules) {
  		char *mod_filename, *mod_command_line, *mod_clp, *buf;
  		off_t mod_size;
@@ -124,7 +117,7 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		mod_clp_base = xmalloc(mod_command_line_space);
  
  		/* Go back and parse the module command lines */
-@@ -592,7 +593,6 @@
+@@ -592,7 +593,6 @@ int multiboot2_x86_load(int argc, char **argv, const char *buf, off_t len,
  			mbi_ptr = multiboot2_mbi_add_module(mbi_buf, mbi_ptr, addr, addr + mod_size, mod_clp);
  
  			mod_clp += strlen(mod_clp) + 1;
@@ -132,12 +125,11 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		}
  
  		free(mod_clp_base);
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-mb2-x86.d
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-mb2-x86.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -269,6 +269,7 @@
+diff --git a/kexec/arch/i386/kexec-multiboot-x86.c b/kexec/arch/i386/kexec-multiboot-x86.c
+index 33c885a..434cbe3 100644
+--- a/kexec/arch/i386/kexec-multiboot-x86.c
++++ b/kexec/arch/i386/kexec-multiboot-x86.c
+@@ -269,6 +269,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
  			if (opt < OPT_ARCH_MAX) {
  				break;
  			}
@@ -145,14 +137,11 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		case OPT_CL:
  			append = optarg;
  			break;
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-multiboot-x86.d
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-multiboot-x86.o
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-nbi.d
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-nbi.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -227,6 +227,8 @@
+diff --git a/kexec/arch/i386/kexec-x86-common.c b/kexec/arch/i386/kexec-x86-common.c
+index 4a67ec8..d027195 100644
+--- a/kexec/arch/i386/kexec-x86-common.c
++++ b/kexec/arch/i386/kexec-x86-common.c
+@@ -227,6 +227,8 @@ err:
  #else
  static int get_memory_ranges_xen(struct memory_range **range, int *ranges)
  {
@@ -161,7 +150,7 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  	return 0;
  }
  #endif /* HAVE_LIBXENCTRL */
-@@ -317,7 +319,8 @@
+@@ -317,7 +319,8 @@ int efi_map_added( void ) {
  	char buf[512];
  	FILE *fp = fopen( "/proc/cmdline", "r" );
  	if( fp ) {
@@ -171,12 +160,11 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		fclose( fp );
  		return strstr( buf, "add_efi_memmap" ) != NULL;
  	} else {
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-x86-common.d
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: kexec-x86-common.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -103,7 +103,7 @@
+diff --git a/kexec/arch/i386/x86-linux-setup.c b/kexec/arch/i386/x86-linux-setup.c
+index 94d9dd2..0b856e1 100644
+--- a/kexec/arch/i386/x86-linux-setup.c
++++ b/kexec/arch/i386/x86-linux-setup.c
+@@ -103,7 +103,7 @@ void setup_linux_bootloader_parameters_high(
  		real_mode->ext_ramdisk_image = (initrd_base >> 16) >> 16;
  
  	if (real_mode->protocol_version >= 0x020c &&
@@ -185,7 +173,7 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		real_mode->ext_ramdisk_size = (initrd_size >> 16) >> 16;
  
  	/* The location of the command line */
-@@ -511,7 +511,8 @@
+@@ -511,7 +511,8 @@ int get_bootparam(void *buf, off_t offset, size_t size)
  		return 1;
  	if (lseek(data_file, offset, SEEK_SET) < 0)
  		goto close;
@@ -195,12 +183,11 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  close:
  	close(data_file);
  	return 0;
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: x86-linux-setup.d
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/i386: x86-linux-setup.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -272,6 +272,7 @@
+diff --git a/kexec/arch/x86_64/kexec-bzImage64.c b/kexec/arch/x86_64/kexec-bzImage64.c
+index 29ed8c9..046dc6f 100644
+--- a/kexec/arch/x86_64/kexec-bzImage64.c
++++ b/kexec/arch/x86_64/kexec-bzImage64.c
+@@ -272,6 +272,7 @@ int bzImage64_load_file(int argc, char **argv, struct kexec_info *info)
  			/* Ignore core options */
  			if (opt < OPT_ARCH_MAX)
  				break;
@@ -208,7 +195,7 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		case OPT_APPEND:
  			append = optarg;
  			break;
-@@ -361,6 +362,7 @@
+@@ -361,6 +362,7 @@ int bzImage64_load(int argc, char **argv, const char *buf, off_t len,
  			/* Ignore core options */
  			if (opt < OPT_ARCH_MAX)
  				break;
@@ -216,14 +203,11 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		case OPT_APPEND:
  			append = optarg;
  			break;
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/x86_64: kexec-bzImage64.d
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/x86_64: kexec-bzImage64.o
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/x86_64: kexec-elf-rel-x86_64.d
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/x86_64: kexec-elf-rel-x86_64.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -107,6 +107,7 @@
+diff --git a/kexec/arch/x86_64/kexec-elf-x86_64.c b/kexec/arch/x86_64/kexec-elf-x86_64.c
+index 7f9540a..87c6cba 100644
+--- a/kexec/arch/x86_64/kexec-elf-x86_64.c
++++ b/kexec/arch/x86_64/kexec-elf-x86_64.c
+@@ -107,6 +107,7 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
  				break;
  			}
  			fprintf(stderr, "Unknown option: opt: %d\n", opt);
@@ -231,18 +215,11 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		case OPT_APPEND:
  			append = optarg;
  			break;
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/x86_64: kexec-elf-x86_64.d
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/x86_64: kexec-elf-x86_64.o
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/x86_64: kexec-x86_64.d
-Только в kexec-test/kexec-tools-2.0.32/kexec/arch/x86_64: kexec-x86_64.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: arch_reuse_initrd.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: arch_reuse_initrd.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: crashdump.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: crashdump.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -32,6 +32,7 @@
+diff --git a/kexec/crashdump-xen.c b/kexec/crashdump-xen.c
+index 3f59a0d..3c1381f 100644
+--- a/kexec/crashdump-xen.c
++++ b/kexec/crashdump-xen.c
+@@ -32,6 +32,7 @@ static int is_dom0;
  static jmp_buf xen_sigill_jmp;
  void xen_sigill_handler(int sig)
  {
@@ -250,7 +227,7 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  	longjmp(xen_sigill_jmp, 1);
  }
  
-@@ -218,6 +219,8 @@
+@@ -218,6 +219,8 @@ out:
  #else
  int get_xen_vmcoreinfo(uint64_t *addr, uint64_t *len)
  {
@@ -259,7 +236,7 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  	return -1;
  }
  
-@@ -251,6 +254,8 @@
+@@ -251,6 +254,8 @@ int xen_get_crashkernel_region(uint64_t *start, uint64_t *end)
  #else
  int xen_get_crashkernel_region(uint64_t *start, uint64_t *end)
  {
@@ -268,42 +245,11 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  	return -1;
  }
  #endif
-Только в kexec-test/kexec-tools-2.0.32/kexec: crashdump-xen.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: crashdump-xen.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: firmware_memmap.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: firmware_memmap.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: ifdown.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: ifdown.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -1187,7 +1187,7 @@
- 			return ret;
- 		}
- 		offset += ret;
--	} while (ret && offset < count);
-+	} while (ret && (size_t)offset < count);
- 
- 	return offset;
- }
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-elf-boot.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-elf-boot.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-elf-core.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-elf-core.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-elf.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-elf-exec.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-elf-exec.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-elf.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-elf-rel.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-elf-rel.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-iomem.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-iomem.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -112,7 +112,8 @@
+diff --git a/kexec/kexec-pe-zboot.c b/kexec/kexec-pe-zboot.c
+index c09f2ae..66d2231 100644
+--- a/kexec/kexec-pe-zboot.c
++++ b/kexec/kexec-pe-zboot.c
+@@ -112,7 +112,8 @@ int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd,
  		/* If signed, the Attribute Certificate Table is always at the end of the PE file */
  		if (dir->certs.virtual_address != 0 && dir->certs.size != 0) {
  			original_file_sz = dir->certs.virtual_address + dir->certs.size;
@@ -313,12 +259,11 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		}
  	}
  
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-pe-zboot.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-pe-zboot.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -50,6 +50,7 @@
+diff --git a/kexec/kexec-uki.c b/kexec/kexec-uki.c
+index 9888d7e..75943c9 100644
+--- a/kexec/kexec-uki.c
++++ b/kexec/kexec-uki.c
+@@ -50,6 +50,7 @@ static int create_tmpfd(const char *template, char *buf, int buf_sz, int *tmpfd)
  
  int uki_image_probe(const char *file_buf, off_t buf_sz)
  {
@@ -326,12 +271,11 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  	struct pe_hdr *pe_hdr;
  	struct pe32plus_opt_hdr *opt_hdr;
  	struct section_header *sect_hdr;
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-uki.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-uki.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -271,6 +271,9 @@
+diff --git a/kexec/kexec-xen.c b/kexec/kexec-xen.c
+index a7c8933..abb2aed 100644
+--- a/kexec/kexec-xen.c
++++ b/kexec/kexec-xen.c
+@@ -271,6 +271,9 @@ int xen_kexec_exec(uint64_t kexec_flags)
  
  int xen_get_kexec_range(int range, uint64_t *start, uint64_t *end)
  {
@@ -341,7 +285,7 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  	return -1;
  }
  
-@@ -281,16 +284,19 @@
+@@ -281,16 +284,19 @@ int xen_kexec_load(struct kexec_info *UNUSED(info))
  
  int xen_kexec_unload(uint64_t kexec_flags)
  {
@@ -361,24 +305,24 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  	return -1;
  }
  
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-xen.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: kexec-xen.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: lzma.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: lzma.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: phys_arch.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: phys_arch.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: phys_to_virt.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: phys_to_virt.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: proc_iomem.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: proc_iomem.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: symbols.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: symbols.o
-Только в kexec-test/kexec-tools-2.0.32/kexec: virt_to_phys.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: virt_to_phys.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
-@@ -25,6 +25,7 @@
+diff --git a/kexec/kexec.c b/kexec/kexec.c
+index c9e4bcb..2682471 100644
+--- a/kexec/kexec.c
++++ b/kexec/kexec.c
+@@ -1187,7 +1187,7 @@ static ssize_t _read(int fd, void *buf, size_t count)
+ 			return ret;
+ 		}
+ 		offset += ret;
+-	} while (ret && offset < count);
++	} while (ret && (size_t)offset < count);
+ 
+ 	return offset;
+ }
+diff --git a/kexec/zlib.c b/kexec/zlib.c
+index 3ed6bd6..c46450f 100644
+--- a/kexec/zlib.c
++++ b/kexec/zlib.c
+@@ -25,6 +25,7 @@ static void _gzerror(gzFile fp, int *errnum, const char **errmsg)
  
  int is_zlib_file(const char *filename, off_t *r_size)
  {
@@ -386,11 +330,10 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  	gzFile fp;
  	int errnum;
  	int is_zlib_file = 0; /* default: It's not in gzip format */
-Только в kexec-test/kexec-tools-2.0.32/kexec: zlib.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: zlib.o
-diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
---- a/kexec
-+++ b/kexec
+diff --git a/kexec/zstd.c b/kexec/zstd.c
+index eaa76b9..7936bc3 100644
+--- a/kexec/zstd.c
++++ b/kexec/zstd.c
 @@ -24,6 +24,7 @@
  __attribute__((weak))
  unsigned ZSTD_isFrame(const void* buffer, size_t size)
@@ -399,7 +342,7 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  	uint8_t *buf = (uint8_t *)buffer;
  	/* Magic zstd frame header value */
  	if ((buf[0] == 0x28) &&
-@@ -80,7 +81,7 @@
+@@ -80,7 +81,7 @@ char *zstd_decompress_file(const char *filename, off_t *r_size)
  		dbgprintf("Cannot stat `%s'\n", filename);
  		return NULL;
  	}
@@ -408,5 +351,3 @@ diff -ru --label a/kexec --label b/kexec a/kexec b/kexec
  		dbgprintf("short file\n");
  		return NULL;
  	}
-Только в kexec-test/kexec-tools-2.0.32/kexec: zstd.d
-Только в kexec-test/kexec-tools-2.0.32/kexec: zstd.o
