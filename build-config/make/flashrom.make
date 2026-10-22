@@ -82,9 +82,11 @@ $(FLASHROM_BUILD_STAMP): $(FLASHROM_SOURCE_STAMP) $(PCIUTILS_BUILD_STAMP) \
 	$(Q) echo "====  Building flashrom-$(FLASHROM_VERSION) ===="
 	$(Q) cd $(FLASHROM_DIR) && PATH='$(CROSSBIN):$(PATH)'	\
 		PKG_CONFIG_PATH=$(DEV_SYSROOT)/usr/lib/pkgconfig	\
+		PKG_CONFIG_SYSROOT_DIR=$(DEV_SYSROOT)		\
 		meson setup buildd --prefix=/usr $(FLASHROM_MESON_OPTS)
 	$(Q) PATH='$(CROSSBIN):$(PATH)'	\
 		PKG_CONFIG_PATH=$(DEV_SYSROOT)/usr/lib/pkgconfig	\
+		PKG_CONFIG_SYSROOT_DIR=$(DEV_SYSROOT)		\
 		ninja -C $(FLASHROM_DIR)/buildd
 	$(Q) PATH='$(CROSSBIN):$(PATH)'	ninja -C $(FLASHROM_DIR)/buildd install \
 		--destdir $(DEV_SYSROOT)
