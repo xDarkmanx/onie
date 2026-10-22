@@ -44,7 +44,7 @@ PHONY += util-linux util-linux-download util-linux-source util-linux-patch util-
 UTILLINUX_SRCPATCHDIR		= $(PATCHDIR)/util-linux
 UTILLINUX_CONFIG	= --enable-libuuid
 UTILLINUX_LIBS		= \
-	libuuid.so.1    libuuid.so.1.4.0
+	libuuid.so.1    libuuid.so.1.3.0
 UTILLINUX_USR_LIBS	= \
 	libuuid.so
 
@@ -52,7 +52,7 @@ ifeq ($(UTILLINUX_FLAVOR),util-linux)
 # These are needed when ext34 and lvm2 are enabled
 UTILLINUX_CONFIG	+= --enable-libblkid
 UTILLINUX_LIBS		+= \
-	libblkid.so.1   libblkid.so.1.2.0
+	libblkid.so.1   libblkid.so.1.1.0
 UTILLINUX_USR_LIBS	+= \
 	libblkid.so
 endif
@@ -79,7 +79,7 @@ $(UTILLINUX_SOURCE_STAMP): $(USER_TREE_STAMP) | $(UTILLINUX_DOWNLOAD_STAMP)
 ifndef MAKE_CLEAN
 UTILLINUX_NEW_FILES = $(shell test -d $(UTILLINUX_DIR) && test -f $(UTILLINUX_BUILD_STAMP) && \
 	              find -L $(UTILLINUX_DIR) -newer $(UTILLINUX_BUILD_STAMP) -type f \
-			\! -name libblkid.so.1.2.0T -print -quit)
+			\! -name libblkid.so.1.1.0T -print -quit)
 endif
 
 util-linux-configure-help: $(UTILLINUX_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
