@@ -11,8 +11,8 @@ Subject: [PATCH] fix -Wextra -Werror build (gcc-14)
 - e4crypt.c: const unsigned char *h, *l (hexchars is const)
 - mk_hugefiles.c: dir = EXT2_ROOT_INO (gcc maybe-uninitialized false
   positive: create_directory always sets it)
---- e2-pristine/e2fsprogs-1.47.4/lib/support/profile.c	2026-03-06 20:17:36.000000000 +0300
-+++ e2-test/e2fsprogs-1.47.4/lib/support/profile.c	2026-10-22 13:19:28.878142438 +0300
+--- a/lib/support/profile.c	2026-03-06 20:17:36.000000000 +0300
++++ b/lib/support/profile.c	2026-10-22 13:19:28.878142438 +0300
 @@ -394,8 +394,8 @@
  	struct parse_state	state;
  	prf_file_t		prf;
@@ -24,8 +24,8 @@ Subject: [PATCH] fix -Wextra -Werror build (gcc-14)
  	int			line_size, len;
  
  	if (!def_string || !profile || profile->magic != PROF_MAGIC_PROFILE)
---- e2-pristine/e2fsprogs-1.47.4/e2fsck/problem.c	2026-03-06 20:17:36.000000000 +0300
-+++ e2-test/e2fsprogs-1.47.4/e2fsck/problem.c	2026-10-22 13:20:13.844570740 +0300
+--- a/e2fsck/problem.c	2026-03-06 20:17:36.000000000 +0300
++++ b/e2fsck/problem.c	2026-10-22 13:20:13.844570740 +0300
 @@ -2528,7 +2528,7 @@
  		return 0;
  	}
@@ -35,8 +35,8 @@ Subject: [PATCH] fix -Wextra -Werror build (gcc-14)
  
  		sprintf(key, "0x%06x", code);
  
---- e2-pristine/e2fsprogs-1.47.4/misc/create_inode.c	2026-03-06 20:17:36.000000000 +0300
-+++ e2-test/e2fsprogs-1.47.4/misc/create_inode.c	2026-10-22 13:21:16.758394367 +0300
+--- a/misc/create_inode.c	2026-03-06 20:17:36.000000000 +0300
++++ b/misc/create_inode.c	2026-10-22 13:21:16.758394367 +0300
 @@ -346,7 +346,7 @@
  	ext2_ino_t		parent_ino;
  	errcode_t		retval;
@@ -74,8 +74,8 @@ Subject: [PATCH] fix -Wextra -Werror build (gcc-14)
  	if (cp) {
  		*cp = 0;
  		retval = ext2fs_namei(fs, root, cwd, dest, &parent_ino);
---- e2-pristine/e2fsprogs-1.47.4/misc/badblocks.c	2026-03-06 20:17:36.000000000 +0300
-+++ e2-test/e2fsprogs-1.47.4/misc/badblocks.c	2026-10-22 13:23:22.210664468 +0300
+--- a/misc/badblocks.c	2026-03-06 20:17:36.000000000 +0300
++++ b/misc/badblocks.c	2026-10-22 13:23:22.210664468 +0300
 @@ -757,8 +757,12 @@
  	errcode_t errcode;
  	unsigned long buf_used;
@@ -91,8 +91,8 @@ Subject: [PATCH] fix -Wextra -Werror build (gcc-14)
  
  	bb_count = 0;
  	errcode = ext2fs_badblocks_list_iterate_begin(bb_list,&bb_iter);
---- e2-pristine/e2fsprogs-1.47.4/misc/e4crypt.c	2026-03-06 20:17:36.000000000 +0300
-+++ e2-test/e2fsprogs-1.47.4/misc/e4crypt.c	2026-10-22 13:23:34.123716941 +0300
+--- a/misc/e4crypt.c	2026-03-06 20:17:36.000000000 +0300
++++ b/misc/e4crypt.c	2026-10-22 13:23:34.123716941 +0300
 @@ -144,7 +144,7 @@
  		    size_t bytes_size)
  {
@@ -111,8 +111,8 @@ Subject: [PATCH] fix -Wextra -Werror build (gcc-14)
  
  		cp += 2;
  		if (strlen(cp) & 1)
---- e2-pristine/e2fsprogs-1.47.4/misc/mk_hugefiles.c	2026-03-06 20:17:36.000000000 +0300
-+++ e2-test/e2fsprogs-1.47.4/misc/mk_hugefiles.c	2026-10-22 13:23:22.210945776 +0300
+--- a/misc/mk_hugefiles.c	2026-03-06 20:17:36.000000000 +0300
++++ b/misc/mk_hugefiles.c	2026-10-22 13:23:22.210945776 +0300
 @@ -359,7 +359,7 @@
  errcode_t mk_hugefiles(ext2_filsys fs, const char *device_name)
  {
