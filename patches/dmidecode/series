@@ -1,2 +1,1 @@
-# This series applies on GIT commit 230d76a606e09f77b0e74e445e35dadeeac756ee
-dmidecode-onie-cross-compile.patch
+# 3.7: no patches needed (CC ?=/CFLAGS ?= upstream; -Wextra clean)

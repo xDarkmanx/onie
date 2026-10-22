@@ -9,9 +9,9 @@
 # This is a makefile fragment that defines the build of dmidecode
 #
 
-DMIDECODE_VERSION		= 3.1
+DMIDECODE_VERSION		= 3.7
 DMIDECODE_TARBALL		= dmidecode-$(DMIDECODE_VERSION).tar.xz
-DMIDECODE_TARBALL_URLS		+= $(ONIE_MIRROR) http://download.savannah.gnu.org/releases/dmidecode/
+DMIDECODE_TARBALL_URLS		+= $(ONIE_MIRROR) https://download.savannah.gnu.org/releases/dmidecode
 DMIDECODE_BUILD_DIR		= $(USER_BUILDDIR)/dmidecode
 DMIDECODE_DIR			= $(DMIDECODE_BUILD_DIR)/dmidecode-$(DMIDECODE_VERSION)
 
@@ -66,9 +66,10 @@ dmidecode-build: $(DMIDECODE_BUILD_STAMP)
 $(DMIDECODE_BUILD_STAMP): $(DMIDECODE_PATCH_STAMP) $(DMIDECODE_NEW_FILES) | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building dmidecode-$(DMIDECODE_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)'	$(MAKE) -C $(DMIDECODE_DIR) \
-		$(DMIDECODE_PROGRAMS) CROSS_COMPILE=$(CROSSPREFIX) \
-			$(DMIDECODE_PROGRAMS)
+	$(Q) PATH='$(CROSSBIN):$(PATH)' \
+		CFLAGS="$(ONIE_CFLAGS)" CC=$(CROSSPREFIX)gcc \
+		$(MAKE) -C $(DMIDECODE_DIR) \
+		$(DMIDECODE_PROGRAMS)
 	$(Q) touch $@
 
 dmidecode-install: $(DMIDECODE_INSTALL_STAMP)
