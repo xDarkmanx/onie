@@ -9,10 +9,10 @@
 # This is a makefile fragment that defines the build of efibootmgr
 #
 
-EFIBOOTMGR_VERSION		= 16
-EFIBOOTMGR_TARBALL		= efibootmgr-$(EFIBOOTMGR_VERSION).tar.bz2
+EFIBOOTMGR_VERSION		= 18
+EFIBOOTMGR_TARBALL		= efibootmgr-$(EFIBOOTMGR_VERSION).tar.gz
 EFIBOOTMGR_TARBALL_URLS		+= $(ONIE_MIRROR) \
-	https://github.com/rhboot/efibootmgr/releases/download/$(EFIBOOTMGR_VERSION)/$(EFIBOOTMGR_TARBALL)
+	https://github.com/rhboot/efibootmgr/archive/refs/tags/$(EFIBOOTMGR_VERSION).tar.gz
 
 EFIBOOTMGR_BUILD_DIR		= $(USER_BUILDDIR)/efibootmgr
 EFIBOOTMGR_DIR			= $(EFIBOOTMGR_BUILD_DIR)/efibootmgr-$(EFIBOOTMGR_VERSION)

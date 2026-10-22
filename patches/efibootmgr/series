@@ -1,3 +1,1 @@
-# This series applies on GIT commit 82ddb11f6d1aa1c83298890ffda75cedfd3eedaa
-makefile-changes-for-onie.patch
-efibootdump-remove-intl-and-local-support.patch
+# 18: no patches needed - CFLAGS come via make command line, intl gone upstream
