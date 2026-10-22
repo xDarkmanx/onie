@@ -328,22 +328,25 @@ if [ "$UEFI_ENABLE" = "yes" ] ; then
     $MCOPY -s -i $RECOVERY_UEFI_IMG $RECOVERY_EFI_DIR '::/'
 fi
 
-# Combine the legacy BIOS and UEFI GRUB images images into an ISO.
-if [ "$FIRMWARE_TYPE" = "uefi" ] ; then
-	cp ${RECOVERY_CONF_DIR}/xorriso-options-uefi.cfg ${RECOVERY_XORRISO_OPTIONS}
-elif [ "$FIRMWARE_TYPE" = "auto" ] ; then
-    rm -f ${RECOVERY_XORRISO_OPTIONS} && touch ${RECOVERY_XORRISO_OPTIONS}
-	git merge-file -p --union ${RECOVERY_CONF_DIR}/xorriso-options-bios.cfg \
-            ${RECOVERY_XORRISO_OPTIONS} \
-            ${RECOVERY_CONF_DIR}/xorriso-options-uefi.cfg \
-            > ${RECOVERY_XORRISO_OPTIONS}
-else
-	cp ${RECOVERY_CONF_DIR}/xorriso-options-bios.cfg ${RECOVERY_XORRISO_OPTIONS}
+# Combine the legacy BIOS and UEFI GRUB images into an ISO.
+#
+# Use xorriso's mkisofs emulation.  The old native command
+# sequence (-map + -options_from_file with boot_image any ...) hits
+# a libburn read-from-output bug in xorriso 1.5.6 ("Read start
+# address ...s larger than number of readable blocks").
+MKISOFS_ARGS="-volid ONIE_RECOVERY"
+if [ "$FIRMWARE_TYPE" != "uefi" ] ; then
+    MKISOFS_ARGS="$MKISOFS_ARGS -eltorito-boot /boot/eltorito.img \
+-no-emul-boot -boot-load-size 4 -boot-info-table --grub2-mbr embedded.img"
 fi
+if [ "$UEFI_ENABLE" = "yes" ] ; then
+    [ "$FIRMWARE_TYPE" != "uefi" ] && MKISOFS_ARGS="$MKISOFS_ARGS -eltorito-alt-boot"
+    MKISOFS_ARGS="$MKISOFS_ARGS -e /boot/efi.img -no-emul-boot"
+fi
+MKISOFS_ARGS="$MKISOFS_ARGS -c /boot/boot.cat"
 
-cd $RECOVERY_DIR && $XORRISO -outdev $RECOVERY_ISO_IMAGE \
-    -map $RECOVERY_ISO_SYSROOT / \
-    -options_from_file $RECOVERY_XORRISO_OPTIONS
+cd $RECOVERY_DIR && $XORRISO -as mkisofs -o $RECOVERY_ISO_IMAGE \
+    $MKISOFS_ARGS $RECOVERY_ISO_SYSROOT
 
 if [ "$UEFI_ENABLE" = "yes" ] ; then
     # The next step is to add a MS-DOS partition table with one entry for
