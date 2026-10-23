@@ -125,7 +125,21 @@ $(SHIM_BUILD_STAMP): $(SHIM_PATCH_STAMP) $(SHIM_NEW_FILES) \
 # generated using 'make shim-self-sign'
 shim-install: $(SHIM_INSTALL_STAMP)
 ifeq ($(SHIM_USE_PREBUILT),yes)
-$(SHIM_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(SHIM_BIN_DIR)/shim$(EFI_ARCH).efi
+# Bootstrap: when the safe place is ours and still empty (fresh
+# signing keys, e.g. right after 'make signing-keys-generate'),
+# self-sign the freshly built shim into it as part of the normal
+# build instead of failing on the missing signed binary.  A
+# third-party SHIM_PREBUILT_DIR still requires the signed shim to
+# be present up front.
+SHIM_SIGNED_SHIM = $(SHIM_BIN_DIR)/shim$(EFI_ARCH).efi
+ifneq ($(wildcard $(SHIM_SIGNED_SHIM)),)
+SHIM_PREBUILT_DEPS = $(SYSROOT_INIT_STAMP) $(SHIM_SIGNED_SHIM)
+else ifeq ($(SHIM_PREBUILT_DIR),$(SAFE_PLACE_DIRECTORY))
+SHIM_PREBUILT_DEPS = $(SYSROOT_INIT_STAMP) $(SHIM_SELF_SIGN_STAMP)
+else
+SHIM_PREBUILT_DEPS = $(SYSROOT_INIT_STAMP) $(SHIM_SIGNED_SHIM)
+endif
+$(SHIM_INSTALL_STAMP): $(SHIM_PREBUILT_DEPS)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Installing prebuilt shim binaries ===="
 else
