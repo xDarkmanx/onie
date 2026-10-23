@@ -81,11 +81,23 @@ signing-keys-values:
 
 signing-keys-generate: $(KEYS_GENERATE_STAMP)
 $(KEYS_GENERATE_STAMP):
-	$(Q) echo "====  Generating signing keys  ===="
-	$(Q) $(ENCRYPTION_SCRIPT)  generate-all-keys --machine-name $(MACHINE) || exit 1
-	$(Q) echo "====  Keys are in $(KEYS_DIRECTORY) ===="
-
+	$(Q) if [ -f "$(ONIE_VENDOR_CERT_PEM)" ] ; then \
+		echo "====  Using existing signing keys in $(KEYS_DIRECTORY) ====" ; \
+	else \
+		echo "====  Generating signing keys  ====" ; \
+		$(ENCRYPTION_SCRIPT)  generate-all-keys --machine-name $(MACHINE) || exit 1; \
+		echo "====  Keys are in $(KEYS_DIRECTORY) ====" ; \
+	fi
 	$(Q) touch $@
+
+# Bootstrap: a from-scratch build needs the signing keys before
+# anything embeds or references them (shim vendor cert, kernel
+# module signing cert, GPG pubring in grub, efi-sign at image
+# time).  Every download stamp already depends on PROJECT_STAMP,
+# so hanging the keys off it guarantees generation happens first.
+# The recipe above never overwrites pre-existing keys, so vendor
+# supplied keys are left untouched (only the stamp is created).
+$(PROJECT_STAMP): $(KEYS_GENERATE_STAMP)
 
 # If keys exist, they can be copied over as many times as needed.
 signing-keys-install: $(KEYS_GENERATE_STAMP) 
