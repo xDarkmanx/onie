@@ -439,12 +439,12 @@ endif
 ifeq ($(OPENSSL_ENABLE),yes)
   include make/openssl.make
 endif
-ifeq ($(MOKUTIL_ENABLE),yes)
-  include make/mokutil.make
-endif
-
 ifeq ($(KEYUTILS_ENABLE),yes)
   include make/keyutils.make
+endif
+
+ifeq ($(MOKUTIL_ENABLE),yes)
+  include make/mokutil.make
 endif
 
 ifeq ($(SECURE_BOOT_EXT),yes)
